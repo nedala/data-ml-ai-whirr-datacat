@@ -14,6 +14,10 @@ Three personas share one workspace image:
 Connectors are **mock-or-live**. The appliance ships with synthetic demo data and
 safe mock responses; real credentials are added in Studio when you are ready.
 
+## Deep dive
+
+[Download the 24-page deep-dive PDF](docs/datacat-deep-dive.pdf) — business purpose, the three personas, key functions with inputs and outputs, and the real tooling screens.
+
 ## Quick start
 
 Requirements: Docker Engine 24+ with Compose v2.20+, at least 16 GB RAM per
