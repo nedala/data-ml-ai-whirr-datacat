@@ -1,0 +1,10 @@
+[Desktop Entry]
+NoDisplay=true
+Version=1.0
+Encoding=UTF-8
+Type=X-XFCE-Helper
+X-XFCE-Category=WebBrowser
+X-XFCE-CommandsWithParameter=appliance-browser-window "%s"
+Icon=chromium
+Name=Appliance browser
+X-XFCE-Commands=appliance-browser-window

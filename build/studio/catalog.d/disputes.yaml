@@ -1,0 +1,35 @@
+# Dispute Desk — build/disputes (plan/architecture.md §1, §4).
+# Uses the shared external credentials M365_CLIENT_SECRET and SAP_BRIM_USER /
+# SAP_BRIM_PASSWORD (core catalog shared_credentials); mailbox and SAP stay on
+# the in-appliance mocks until they are set.
+services:
+  disputes:
+    title: Dispute Desk
+    blurb: "Billing-dispute inbox → AI extraction → review queue → SAP BRIM (OData API or Playwright in visible browser windows)"
+    profile: disputes
+    ram_mb: 512
+    kind: app
+    route: /disputes/
+    needs: [postgres]
+    soft_needs: [connectors, harness, browser]
+    endpoints:
+      - {label: Review queue, value: "/disputes/"}
+      - {label: API docs, value: "/disputes/docs"}
+      - {label: Inside the appliance, value: "http://disputes:8099/disputes"}
+      - {label: Watch the Playwright windows, value: "/browser/ (Linux Desktop)"}
+
+capabilities:
+  disputes:
+    title: Dispute Desk
+    tone: ai
+    icon: contract
+    services: [disputes]
+    requires: [ai, connectors]
+    blurb: "Shared Outlook dispute inbox parsed into structured cases and raised in SAP BRIM — API or Playwright"
+
+app_groups:
+  - {id: ai-automations, title: AI that does the work, icon: zap, blurb: "Automations that take routine work off people's desks"}
+
+apps:
+  - {id: disputes, group: ai-automations, title: Dispute Desk, service: disputes, path: /disputes/, icon: mail,
+     blurb: "Review billing disputes the AI found and raise them in SAP BRIM"}

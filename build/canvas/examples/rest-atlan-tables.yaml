@@ -1,0 +1,42 @@
+# Example: REST API (the connectors service's Atlan endpoint, offset-paged) → landing.atlan_tables
+id: rest-atlan-tables
+name: REST API (Atlan catalog) → landing.atlan_tables
+description: Generic REST source with offset pagination and a JSONPath record selector, pulling catalog tables.
+example: true
+tags: [rest, atlan, catalog]
+schedule: {cron: "0 2 * * *", enabled: false}
+nodes:
+  - id: src
+    type: source.rest
+    label: GET /connectors/atlan/assets
+    position: {x: 60, y: 140}
+    config:
+      base_url: "${CONNECTORS_URL}/atlan"
+      path: /assets
+      params: {type: Table}
+      auth: none
+      records_path: "$.entities[*]"
+      pagination: offset
+      page_size: 10
+      limit_param: limit
+      offset_param: offset
+      max_pages: 50
+  - id: select
+    type: transform.select
+    label: Keep catalog fields
+    position: {x: 340, y: 140}
+    config:
+      columns: [qualifiedName, typeName, name, attributes.schemaName, attributes.description,
+                attributes.certificateStatus, attributes.columnCount, attributes.ownerGroups, classificationNames]
+      rename: {qualifiedName: qualified_name, typeName: type_name, attributes.schemaName: schema_name,
+               attributes.description: description, attributes.certificateStatus: certificate,
+               attributes.columnCount: column_count, attributes.ownerGroups: owner_groups,
+               classificationNames: classifications}
+  - id: dest
+    type: dest.warehouse
+    label: landing.atlan_tables
+    position: {x: 620, y: 140}
+    config: {schema: landing, table: atlan_tables, mode: full_refresh}
+edges:
+  - {from: src, to: select}
+  - {from: select, to: dest}

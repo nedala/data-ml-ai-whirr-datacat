@@ -1,0 +1,21 @@
+# Example: SQL Server table → landing.care_orders, incremental on updated_at, upsert on order_id
+id: mssql-orders-incremental
+name: SQL Server dbo.care_orders → landing.care_orders (incremental)
+description: "Demo source (add 'Demo sources' in Studio). Chunked dlt sql_database extraction; each run reads only rows with updated_at above the saved high-water mark and merges on order_id."
+example: true
+tags: [database, sqlserver, incremental]
+schedule: {cron: "*/15 * * * *", enabled: false}
+nodes:
+  - id: src
+    type: source.database
+    label: dbo.care_orders
+    position: {x: 60, y: 140}
+    config: {connection: care-mssql, schema: dbo, table: care_orders, cursor_column: updated_at, backend: sqlalchemy,
+             chunk_size: 10000}
+  - id: dest
+    type: dest.warehouse
+    label: landing.care_orders
+    position: {x: 380, y: 140}
+    config: {schema: landing, table: care_orders, mode: merge, primary_key: [order_id]}
+edges:
+  - {from: src, to: dest}

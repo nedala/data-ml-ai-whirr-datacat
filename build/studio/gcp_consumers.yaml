@@ -1,0 +1,108 @@
+# Cloud identity consumers — the ONE place that says who in the appliance
+# calls Google Cloud and with which credential (Studio → Cloud identities).
+#
+#   key:        assignment key (vault gcp_assignments.<key>) and the purpose
+#               name bsp_common.gcp.credentials(<key>) accepts
+#   env:        process env var that carries the identity JSON (secret; also
+#               <env minus _JSON>_PROJECT with the identity's project). Every
+#               env listed here must be referenced in compose.base.yml's
+#               bsp-workload environment (a Studio unit test checks it).
+#   fallback:   consumer whose identity is used when this one is unassigned;
+#               the chain ends at GCP_SA_JSON, then Application Default Creds
+#   service_account_only: true → personal (authorized_user) sign-ins are refused
+#   execution_project: true → also an EXECUTION (job / billing) project, separate
+#               from the DATA project: env <env minus _JSON>_EXEC_PROJECT
+#   multi_project: true → several data projects: <env minus _JSON>_DATA_PROJECTS
+#               (comma list; the first is also <…>_PROJECT)
+#   checks:     what Test runs for this consumer (see gcp_identities.CHECKS)
+#   services:   compose services / features that read it (informational)
+#   future:     true → wired for a feature not built yet (shown as “planned”)
+groups:
+  - {id: ai,        title: AI}
+  - {id: data,      title: Data}
+  - {id: ml,        title: ML}
+  - {id: workspace, title: Workspace}
+
+consumers:
+  - key: vertex
+    group: ai
+    title: Vertex AI
+    description: Gemini models for the LLM harness / gateway, Open WebUI and OpenCode via Vertex
+    env: GCP_VERTEX_JSON
+    checks: [vertex]
+    services: [harness, openwebui, mcp, appliance, code]
+
+  - key: bigquery_read
+    group: data
+    title: BigQuery · read
+    description: Notebooks, connectors, MCP BigQuery tools, Canvas BigQuery sources, Superset
+    env: GCP_BQ_JSON
+    execution_project: true
+    multi_project: true
+    checks: [bq_list, bq_query]
+    services: [connectors, mcp, canvas, appliance, superset]
+
+  - key: bigquery_write
+    group: data
+    title: BigQuery · write
+    description: dbt bigquery target, Canvas BigQuery destination, seed --target bigquery, publish_marts_to_bigquery
+    env: GCP_BQ_WRITE_JSON
+    fallback: bigquery_read
+    execution_project: true
+    checks: [bq_query, bq_write]
+    services: [appliance, canvas]
+
+  - key: trino_bigquery
+    group: data
+    title: Trino · BigQuery catalog
+    description: Trino's BigQuery catalogs — one bq_<project> catalog per data project. A personal sign-in is shared by every appliance user (queries run and bill as that person)
+    env: GCP_TRINO_JSON
+    fallback: bigquery_read
+    execution_project: true
+    multi_project: true
+    checks: [bq_list, bq_query]
+    services: [trino]
+
+  - key: gcs
+    group: data
+    title: Cloud Storage
+    description: Canvas GCS connections, workbench and lake imports / exports
+    env: GCP_GCS_JSON
+    checks: [gcs_buckets, gcs_objects]
+    services: [canvas, appliance, connectors]
+
+  - key: mlflow_artifacts
+    group: ml
+    title: MLflow artifacts (GCS)
+    description: GCS artifact store for MLflow runs and registered models
+    env: GCP_MLFLOW_JSON
+    fallback: gcs
+    checks: [gcs_write]
+    services: [mlflow, mlops]
+    future: true
+
+  - key: artifact_registry
+    group: ml
+    title: Artifact Registry
+    description: Container and package pushes (MLOps freeze → push)
+    env: GCP_ARTIFACT_JSON
+    checks: [artifact_registry]
+    services: [mlops]
+    future: true
+
+  - key: cloud_run
+    group: ml
+    title: Cloud Run
+    description: Deploying the model gateway and services to Cloud Run
+    env: GCP_CLOUDRUN_JSON
+    checks: [cloud_run]
+    services: [mlops]
+    future: true
+
+  - key: workspace
+    group: workspace
+    title: Workspace tools
+    description: Application Default Credentials in Jupyter, VS Code and the Linux Desktop; OpenCode and Antigravity
+    env: GCP_WORKSPACE_JSON
+    checks: [vertex]
+    services: [appliance, code, desktop]

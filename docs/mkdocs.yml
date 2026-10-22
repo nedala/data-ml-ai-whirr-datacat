@@ -1,0 +1,4 @@
+site_name: Data & AI Appliance
+docs_dir: .
+nav:
+  - Usage: index.md

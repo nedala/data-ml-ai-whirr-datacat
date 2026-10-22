@@ -1,0 +1,56 @@
+# Golden set: question → SQL over the local warehouse (Postgres bsp_edw, schema raw).
+# Scoring: when the warehouse is reachable, run generated and expected SQL read-only and
+# compare result sets (1 = same rows); otherwise the fraction of `must_contain` tokens present.
+suite: warehouse_sql
+type: sql
+description: Text-to-SQL over raw.* (result-set match against the seeded warehouse)
+default_routes: [sql-default]
+system: |
+  You write a single PostgreSQL SELECT for the DataPlatform warehouse. Always schema-qualify tables (raw.<table>).
+  Return only SQL, no explanation, no fences.
+  DataPlatform sells copper (DSL) and fiber (FTTH) internet only. Account tables are keyed by ban (10-digit text);
+  wire centers by clli; invoice_id is '<ban>-<yymm>'. technology is 'copper' or 'fiber'.
+  Tables (schema raw):
+    wire_centers(clli, wire_center_name, state, city, fiber_passings, copper_lines, olt_count, dslam_count, fiber_build_year)
+    customers(ban, customer_name, segment, state, city, clli, zip, signup_date, credit_band, autopay, paperless, preferred_channel)
+    service_locations(location_id, ban, clli, technology, fiber_available, competitor_fiber_available, max_down_mbps, loop_length_kft)
+    plans(plan_id, plan_name, technology, down_mbps, up_mbps, monthly_price, promo_price, promo_months)
+    subscriptions(subscription_id, ban, plan_id, start_date, end_date, status, cancel_reason, contract_term)
+    invoices(invoice_id, ban, bill_cycle, invoice_date, due_date, recurring_charges, one_time_charges, taxes_fees, credits, late_fee, amount_due, status)
+    transactions(txn_id, ban, invoice_id, txn_date, txn_type, amount, payment_method, reason)  -- txn_type: payment | late_fee | credit
+    disputes(dispute_id, ban, invoice_id, opened_date, channel, category, disputed_amount, status, resolved_date, credit_amount)
+    service_tickets(ticket_id, ban, opened_at, closed_at, category, subcategory, channel, first_contact_resolved)
+    dispatches(dispatch_id, ban, ticket_id, clli, dispatch_type, scheduled_at, completed_at, status, tech_id, cause, repeat_dispatch_30d)
+cases:
+  - id: s1
+    input: How many customers are there in each state? Return state and n, ordered by state.
+    expected_sql: SELECT state, count(*) AS n FROM raw.customers GROUP BY state ORDER BY state
+    must_contain: [count, raw.customers, group by, state]
+  - id: s2
+    input: How many subscriptions are cancelled? Return a single number.
+    expected_sql: SELECT count(*) FROM raw.subscriptions WHERE status = 'cancelled'
+    must_contain: [count, raw.subscriptions, cancelled]
+  - id: s3
+    input: List the plan_id and plan_name of fiber plans ordered by monthly_price.
+    expected_sql: SELECT plan_id, plan_name FROM raw.plans WHERE technology = 'fiber' ORDER BY monthly_price
+    must_contain: [raw.plans, fiber, order by]
+  - id: s4
+    input: What is the total late_fee across all invoices? Return one number.
+    expected_sql: SELECT sum(late_fee) FROM raw.invoices
+    must_contain: [sum, late_fee, raw.invoices]
+  - id: s5
+    input: How many service locations are on each technology? Return technology and n ordered by technology.
+    expected_sql: SELECT technology, count(*) AS n FROM raw.service_locations GROUP BY technology ORDER BY technology
+    must_contain: [technology, raw.service_locations, group by]
+  - id: s6
+    input: How many billing disputes are there per category? Return category and n ordered by category.
+    expected_sql: SELECT category, count(*) AS n FROM raw.disputes GROUP BY category ORDER BY category
+    must_contain: [category, raw.disputes, group by]
+  - id: s7
+    input: List the invoice_id and amount_due of the 3 most recent invoices for BAN 3100000016, newest first.
+    expected_sql: SELECT invoice_id, amount_due FROM raw.invoices WHERE ban = '3100000016' ORDER BY invoice_date DESC LIMIT 3
+    must_contain: [invoice_id, amount_due, raw.invoices, "3100000016"]
+  - id: s8
+    input: How many payment transactions were made by each payment_method? Return payment_method and n ordered by payment_method.
+    expected_sql: SELECT payment_method, count(*) AS n FROM raw.transactions WHERE txn_type = 'payment' GROUP BY payment_method ORDER BY payment_method
+    must_contain: [raw.transactions, payment, group by]

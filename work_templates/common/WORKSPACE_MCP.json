@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "bsp": {
+      "type": "http",
+      "url": "http://mcp:8095/mcp",
+      "headers": {
+        "Authorization": "Bearer ${MCP_TOKEN}"
+      }
+    }
+  }
+}

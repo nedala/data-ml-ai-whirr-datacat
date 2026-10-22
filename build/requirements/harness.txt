@@ -1,0 +1,14 @@
+# AI harness (bsp_harness) — LLM gateway + playground + evals. Python 3.12.
+# Lower bounds only where an API we use appeared; no upper pins that fight
+# mlflow / dbt / sqlalchemy 2 in the shared image.
+fastapi>=0.110
+uvicorn[standard]>=0.29
+httpx>=0.27
+sse-starlette>=2.0
+pyyaml>=6.0
+psycopg2-binary>=2.9
+openai>=1.40              # notebooks + openai_compatible clients
+google-genai>=1.20        # Vertex AI (vertexai=True)
+google-auth>=2.29
+anthropic[vertex]>=0.40   # Anthropic API + Claude on Vertex
+fastmcp>=2.10,<3          # playground agent loop → MCP server (client)

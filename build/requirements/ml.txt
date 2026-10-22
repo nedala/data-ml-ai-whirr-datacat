@@ -1,0 +1,15 @@
+# ML Scientist — modelling stack (training, tuning, explainability).
+# Resolved together with every other build/requirements/*.txt by the
+# platform image build; keep ranges loose (no hard pins).
+numpy>=1.26,<3
+pandas>=2.1,<3
+pyarrow>=14
+scipy>=1.11
+scikit-learn>=1.4,<1.8
+lightgbm>=4.3
+xgboost>=2.0
+optuna>=3.6
+shap>=0.45
+statsmodels>=0.14
+matplotlib>=3.8
+pyyaml>=6

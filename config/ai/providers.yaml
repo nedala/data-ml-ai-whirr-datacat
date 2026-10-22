@@ -1,0 +1,130 @@
+# AI harness routing — model aliases → providers (plan/architecture.md §5).
+#
+# Read by bsp_harness (service `harness`, http://harness:8096/ai/v1). The file
+# is hot-reloaded on change. Edits made in the harness UI (/ai/ → Routing) are
+# written to ${DATA_ROOT}/harness/providers.override.yaml and deep-merged over
+# this file — this repo file is never modified at runtime.
+#
+# Values may use ${VAR} / ${VAR:-default} interpolation from the container env.
+# Secrets (GCP_SA_JSON, ANTHROPIC_API_KEY, …) are NEVER written here: providers
+# name the env var that holds them and the vault injects it.
+version: 1
+
+defaults:
+  timeout_s: 120          # per attempt
+  retries: 1              # extra attempts on the same route (timeouts, 429, 5xx, connect errors)
+  backoff_s: 0.5          # exponential: 0.5, 1, 2 …
+  max_tokens: 1024
+
+providers:
+  ollama:
+    type: ollama
+    local: true            # runs inside the appliance / on the host → allowed for restricted data
+    base_url: ${OLLAMA_BASE_URL:-http://ollama:11434}
+    # Alternative when Ollama runs on the laptop/host instead of the container:
+    alt_base_urls: ["http://host.docker.internal:11434"]
+    keep_alive: 10m
+    timeout_s: 180
+    models:
+      - {id: "qwen2.5:7b-instruct", kind: chat, json: true, tools: true}
+      - {id: "llama3.1:8b", kind: chat, json: true, tools: true}
+      - {id: "qwen2.5vl:7b", kind: vlm, json: true}
+      - {id: "llava:7b", kind: vlm}
+      - {id: "nomic-embed-text", kind: embed}
+      - {id: "qwen2.5:0.5b", kind: chat, json: true}   # tiny, for smoke tests
+      - {id: "all-minilm", kind: embed}                  # tiny, for smoke tests
+
+  vertex:
+    type: vertex
+    local: false
+    project: ${GCP_PROJECT_ID:-to-be-named-soon}
+    region: ${GCP_REGION:-us-central1}
+    credentials_env: GCP_SA_JSON      # via bsp_common.gcp.credentials() (SA JSON → ADC fallback)
+    timeout_s: 120
+    models:
+      - {id: gemini-2.5-flash, kind: chat, thinking_budget: 0, json: true, tools: true, vision: true, cost_in_per_1k: 0.0003, cost_out_per_1k: 0.0025}
+      - {id: gemini-2.5-pro, kind: chat, json: true, tools: true, vision: true, cost_in_per_1k: 0.00125, cost_out_per_1k: 0.01}
+      - {id: text-embedding-005, kind: embed, cost_in_per_1k: 0.000025}
+
+  # Claude on Vertex AI (Model Garden). Enable the model in the project first
+  # (docs/ai-engineer/vertex-setup.md §7). Same credentials as `vertex`.
+  vertex-claude:
+    type: anthropic_vertex
+    enabled: false
+    local: false
+    project: ${GCP_PROJECT_ID:-to-be-named-soon}
+    region: ${VERTEX_CLAUDE_REGION:-us-east5}
+    credentials_env: GCP_SA_JSON
+    models:
+      - {id: claude-sonnet-4-5, kind: chat, tools: true, vision: true, cost_in_per_1k: 0.003, cost_out_per_1k: 0.015}
+
+  anthropic:
+    type: anthropic
+    enabled: true          # skipped automatically when the key is empty
+    local: false
+    api_key_env: ANTHROPIC_API_KEY
+    models:
+      - {id: claude-sonnet-4-5, kind: chat, tools: true, vision: true, cost_in_per_1k: 0.003, cost_out_per_1k: 0.015}
+      - {id: claude-haiku-4-5, kind: chat, tools: true, vision: true, cost_in_per_1k: 0.001, cost_out_per_1k: 0.005}
+
+  # Any OpenAI-compatible server (vLLM, LM Studio, LiteLLM, Azure OpenAI proxy …).
+  openai-compatible:
+    type: openai_compatible
+    enabled: false
+    local: false            # set true if it runs inside the network boundary
+    base_url: ${OPENAI_COMPAT_BASE_URL:-http://vllm:8000/v1}
+    api_key_env: OPENAI_COMPAT_API_KEY
+    models:
+      - {id: "${OPENAI_COMPAT_MODEL:-meta-llama/Llama-3.1-8B-Instruct}", kind: chat, json: true, tools: true}
+
+# Callers ask for an alias; routes are tried in order (fallback on error,
+# timeout, policy or budget refusal). `params` are defaults the request can
+# override; `json: true` forces response_format json_object.
+aliases:
+  chat-default:
+    display_name: DataPlatform Chat
+    description: General chat / reasoning
+    routes: ["ollama/qwen2.5:7b-instruct", "vertex/gemini-2.5-flash"]
+    params: {temperature: 0.3, max_tokens: 1024}
+  extract-default:
+    display_name: DataPlatform Extract (JSON)
+    description: Structured extraction (dispute e-mails → case fields)
+    routes: ["ollama/qwen2.5:7b-instruct", "vertex/gemini-2.5-flash"]
+    params: {temperature: 0, max_tokens: 1024, json: true}
+  classify-default:
+    display_name: DataPlatform Classify
+    description: Short-label classification (CCAI contact reasons)
+    routes: ["ollama/qwen2.5:7b-instruct", "vertex/gemini-2.5-flash"]
+    params: {temperature: 0, max_tokens: 256}
+  vlm-default:
+    display_name: DataPlatform Vision
+    description: Vision-language (bill images, screenshots)
+    routes: ["ollama/qwen2.5vl:7b", "vertex/gemini-2.5-flash"]
+    params: {temperature: 0, max_tokens: 1024}
+  embed-default:
+    display_name: DataPlatform Embeddings
+    description: Text embeddings
+    kind: embed
+    routes: ["ollama/nomic-embed-text", "vertex/text-embedding-005"]
+  sql-default:
+    display_name: Data Platform SQL
+    description: Conversational text-to-SQL across systems (Trino federation and the warehouse)
+    routes: ["ollama/qwen2.5:7b-instruct", "vertex/gemini-2.5-pro"]
+    params: {temperature: 0, max_tokens: 4096}
+
+policies:
+  # Data classification arrives as header `X-Data-Classification` or body
+  # `metadata.data_classification`; an alias may also pin one.
+  data_classification:
+    default: internal
+    rules:
+      restricted: {local_only: true}     # restricted → only providers with local: true
+      confidential: {local_only: false}
+      internal: {local_only: false}
+  budgets:
+    # Daily caps (UTC day) from ai.llm_calls; a capped provider is skipped and
+    # the next route is tried. 0 / absent = unlimited.
+    per_provider_daily_usd: {vertex: 25, vertex-claude: 25, anthropic: 25}
+    per_provider_daily_tokens: {}
+  logging:
+    store_prompts: false     # true → keep a truncated prompt/response preview in ai.llm_calls

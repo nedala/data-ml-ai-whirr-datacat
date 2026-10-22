@@ -1,0 +1,8 @@
+# Apache Spark (local mode) for notebooks and ETL scripts — workspace image,
+# main Python environment. Needs a JRE (openjdk-21-jre-headless, Dockerfile
+# stage `final`) and finds the PostgreSQL JDBC driver baked into
+# /opt/spark-jars (Dockerfile stage `sparkjars`); nothing is fetched at runtime.
+# Pinned on purpose: the PySpark wheel bundles the Spark jars (~430 MB), so
+# upgrades are deliberate. 4.0.x supports Python 3.9-3.13 and Java 17/21.
+# Helper: bsp_common.spark (get_spark / jdbc_options / stop_spark).
+pyspark==4.0.4

@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "dataplatform": {
+      "type": "http",
+      "url": "http://mcp:8095/mcp",
+      "headers": { "Authorization": "Bearer ${MCP_TOKEN}" }
+    },
+    "dataplatform-laptop": {
+      "type": "http",
+      "url": "http://127.0.0.1:${MCP_PORT:-8765}/mcp",
+      "headers": { "Authorization": "Bearer ${MCP_TOKEN}" }
+    }
+  }
+}

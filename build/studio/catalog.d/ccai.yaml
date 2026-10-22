@@ -1,0 +1,33 @@
+# Catalog fragment — CCAI call-log tagging (build/ccai). Merged by Studio.
+services:
+  ccai:
+    title: CCAI Call Insights
+    blurb: "Downloads contact-centre call logs from SharePoint and tags every call against the 104-reason taxonomy, with confidence, sentiment, resolution and churn risk"
+    profile: ccai
+    ram_mb: 768
+    kind: app
+    route: /ccai/
+    needs: [postgres]
+    soft_needs: [harness, connectors]
+    endpoints:
+      - {label: Portal, value: "/ccai/"}
+      - {label: API (OpenAPI), value: "/ccai/api/docs"}
+      - {label: SharePoint folder, value: "CCAI_SHAREPOINT_SITE / CCAI_SHAREPOINT_FOLDER (default: CCAI/CallLogs)"}
+      - {label: Warehouse tables, value: "ccai.ingest_runs · ccai.calls · ccai.call_tags · ccai.taxonomy"}
+      - {label: Files on disk, value: "data/ccai (raw transcripts, exports)"}
+
+app_groups:
+  - {id: ai-automations, title: AI that does the work, icon: zap, blurb: "Automations that take routine work off people's desks"}
+
+apps:
+  - {id: ccai, group: ai-automations, title: CCAI Call Insights, service: ccai, path: /ccai/, icon: headset,
+     blurb: "Tag every customer call and review the ones the AI is unsure of"}
+
+capabilities:
+  ccai:
+    title: CCAI Call Insights
+    tone: ai-automations
+    icon: chat
+    services: [ccai]
+    requires: [ai, connectors]
+    blurb: "SharePoint call logs → 104-leaf contact-reason tags with confidence; manager portal with review queue and exports"

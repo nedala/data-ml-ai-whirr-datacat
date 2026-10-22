@@ -1,0 +1,12 @@
+bsp_fixture:
+  target: "{{ env_var('DBT_TARGET', 'postgres') }}"
+  outputs:
+    postgres:
+      type: postgres
+      host: "{{ env_var('PG_HOST', 'postgres') }}"
+      port: 5432
+      user: "{{ env_var('PG_USER', 'analyst') }}"
+      password: "{{ env_var('PG_PASS', 'unused') }}"
+      dbname: "{{ env_var('PG_DB', 'bsp_edw') }}"
+      schema: public
+      threads: 2

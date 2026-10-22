@@ -1,0 +1,72 @@
+# Knowledge & RAG — build/rag: vector store (Qdrant; pgvector in Postgres), the RAG
+# service with front-office automation demos, and Open WebUI on the LLM gateway
+# (plan/architecture.md §1, §2). Open WebUI is served on its own gated port
+# (${OPENWEBUI_PORT}) because it cannot run under a sub-path.
+services:
+  rag:
+    title: Knowledge & RAG
+    blurb: "Ingest runbooks & design docs (upload, SharePoint, lake, URL), hybrid search with citations, agent assist, runbook copilot, evals"
+    profile: rag
+    ram_mb: 512
+    kind: app
+    route: /rag/
+    needs: [postgres, qdrant]
+    soft_needs: [harness, connectors]
+    endpoints:
+      - {label: UI, value: "/rag/"}
+      - {label: "API (inside the appliance)", value: "http://rag:8101/rag/api · OpenAPI docs /rag/docs"}
+      - {label: "OpenAPI tool server (Open WebUI, agents)", value: "http://rag:8101/rag/tools (spec: /rag/tools/openapi.json)"}
+      - {label: "MCP tools (via the MCP server)", value: "rag_search · rag_answer · rag_list_collections · rag_agent_assist · rag_runbook_copilot"}
+      - {label: Python, value: "from bsp_rag import tools  (PYTHONPATH /opt/rag)"}
+      - {label: Metadata & logs, value: "Postgres schema rag (collections, documents, chunks, queries, eval_runs)"}
+    creds:
+      - {env: RAG_TOOLS_TOKEN, label: "Optional bearer token for /rag/tools (empty = gate + internal network only)", external: true}
+  qdrant:
+    title: Qdrant
+    blurb: "Vector database (official image, internal only) — one collection per knowledge collection, dense + BM25 sparse vectors"
+    profile: rag
+    ram_mb: 384
+    kind: base
+    endpoints:
+      - {label: "Inside the appliance", value: "http://qdrant:6333"}
+      - {label: Files on disk, value: "<data root>/qdrant (host)"}
+  openwebui:
+    title: Open WebUI
+    blurb: "Chat UI on the appliance LLM gateway with every MCP tool group, the RAG tool server and ready-made assistant presets"
+    profile: chatui
+    ram_mb: 1024
+    kind: app
+    needs: [harness]
+    soft_needs: [mcp, rag]
+    endpoints:
+      - {label: "Open WebUI (dedicated gated port)", value: "https://${PUBLIC_FACADE_HOST:-localhost}:${OPENWEBUI_PORT:-37081}/"}
+      - {label: Models, value: "gateway aliases (chat-default …) + presets: DataPlatform Data Assistant · Front-office Copilot · Browser Operator · ML Assistant"}
+      - {label: Chats & settings, value: "<data root>/openwebui (host)"}
+    creds:
+      - {env: WEBUI_SECRET_KEY, label: "Open WebUI session signing key", length: 48, policy: alnum}
+
+capabilities:
+  rag:
+    title: Knowledge & RAG
+    tone: ai
+    icon: document
+    services: [rag, qdrant]
+    requires: [ai]
+    blurb: "Vector store + RAG over runbooks and design docs: cited answers, agent assist, runbook copilot, evals"
+  chatui:
+    title: Chat (Open WebUI)
+    tone: ai
+    icon: chat
+    services: [openwebui]
+    requires: [ai]
+    blurb: "Open WebUI on the LLM gateway, wired to every MCP tool group and the knowledge base — SSO via Studio"
+
+app_groups:
+  - {id: ai-engineering, title: Build with AI, icon: bot, blurb: "Models, tools and knowledge for AI apps"}
+
+apps:
+  - {id: rag, group: ai-engineering, title: Knowledge & RAG, service: rag, path: /rag/, icon: search,
+     blurb: "Load runbooks, search them and get answers with sources"}
+  - {id: openwebui, group: ai-engineering, title: Open WebUI, service: openwebui, path: /rag/chat/, icon: chat,
+     blurb: "Chat with the platform's AI and its tools in a familiar window",
+     alt: {label: "Open on port ${OPENWEBUI_PORT:-37081}", url: "https://${PUBLIC_FACADE_HOST:-localhost}:${OPENWEBUI_PORT:-37081}/"}}

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Enterprise Connectors · DataPlatform</title>
+<link rel="icon" href="ui-kit/brand/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="ui-kit/bsp.css">
+<style>
+  .bsp-app.nosidebar { grid-template-columns: 1fr; }
+  .sys-card { display: flex; flex-direction: column; gap: 12px; }
+  .sys-head { display: flex; align-items: center; gap: 12px; }
+  .sys-ic { width: 40px; height: 40px; border-radius: 8px; display: grid; place-items: center; background: var(--bsp-tints-fiber-10); color: var(--bsp-primary-fiber); flex: none; }
+  .sys-ic svg { width: 20px; height: 20px; }
+  .sys-title { font-weight: 600; font-size: 16px; }
+  .env-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  .env-list .chip.set { background: var(--bsp-surface-success); color: #1f7a3c; }
+  .env-list .chip.req { border-color: var(--bsp-border-subtle); }
+  .result { font: 12.5px/18px var(--bsp-font-mono); background: var(--bsp-neutral-gray-light); border-radius: 6px; padding: 8px 10px; white-space: pre-wrap; word-break: break-word; }
+  .result.ok { background: var(--bsp-surface-success); }
+  .result.bad { background: var(--bsp-surface-error); }
+  .sys-foot { margin-top: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  code.inline { font: 12.5px var(--bsp-font-mono); background: var(--bsp-neutral-gray-light); padding: 1px 6px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<div class="bsp-app nosidebar">
+  <header class="bsp-topbar">
+    <div class="bsp-brand"><span class="mark"></span><span class="word">datacat</span> <span class="sub">Enterprise Connectors</span></div>
+    <div class="spacer"></div>
+    <a class="btn ghost sm" href="docs" id="docs-link"></a>
+    <a class="btn ghost sm" href="/studio/">Studio</a>
+  </header>
+  <main class="bsp-main">
+    <div class="bsp-page-head">
+      <div>
+        <div class="eyebrow">Integration layer</div>
+        <h1 style="margin:4px 0 0">Enterprise connectors</h1>
+        <div class="lede">Each system runs against an in-appliance <b>mock</b> until its credentials are added in
+          Studio → Credentials, then switches to <b>live</b>. Notebooks, the canvas, MCP tools and services all use the
+          same SDK: <code class="inline">from bsp_connectors import m365, atlan, bigquery, powerbi, sap_brim</code></div>
+      </div>
+      <button class="btn secondary" id="test-all"></button>
+    </div>
+    <div class="grid cols-3" id="systems"></div>
+    <div class="section">
+      <span class="eyebrow">Paths</span>
+      <div class="card tight caption" id="paths"></div>
+    </div>
+  </main>
+</div>
+<script src="ui-kit/bsp.js"></script>
+<script src="static/app.js"></script>
+</body>
+</html>

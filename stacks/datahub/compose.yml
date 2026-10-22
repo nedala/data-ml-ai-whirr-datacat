@@ -1,0 +1,403 @@
+# DataHub — OPTIONAL side stack for the DataPlatform Data & AI Appliances
+# (plan/architecture.md §8). Open-source catalog / lineage / stewardship,
+# offered next to the enterprise catalog (Atlan) for demos and evaluation.
+#
+# NOT part of docker-compose.yml and never started by Studio. Run it with
+#   make -C stacks/datahub up APPLIANCE=data|ml|ai     (or `make datahub-up`)
+# The wrapper (scripts/dh.sh) sets the project name, DATA_ROOT, ATTACH_NETWORK
+# and DATAHUB_PORT, and generates the secrets file on first run.
+#
+# Based on DataHub's official quickstart compose (docker/quickstart/
+# docker-compose.quickstart-profile.yml at tag v1.7.0.1): KRaft Kafka (no
+# ZooKeeper), GMS-internal schema registry (no Confluent schema registry),
+# OpenSearch, MySQL, system-update job (replaces the old *-setup jobs).
+# Changes vs. upstream: no published ports, bind mounts under
+# ${DATA_ROOT}/datahub, generated secrets, metadata-service auth ON,
+# telemetry OFF, memory limits; only the frontend (UI + GMS proxy for appliance
+# services) and the actions executor (managed ingestion of Trino) join the
+# appliance network.
+
+name: bsp_datahub
+
+x-logging: &logging
+  driver: json-file
+  options: {max-size: "10m", max-file: "3"}
+
+x-gms-common: &gms_common
+  DATAHUB_TELEMETRY_ENABLED: "false"
+  DATAHUB_SYSTEM_CLIENT_ID: __datahub_system
+  DATAHUB_SYSTEM_CLIENT_SECRET: ${DATAHUB_SYSTEM_CLIENT_SECRET:?run via make (scripts/dh.sh generates secrets)}
+  DATAHUB_TOKEN_SERVICE_SALT: ${DATAHUB_TOKEN_SERVICE_SALT:?}
+  DATAHUB_TOKEN_SERVICE_SIGNING_KEY: ${DATAHUB_TOKEN_SERVICE_SIGNING_KEY:?}
+  DATAHUB_BASE_PATH: /
+  DATAHUB_GMS_BASE_PATH: /
+  DATAHUB_GMS_HOST: datahub-gms
+  DATAHUB_GMS_PORT: "8080"
+  EBEAN_DATASOURCE_DRIVER: com.mysql.jdbc.Driver
+  EBEAN_DATASOURCE_HOST: mysql:3306
+  EBEAN_DATASOURCE_USERNAME: root
+  EBEAN_DATASOURCE_PASSWORD: ${DATAHUB_DB_PASSWORD:?}
+  EBEAN_DATASOURCE_URL: jdbc:mysql://mysql:3306/datahub?verifyServerCertificate=false&useSSL=true&useUnicode=yes&characterEncoding=UTF-8&enabledTLSProtocols=TLSv1.2
+  ELASTICSEARCH_HOST: search
+  ELASTICSEARCH_PORT: "9200"
+  ELASTICSEARCH_PROTOCOL: http
+  ELASTICSEARCH_USE_SSL: "false"
+  ELASTICSEARCH_IMPLEMENTATION: opensearch
+  ELASTICSEARCH_INDEX_BUILDER_MAPPINGS_REINDEX: "true"
+  ELASTICSEARCH_INDEX_BUILDER_SETTINGS_REINDEX: "true"
+  ENTITY_REGISTRY_CONFIG_PATH: /datahub/datahub-gms/resources/entity-registry.yml
+  ENTITY_VERSIONING_ENABLED: "true"
+  GRAPH_SERVICE_IMPL: elasticsearch
+  KAFKA_BOOTSTRAP_SERVER: broker:29092
+  KAFKA_SCHEMAREGISTRY_URL: http://datahub-gms:8080/schema-registry/api/
+  SCHEMA_REGISTRY_TYPE: INTERNAL
+  LOG_AGGREGATOR_ENDPOINT: ""
+  # The URL validator resolves every stored link (avatars, docs, glossary
+  # URLs, dbt/BI external URLs) and rejects names that do not resolve to a
+  # public address. On this internal-only network nothing external resolves,
+  # so every link would be refused; GMS cannot reach those URLs anyway.
+  MCP_VALIDATION_URL_ENABLED: "false"
+
+services:
+
+  # ── storage ──────────────────────────────────────────────────────────────
+  mysql:
+    image: mysql:8.2
+    hostname: mysql
+    user: "${DATAHUB_UID:-1000}:${DATAHUB_GID:-1000}"
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_bin
+      - --default-authentication-plugin=caching_sha2_password
+      # single-node catalog store: no replication binlog, group-commit the
+      # redo log (fewer fsyncs; at most ~1 s of writes lost on a host crash —
+      # re-run ingestion to recover)
+      - --skip-log-bin
+      - --innodb-flush-log-at-trx-commit=2
+    environment:
+      MYSQL_DATABASE: datahub
+      MYSQL_USER: datahub
+      MYSQL_PASSWORD: ${DATAHUB_DB_PASSWORD:?}
+      MYSQL_ROOT_PASSWORD: ${DATAHUB_DB_PASSWORD:?}
+      MYSQL_ROOT_HOST: "%"
+    volumes:
+      - ${DATA_ROOT:-../../data/data}/datahub/mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root --password=$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      # first-run initialisation can take minutes on slow / busy disks
+      start_period: 900s
+    mem_limit: 1g
+    restart: unless-stopped
+    logging: *logging
+    networks: [datahub-net]
+
+  opensearch:
+    image: opensearchproject/opensearch:2.19.3
+    hostname: search
+    environment:
+      discovery.type: single-node
+      DISABLE_SECURITY_PLUGIN: "true"
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      OPENSEARCH_JAVA_OPTS: -Xms1g -Xmx1g -Dlog4j2.formatMsgNoLookups=true
+    volumes:
+      - ${DATA_ROOT:-../../data/data}/datahub/opensearch:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sS --fail 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=0s'"]
+      interval: 5s
+      timeout: 15s
+      retries: 30
+      start_period: 300s
+    ulimits:
+      memlock: {soft: -1, hard: -1}
+      nofile: {soft: 65536, hard: 65536}
+    mem_limit: 2g
+    restart: unless-stopped
+    logging: *logging
+    networks: [datahub-net]
+
+  kafka-broker:
+    image: confluentinc/cp-kafka:8.2.2
+    hostname: broker
+    command:
+      - /bin/bash
+      - -c
+      - |
+        # KRaft (no ZooKeeper): format the storage dir once with a cluster id
+        file_path=/var/lib/kafka/data/clusterID
+        if [ ! -f "$$file_path" ]; then
+          /bin/kafka-storage random-uuid > "$$file_path"
+          kafka-storage format --ignore-formatted -t "$$(cat "$$file_path")" -c /etc/kafka/kafka.properties
+        fi
+        export CLUSTER_ID=$$(cat "$$file_path")
+        exec /etc/confluent/docker/run
+    environment:
+      KAFKA_NODE_ID: "1"
+      KAFKA_BROKER_ID: "1"
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker:39092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: BROKER://broker:29092,CONTROLLER://broker:39092
+      KAFKA_ADVERTISED_LISTENERS: BROKER://broker:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,BROKER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: BROKER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+      KAFKA_MAX_MESSAGE_BYTES: "5242880"
+      KAFKA_MESSAGE_MAX_BYTES: "5242880"
+      KAFKA_HEAP_OPTS: -Xms512m -Xmx512m
+      KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: "false"
+      KAFKA_LOG4J_LOGGERS: org.apache.kafka.image.loader.MetadataLoader=WARN
+    volumes:
+      - ${DATA_ROOT:-../../data/data}/datahub/kafka:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server broker:29092 >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 300s
+    mem_limit: 1536m
+    restart: unless-stopped
+    logging: *logging
+    networks: [datahub-net]
+
+  # ── one-shot: schema, indices, topics, SQL setup, upgrades ──────────────
+  system-update:
+    image: acryldata/datahub-upgrade:v1.7.0.1
+    hostname: datahub-system-update
+    command: ["-u", "SystemUpdate"]
+    depends_on:
+      mysql: {condition: service_healthy}
+      opensearch: {condition: service_healthy}
+      kafka-broker: {condition: service_healthy}
+    environment:
+      <<: *gms_common
+      DATAHUB_SQL_SETUP_ENABLED: "true"
+      DATAHUB_PRECREATE_TOPICS: "true"
+      PARTITIONS: "3"
+      BACKFILL_BROWSE_PATHS_V2: "true"
+      REPROCESS_DEFAULT_BROWSE_PATHS_V2: "false"
+      CREATE_USER: "false"
+      ELASTICSEARCH_BUILD_INDICES_CLONE_INDICES: "false"
+      ELASTICSEARCH_INDEX_BUILDER_REFRESH_INTERVAL_SECONDS: "3"
+      SCHEMA_REGISTRY_SYSTEM_UPDATE: "true"
+      SPRING_KAFKA_PROPERTIES_AUTO_REGISTER_SCHEMAS: "true"
+      SPRING_KAFKA_PROPERTIES_USE_LATEST_VERSION: "true"
+      USE_CONFLUENT_SCHEMA_REGISTRY: "false"
+      JAVA_OPTS: -Xms256m -Xmx1g
+    labels:
+      datahub_setup_job: "true"
+    mem_limit: 1536m
+    restart: "no"
+    logging: *logging
+    networks: [datahub-net]
+
+  # ── metadata service (GMS) — internal network only ───────────────────────
+  datahub-gms:
+    image: acryldata/datahub-gms:v1.7.0.1
+    hostname: datahub-gms
+    depends_on:
+      system-update: {condition: service_completed_successfully}
+    environment:
+      <<: *gms_common
+      # every API call needs a token (users: personal access tokens; the
+      # ingest job: the system client credentials from the secrets file)
+      METADATA_SERVICE_AUTH_ENABLED: "true"
+      DATAHUB_SERVER_TYPE: quickstart
+      DATAHUB_OBJECT_STORAGE_URI: file:///tmp/datahub-object-storage
+      ALTERNATE_MCP_VALIDATION: "true"
+      CONFIG_ENTITY_REGISTRY_USE_OPTIMIZED_LOADING: "true"
+      ELASTICSEARCH_LIMIT_RESULTS_STRICT: "true"
+      ENTITY_SERVICE_ENABLE_RETENTION: "true"
+      ES_BULK_REFRESH_POLICY: NONE
+      GMS_LIFECYCLE_TIMEOUT: 65s
+      GRAPH_SERVICE_DIFF_MODE_ENABLED: "true"
+      JAVA_OPTS: -Xms1g -Xmx1536m
+      MAE_CONSUMER_ENABLED: "true"
+      MCE_CONSUMER_ENABLED: "true"
+      PE_CONSUMER_ENABLED: "true"
+      MCL_CONSUMER_BATCH_ENABLED: "true"
+      MCP_CONSUMER_BATCH_ENABLED: "true"
+      POLICY_CACHE_REFRESH_INTERVAL_SECONDS: "120"
+      SEARCH_BAR_API_VARIANT: SEARCH_ACROSS_ENTITIES
+      SERVER_SHUTDOWN_MODE: immediate
+      SHOW_HAS_SIBLINGS_FILTER: "true"
+      STRICT_URN_VALIDATION_ENABLED: "true"
+      THEME_V2_DEFAULT: "true"
+      UI_INGESTION_ENABLED: "true"
+      USAGE_AGGREGATION_ENABLED: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sS --fail http://localhost:8080/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 6
+      start_period: 600s
+    mem_limit: 2560m
+    restart: unless-stopped
+    logging: *logging
+    networks: [datahub-net]
+
+  # ── web UI — on the appliance network (with the actions executor) ───────
+  # Appliance services reach GMS through the frontend's /api/gms proxy with a
+  # DataHub personal access token (DATAHUB_TOKEN, Studio secret).
+  datahub-frontend:
+    image: acryldata/datahub-frontend-react:v1.7.0.1
+    hostname: datahub-frontend
+    depends_on:
+      datahub-gms: {condition: service_healthy}
+    environment:
+      DATAHUB_APP_VERSION: v1.7.0.1
+      DATAHUB_BASE_PATH: /
+      DATAHUB_GMS_BASE_PATH: /
+      DATAHUB_GMS_HOST: datahub-gms
+      DATAHUB_GMS_PORT: "8080"
+      DATAHUB_SECRET: ${DATAHUB_FRONTEND_SECRET:?}
+      DATAHUB_SYSTEM_CLIENT_ID: __datahub_system
+      DATAHUB_SYSTEM_CLIENT_SECRET: ${DATAHUB_SYSTEM_CLIENT_SECRET:?}
+      METADATA_SERVICE_AUTH_ENABLED: "true"
+      DATAHUB_TRACKING_TOPIC: DataHubUsageEvent_v1
+      DATAHUB_PLAY_MEM_BUFFER_SIZE: 10MB
+      KAFKA_BOOTSTRAP_SERVER: broker:29092
+      ELASTIC_CLIENT_HOST: search
+      ELASTIC_CLIENT_PORT: "9200"
+      PLAY_HTTP_CONTEXT: /
+      THEME_V2_DEFAULT: "true"
+      LOG_AGGREGATOR_ENDPOINT: ""
+      FRONTEND_GRACEFUL_SHUTDOWN_ENABLED: "false"
+      JAVA_OPTS: >-
+        -Xms512m -Xmx768m -Dhttp.port=9002
+        -Dconfig.file=datahub-frontend/conf/application.conf
+        -Djava.security.auth.login.config=datahub-frontend/conf/jaas.conf
+        -Dlogback.configurationFile=datahub-frontend/conf/logback.xml
+        -Dlogback.debug=false -Dpidfile.path=/dev/null
+      # Native sign-in: the `datahub` root user's password comes from the
+      # generated user.props (mounted below, replacing the image default
+      # datahub:datahub). Kept on even with SSO as a break-glass admin.
+      AUTH_JAAS_ENABLED: "true"
+      AUTH_NATIVE_ENABLED: "true"
+      AUTH_SESSION_TTL_HOURS: "12"
+      # Entra ID SSO — scripts/dh.sh sets DATAHUB_OIDC_* from OIDC_TENANT_ID /
+      # OIDC_CLIENT_ID / OIDC_CLIENT_SECRET (or explicit DATAHUB_OIDC_*).
+      AUTH_OIDC_ENABLED: ${DATAHUB_OIDC_ENABLED:-false}
+      AUTH_OIDC_CLIENT_ID: ${DATAHUB_OIDC_CLIENT_ID:-}
+      AUTH_OIDC_CLIENT_SECRET: ${DATAHUB_OIDC_CLIENT_SECRET:-}
+      AUTH_OIDC_DISCOVERY_URI: ${DATAHUB_OIDC_DISCOVERY_URI:-}
+      AUTH_OIDC_BASE_URL: ${DATAHUB_PUBLIC_URL:-https://localhost:38081}
+      AUTH_OIDC_SCOPE: openid profile email
+      AUTH_OIDC_USER_NAME_CLAIM: ${DATAHUB_OIDC_USER_NAME_CLAIM:-preferred_username}
+      AUTH_OIDC_USER_NAME_CLAIM_REGEX: "([^@]+)"
+      AUTH_OIDC_JIT_PROVISIONING_ENABLED: "true"
+      AUTH_OIDC_PRE_PROVISIONING_REQUIRED: "false"
+      AUTH_OIDC_EXTRACT_GROUPS_ENABLED: "true"
+      AUTH_OIDC_GROUPS_CLAIM: groups
+    volumes:
+      - ${DATA_ROOT:-../../data/data}/datahub/secrets/user.props:/datahub-frontend/conf/user.props:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sS --fail http://localhost:9002/admin || wget -qO- http://localhost:9002/admin"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 300s
+    mem_limit: 1g
+    restart: unless-stopped
+    logging: *logging
+    networks:
+      datahub-net: {}
+      appliance-net:
+        aliases: [datahub-frontend]
+
+  # ── actions framework (UI-driven ingestion, automations) ────────────────
+  datahub-actions:
+    image: acryldata/datahub-actions:v1.7.0.1-slim
+    hostname: actions
+    depends_on:
+      datahub-gms: {condition: service_healthy}
+    environment:
+      DATAHUB_TELEMETRY_ENABLED: "false"
+      DATAHUB_GMS_HOST: datahub-gms
+      DATAHUB_GMS_PORT: "8080"
+      DATAHUB_GMS_PROTOCOL: http
+      DATAHUB_SYSTEM_CLIENT_ID: __datahub_system
+      DATAHUB_SYSTEM_CLIENT_SECRET: ${DATAHUB_SYSTEM_CLIENT_SECRET:?}
+      ACTIONS_CONFIG: ""
+      ACTIONS_EXTRA_PACKAGES: ""
+      KAFKA_BOOTSTRAP_SERVER: broker:29092
+      KAFKA_PROPERTIES_SECURITY_PROTOCOL: PLAINTEXT
+      SCHEMA_REGISTRY_URL: http://datahub-gms:8080/schema-registry/api/
+      METADATA_AUDIT_EVENT_NAME: MetadataAuditEvent_v4
+      METADATA_CHANGE_LOG_VERSIONED_TOPIC_NAME: MetadataChangeLog_Versioned_v1
+      ELASTICSEARCH_HOST: search
+      ELASTICSEARCH_PORT: "9200"
+      ELASTICSEARCH_PROTOCOL: http
+      ELASTICSEARCH_USE_SSL: "false"
+      # managed (UI / API-driven) ingestion: the executor pip-installs the
+      # source plugin per run (PyPI through the appliance px-proxy, egress CA
+      # trusted) and reads Trino on the appliance network. Used by the
+      # appliance's scoped refresh (bsp_common.catalog.refresh).
+      HTTPS_PROXY: ${INGEST_HTTPS_PROXY:-}
+      https_proxy: ${INGEST_HTTPS_PROXY:-}
+      NO_PROXY: datahub-gms,broker,search,trino,localhost,127.0.0.1
+      no_proxy: datahub-gms,broker,search,trino,localhost,127.0.0.1
+      PIP_CERT: /trust/ca-bundle.pem
+      REQUESTS_CA_BUNDLE: /trust/ca-bundle.pem
+      SSL_CERT_FILE: /trust/ca-bundle.pem
+    volumes:
+      - ${DATA_ROOT:-../../data/data}/trust:/trust:ro
+    mem_limit: 2g
+    restart: unless-stopped
+    logging: *logging
+    networks: [datahub-net, appliance-net]
+
+  # ── one-shot ingestion (profile `ingest`): make ingest [RECIPE=…] ────────
+  # Joins the DataHub network (to reach GMS) and the appliance network (to
+  # reach postgres / trino; BigQuery through px-proxy). Secrets (PG_PASS,
+  # GCP_SA_JSON) come only from the caller's environment.
+  ingest:
+    profiles: [ingest]
+    image: acryldata/datahub-ingestion:v1.7.0.1
+    entrypoint: ["bash", "/opt/bsp-datahub/scripts/ingest.sh"]
+    environment:
+      RECIPE: ${RECIPE:-all}
+      DATAHUB_TELEMETRY_ENABLED: "false"
+      DATAHUB_GMS_URL: http://datahub-gms:8080
+      DATAHUB_SYSTEM_CLIENT_SECRET: ${DATAHUB_SYSTEM_CLIENT_SECRET:?}
+      DATAHUB_ENV: ${DATAHUB_ENV:-PROD}
+      PG_HOST: ${PG_HOST:-postgres}
+      PG_PORT: ${PG_PORT:-5432}
+      PG_DB: ${PG_DB:-bsp_edw}
+      PG_USER: ${PG_USER:-analyst}
+      PG_PASS: ${PG_PASS:-}
+      TRINO_HOST: ${TRINO_HOST:-trino}
+      TRINO_PORT: ${TRINO_PORT:-8080}
+      TRINO_USER: ${TRINO_USER:-datahub}
+      # catalogs + per-catalog schema allow / deny lists: recipes/trino_scopes.yml
+      TRINO_CATALOGS: ${TRINO_CATALOGS:-}
+      GCP_PROJECT_ID: ${GCP_PROJECT_ID:-to-be-named-soon}
+      GCP_SA_JSON: ${GCP_SA_JSON:-}
+      HTTPS_PROXY: ${INGEST_HTTPS_PROXY:-}
+      https_proxy: ${INGEST_HTTPS_PROXY:-}
+      NO_PROXY: datahub-gms,postgres,trino,localhost,127.0.0.1
+      no_proxy: datahub-gms,postgres,trino,localhost,127.0.0.1
+    volumes:
+      - ./recipes:/opt/bsp-datahub/recipes:ro
+      - ./scripts:/opt/bsp-datahub/scripts:ro
+      - ${DBT_TARGET_DIR:-../../dbt_project/target}:/opt/bsp-datahub/dbt-target:ro
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+    mem_limit: 4g
+    restart: "no"
+    logging: *logging
+    networks: [datahub-net, appliance-net]
+
+networks:
+  # DataHub's own backplane: no internet route, no other stacks.
+  datahub-net:
+    driver: bridge
+    internal: true
+  # The chosen appliance's appliance-net (bsp-data-net / bsp-ml-net /
+  # bsp-ai-net), created by that appliance's compose project.
+  appliance-net:
+    name: ${ATTACH_NETWORK:-bsp-data-net}
+    external: true

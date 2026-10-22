@@ -1,0 +1,474 @@
+version: 2
+
+models:
+  - name: dim_customer
+    description: Customer dimension — one row per account (BAN) with current service, CLLI, plan, tenure and lifetime activity.
+    config:
+      tags: ["pii", "core"]
+    columns:
+      - name: ban
+        description: "{{ doc('ban') }}"
+        data_tests: [unique, not_null]
+      - name: customer_name
+        config: {meta: {pii: true, pii_type: person_name}}
+      - name: email
+        config: {meta: {pii: true, pii_type: email}}
+      - name: phone
+        config: {meta: {pii: true, pii_type: phone}}
+      - name: zip
+        config: {meta: {pii: true, pii_type: postal_code}}
+      - name: latitude
+        config: {meta: {pii: true, pii_type: location}}
+      - name: longitude
+        config: {meta: {pii: true, pii_type: location}}
+      - name: technology
+        description: "{{ doc('technology') }}"
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments: {values: [copper, fiber]}
+      - name: clli
+        description: "{{ doc('clli') }}"
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_wire_center'), field: clli}
+      - name: region
+        data_tests: [not_null]
+      - name: subscription_status
+        data_tests:
+          - accepted_values:
+              arguments: {values: [active, cancelled]}
+      - name: tenure_months
+        data_tests: [not_null, non_negative]
+      - name: tenure_band
+        data_tests:
+          - accepted_values:
+              arguments: {values: ['1: <1 year', '2: 1-2 years', '3: 2-4 years', '4: 4+ years']}
+
+  - name: dim_wire_center
+    description: Wire center dimension — one row per CLLI with fiber passings, copper lines, OLT / DSLAM counts and current customer base.
+    config:
+      tags: ["network", "core"]
+    columns:
+      - name: clli
+        description: "{{ doc('clli') }}"
+        data_tests: [unique, not_null]
+      - name: region
+        data_tests: [not_null]
+      - name: fiber_passings
+        description: "{{ doc('fiber_passings') }}"
+        data_tests: [not_null, non_negative]
+
+  - name: fct_invoice
+    description: One row per monthly invoice (<ban>-<yymm>) with charges, ledger settlement, days to pay, disputes and account dimensions.
+    config:
+      tags: ["billing", "core"]
+    columns:
+      - name: invoice_id
+        description: "{{ doc('invoice_id') }}"
+        data_tests: [unique, not_null]
+      - name: ban
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_customer'), field: ban}
+      - name: bill_month
+        data_tests: [not_null]
+      - name: service_revenue
+        description: Recurring service revenue (recurring charges net of promo discount).
+        data_tests: [not_null]
+      - name: invoice_status
+        data_tests:
+          - accepted_values:
+              arguments: {values: [paid, late, open, written_off]}
+      - name: technology
+        data_tests:
+          - accepted_values:
+              arguments: {values: [copper, fiber]}
+
+  - name: fct_transaction
+    description: >
+      One row per ledger transaction (payment, late fee, credit) — replaces
+      fct_payment. Payments and credits are negative; abs_amount is unsigned.
+    config:
+      tags: ["billing"]
+    columns:
+      - name: txn_id
+        data_tests: [unique, not_null]
+      - name: ban
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_customer'), field: ban}
+      - name: invoice_id
+        data_tests:
+          - relationships:
+              arguments: {to: ref('fct_invoice'), field: invoice_id}
+      - name: txn_type
+        data_tests:
+          - accepted_values:
+              arguments: {values: [payment, late_fee, credit, refund, adjustment]}
+
+  - name: fct_dispute
+    description: One row per billing dispute with category, disputed amount, outcome, credit and account dimensions.
+    config:
+      tags: ["billing", "disputes"]
+    columns:
+      - name: dispute_id
+        data_tests: [unique, not_null]
+      - name: ban
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_customer'), field: ban}
+      - name: invoice_id
+        data_tests:
+          - relationships:
+              arguments: {to: ref('fct_invoice'), field: invoice_id}
+      - name: dispute_status
+        data_tests:
+          - accepted_values:
+              arguments: {values: [approved, partial, denied, open]}
+      - name: credit_amount
+        data_tests: [not_null, non_negative]
+
+  - name: fct_revenue_monthly
+    description: >
+      Revenue (raw.revenue), billing, collections, subscribers, ARPU and churn
+      by month × state × technology × segment. Sum subscribers / revenue across
+      dimensions; recompute ARPU and churn rate as ratios of sums.
+    config:
+      tags: ["billing", "core"]
+    data_tests:
+      - unique_combination:
+          arguments: {columns: [revenue_month, state, technology, segment]}
+    columns:
+      - name: revenue_month
+        data_tests: [not_null]
+      - name: technology
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments: {values: [copper, fiber]}
+      - name: subscribers
+        data_tests: [not_null, non_negative]
+      - name: arpu
+        description: "{{ doc('arpu') }}"
+      - name: churn_rate
+        description: "{{ doc('churn_rate') }}"
+        data_tests:
+          - between:
+              arguments: {min_value: 0, max_value: 1}
+
+  - name: fct_service_ticket
+    description: One row per care / repair ticket with resolution time, truck roll (dispatch), FCR and repeat flags.
+    config:
+      tags: ["servicing", "core"]
+    columns:
+      - name: ticket_id
+        data_tests: [unique, not_null]
+      - name: ban
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_customer'), field: ban}
+      - name: is_truck_roll
+        description: "{{ doc('truck_roll') }}"
+      - name: is_first_contact_resolved
+        description: "{{ doc('fcr') }}"
+      - name: category
+        data_tests:
+          - accepted_values:
+              arguments: {values: [billing, technical, installation, account]}
+
+  - name: fct_customer_call
+    description: One row per contact-center call — queue, reason, disposition, handle time, repeat flag, sentiment.
+    config:
+      tags: ["contact_center", "core"]
+    columns:
+      - name: call_id
+        data_tests: [unique, not_null]
+      - name: ban
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_customer'), field: ban}
+      - name: queue
+        data_tests:
+          - accepted_values:
+              arguments: {values: [billing, technical, retention, sales, move]}
+      - name: is_repeat_call_7d
+        description: "{{ doc('repeat_call') }}"
+      - name: technology
+        data_tests:
+          - accepted_values:
+              arguments: {values: [copper, fiber]}
+
+  - name: fct_dispatch
+    description: One row per field dispatch (truck roll) with cause, outcome, repeat_dispatch_30d and plant quality that month.
+    config:
+      tags: ["field_ops", "core"]
+    columns:
+      - name: dispatch_id
+        data_tests: [unique, not_null]
+      - name: ban
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_customer'), field: ban}
+      - name: clli
+        data_tests:
+          - relationships:
+              arguments: {to: ref('dim_wire_center'), field: clli}
+      - name: repeat_dispatch_30d
+        description: "{{ doc('repeat_dispatch') }}"
+        data_tests: [not_null]
+      - name: technology
+        data_tests:
+          - accepted_values:
+              arguments: {values: [copper, fiber]}
+
+  - name: fct_plant_quality_monthly
+    description: Fiber ONT optics / copper DSL line quality per account × month with CLLI and plan.
+    config:
+      tags: ["field_ops", "network"]
+    data_tests:
+      - unique_combination:
+          arguments: {columns: [ban, metric_month]}
+    columns:
+      - name: ban
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_customer'), field: ban}
+      - name: technology
+        data_tests:
+          - accepted_values:
+              arguments: {values: [copper, fiber]}
+      - name: rx_power_dbm
+        description: "{{ doc('ont_rx_power') }}"
+      - name: snr_margin_db
+        description: "{{ doc('dsl_snr_margin') }}"
+
+  - name: mart_churn_features
+    description: >
+      Churn model features and label per account × snapshot month (feature
+      names as in raw.customer_monthly, incl. calls, dispatches, disputes,
+      ONT rx power / LOS and DSL SNR / retrains). Train on
+      label_complete = true; score the latest month.
+    config:
+      tags: ["ml", "churn"]
+    data_tests:
+      - unique_combination:
+          arguments: {columns: [ban, snapshot_month]}
+    columns:
+      - name: ban
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_customer'), field: ban}
+      - name: technology
+        data_tests:
+          - accepted_values:
+              arguments: {values: [copper, fiber]}
+      - name: churned_next_90d
+        description: "{{ doc('churned_next_90d') }}"
+        data_tests: [not_null]
+      - name: label_complete
+        data_tests: [not_null]
+      - name: ont_rx_power_dbm
+        description: "{{ doc('ont_rx_power') }} NULL for copper accounts."
+      - name: dsl_snr_margin_db
+        description: "{{ doc('dsl_snr_margin') }} NULL for fiber accounts."
+
+  - name: mart_fiber_penetration
+    description: Fiber passings, availability, take rate and copper → fiber upgrade opportunity by state × CLLI wire center.
+    config:
+      tags: ["growth"]
+    columns:
+      - name: clli
+        description: "{{ doc('clli') }}"
+        data_tests: [unique, not_null]
+      - name: fiber_passings
+        description: "{{ doc('fiber_passings') }}"
+      - name: fiber_take_rate
+        description: "{{ doc('fiber_take_rate') }}"
+        data_tests:
+          - between:
+              arguments: {min_value: 0, max_value: 1}
+      - name: upgrade_opportunity_accounts
+        description: "{{ doc('upgrade_opportunity') }}"
+        data_tests: [non_negative]
+      - name: upgrade_opportunity_mrr
+        description: Monthly list-price uplift if every upgrade-opportunity account moved to its catalogue fiber plan.
+
+  - name: mart_network_reliability
+    description: >
+      Outages, customer outage minutes, tickets, dispatches / repeat
+      dispatches, FCR, ONT rx power & LOS and DSL SNR & retrains by CLLI × month.
+    config:
+      tags: ["network", "servicing", "field_ops"]
+    data_tests:
+      - unique_combination:
+          arguments: {columns: [clli, report_month]}
+    columns:
+      - name: clli
+        description: "{{ doc('clli') }}"
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_wire_center'), field: clli}
+      - name: fcr_rate
+        description: "{{ doc('fcr') }}"
+        data_tests:
+          - between:
+              arguments: {min_value: 0, max_value: 1}
+      - name: repeat_dispatch_rate
+        description: "{{ doc('repeat_dispatch') }}"
+        data_tests:
+          - between:
+              arguments: {min_value: 0, max_value: 1}
+      - name: outage_minutes
+        data_tests: [non_negative]
+
+  - name: mart_customer_sentiment
+    description: >
+      Survey-level relationship NPS with verbatim theme, customer context and
+      prior ticket / call counts. NPS = 100 × (Σ is_promoter − Σ is_detractor) / count.
+    config:
+      tags: ["sentiment"]
+    columns:
+      - name: survey_id
+        data_tests: [unique, not_null]
+      - name: ban
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_customer'), field: ban}
+      - name: nps_score
+        description: "{{ doc('nps') }}"
+        data_tests:
+          - between:
+              arguments: {min_value: 0, max_value: 10}
+      - name: verbatim
+        config: {meta: {pii: false, free_text: true}}
+      - name: verbatim_theme
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [Reliability, Fiber availability, Billing, Price & promotions, Install & field service,
+                         Customer support, Wi-Fi coverage, Speed, General]
+
+  - name: mart_billing_disputes
+    description: Billing disputes (raw.disputes) with outcome, invoice, account, nearby billing tickets / calls and churn after dispute.
+    config:
+      tags: ["billing", "disputes"]
+    columns:
+      - name: dispute_id
+        data_tests: [unique, not_null]
+      - name: ban
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_customer'), field: ban}
+      - name: credit_amount
+        data_tests: [non_negative]
+      - name: category
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [late_fee_autopay, promo_expired, price_increase, duplicate_charge, outage_credit,
+                         equipment_fee, final_bill, install_fee]
+
+  - name: mart_arpu_by_plan
+    description: ARPU, promo-discount share and realised price vs list by month × plan (raw.revenue).
+    config:
+      tags: ["billing"]
+    data_tests:
+      - unique_combination:
+          arguments: {columns: [bill_month, plan_id]}
+    columns:
+      - name: arpu
+        description: "{{ doc('arpu') }}"
+        data_tests: [not_null]
+      - name: technology
+        data_tests:
+          - accepted_values:
+              arguments: {values: [copper, fiber]}
+
+  - name: mart_contact_center
+    description: Calls, repeat-call rate, average handle time, resolution and sentiment by month × queue × reason × technology.
+    config:
+      tags: ["contact_center"]
+    data_tests:
+      - unique_combination:
+          arguments: {columns: [call_month, queue, reason, technology]}
+    columns:
+      - name: repeat_call_rate
+        description: "{{ doc('repeat_call') }}"
+        data_tests:
+          - between:
+              arguments: {min_value: 0, max_value: 1}
+      - name: avg_handle_time_sec
+        data_tests: [non_negative]
+
+  - name: mart_churn_risk_rules
+    description: >
+      Rules-based churn risk (points 0–100, decile, band, reasons) for the
+      latest snapshot month — the fallback for the high-risk accounts list
+      until mlops.scored_customers holds model scores.
+    config:
+      tags: ["churn", "ml"]
+    columns:
+      - name: ban
+        data_tests: [unique, not_null]
+      - name: risk_decile
+        data_tests:
+          - between:
+              arguments: {min_value: 1, max_value: 10}
+      - name: risk_band
+        data_tests:
+          - accepted_values:
+              arguments: {values: [high, medium, low]}
+
+  - name: mart_cohort_retention
+    description: Retention by signup-year cohort (accounts billed in the first window month) × months since start.
+    config:
+      tags: ["churn"]
+    data_tests:
+      - unique_combination:
+          arguments: {columns: [signup_cohort, report_month]}
+    columns:
+      - name: retention_rate
+        data_tests:
+          - between:
+              arguments: {min_value: 0, max_value: 1}
+
+  - name: mart_subscriber_movement
+    description: Monthly billed base, gross adds, disconnects, net adds and MRR churned by technology.
+    config:
+      tags: ["churn", "billing"]
+    data_tests:
+      - unique_combination:
+          arguments: {columns: [report_month, technology]}
+    columns:
+      - name: mrr_churned
+        data_tests: [non_negative]
+
+  - name: mart_mrr_bridge
+    description: >
+      Month-over-month MRR movement by type (new, upgrade_to_fiber,
+      upgrade_plan, downgrade, price_change, churn) × technology × state.
+      Reconciles to the change in total MRR.
+    config:
+      tags: ["billing"]
+    data_tests:
+      - unique_combination:
+          arguments: {columns: [movement_month, movement_type, technology, state]}
+    columns:
+      - name: movement_type
+        data_tests:
+          - accepted_values:
+              arguments: {values: [new, upgrade_to_fiber, upgrade_plan, downgrade, price_change, churn]}

@@ -1,0 +1,90 @@
+# MLOps component — ML Scientist appliance (profile `mlops`).
+#   mlflow         MLflow 3 tracking server + model registry      /mlflow/  :5000
+#   model-gateway  churn model serving (single/blue-green/canary/shadow)  /serve/  :8098
+#   mlops          MLOps control tower UI + drift monitor + retrain orchestrator
+#                  + traffic simulator                              /mlops/   :8097
+# Contract: plan/architecture.md §1, §3, §6. Code: build/mlops/bsp_mlops.
+# Secrets (Studio vault → process env): PG_PASS (required), ARTIFACTORY_TOKEN
+# (optional, external — with ARTIFACTORY_URL enables the JFrog push).
+
+x-mlops-env: &mlops_env
+  PYTHONPATH: /opt/mlops:/opt/common:/opt/seed:/opt/connectors
+  PG_PASS: ${PG_PASS:-}
+  MLOPS_DATA_DIR: /data/mlops
+  MODEL_GATEWAY_URL: http://model-gateway:8098/serve
+  MLOPS_URL: http://mlops:8097/mlops
+  MLFLOW_TRACKING_URI: http://mlflow:5000/mlflow
+  UI_KIT_DIR: /opt/ui-kit
+  MPLCONFIGDIR: /tmp/matplotlib
+  MLFLOW_ALLOW_PICKLE_DESERIALIZATION: "true"   # MLflow 3: models come only from our own gated registry
+  GIT_PYTHON_REFRESH: quiet
+  PUBLIC_FACADE_HOST: ${PUBLIC_FACADE_HOST:-localhost}
+  FACADE_PORT: ${FACADE_PORT:-31202}
+
+x-mlops-volumes: &mlops_volumes
+  - ./build/mlops:/opt/mlops:ro
+  - ${DATA_ROOT:-./data}/mlops:/data/mlops
+
+services:
+  mlflow:
+    extends: {file: compose.base.yml, service: bsp-workload}
+    profiles: [mlops]
+    command: ["python", "-m", "bsp_mlops.mlflow_server"]
+    environment:
+      <<: *mlops_env
+      MLFLOW_ARTIFACTS_DIR: /data/mlops/artifacts
+      MLFLOW_WORKERS: "2"
+    volumes: *mlops_volumes
+    depends_on:
+      postgres: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/mlflow/health', timeout=4)"]
+      interval: 15s
+      timeout: 6s
+      retries: 20
+      start_period: 30s
+
+  model-gateway:
+    extends: {file: compose.base.yml, service: bsp-workload}
+    profiles: [mlops]
+    command: ["python", "-m", "uvicorn", "bsp_mlops.gateway.app:app", "--host", "0.0.0.0", "--port", "8098",
+              "--proxy-headers", "--forwarded-allow-ips", "*"]
+    environment:
+      <<: *mlops_env
+      GATEWAY_RELOAD_SECONDS: "5"
+    volumes: *mlops_volumes
+    depends_on:
+      postgres: {condition: service_healthy}
+      mlflow: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8098/serve/healthz', timeout=4)"]
+      interval: 15s
+      timeout: 6s
+      retries: 20
+      start_period: 20s
+
+  mlops:
+    extends: {file: compose.base.yml, service: bsp-workload}
+    profiles: [mlops]
+    command: ["python", "-m", "uvicorn", "bsp_mlops.tower.app:app", "--host", "0.0.0.0", "--port", "8097",
+              "--proxy-headers", "--forwarded-allow-ips", "*"]
+    environment:
+      <<: *mlops_env
+      DRIFT_INTERVAL_MIN: ${DRIFT_INTERVAL_MIN:-5}
+      AUTO_RETRAIN: ${AUTO_RETRAIN:-true}
+      AUTO_PROMOTE: ${AUTO_PROMOTE:-true}
+      RETRAIN_COOLDOWN_MIN: ${RETRAIN_COOLDOWN_MIN:-30}
+      ARTIFACTORY_URL: ${ARTIFACTORY_URL:-}
+      ARTIFACTORY_REPO: ${ARTIFACTORY_REPO:-bsp-ml-models}
+      ARTIFACTORY_TOKEN: ${ARTIFACTORY_TOKEN:-}
+    volumes: *mlops_volumes
+    depends_on:
+      postgres: {condition: service_healthy}
+      mlflow: {condition: service_healthy}
+      model-gateway: {condition: service_started}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8097/mlops/healthz', timeout=4)"]
+      interval: 15s
+      timeout: 6s
+      retries: 20
+      start_period: 20s

@@ -1,0 +1,29 @@
+# Extensions baked into code-server at image build.
+#
+# code-server's marketplace is Open VSX (https://open-vsx.org), NOT the
+# Microsoft marketplace — every id below was checked to exist there
+# (2026-10-08). Microsoft-only extensions (ms-python.vscode-pylance,
+# dbt-labs.dbt) are NOT available and are replaced by open equivalents.
+#
+# The Dockerfile installs them into /opt/code-server/extensions and FAILS the
+# build if any install fails ("required: true", default). Optional entries
+# (required: false) are attempted but may be skipped.
+# build/services/code.sh seeds them into each user's extensions dir.
+extensions:
+  # Python + notebooks
+  - {id: ms-python.python}
+  - {id: ms-python.debugpy}
+  - {id: detachhead.basedpyright}          # open-source Pylance replacement
+  - {id: charliermarsh.ruff}
+  - {id: ms-toolsai.jupyter}
+  - {id: ms-toolsai.jupyter-renderers}
+  - {id: ms-toolsai.jupyter-keymap}
+  # dbt / SQL / data files
+  - {id: innoverio.vscode-dbt-power-user, required: false}  # dbt (dbt-labs.dbt is not on Open VSX)
+  - {id: mtxr.sqltools, required: false}
+  - {id: mtxr.sqltools-driver-pg, required: false}          # Postgres warehouse
+  - {id: ms-python.black-formatter, required: false}
+  - {id: redhat.vscode-yaml}
+  - {id: mechatroner.rainbow-csv}
+  # AI — Claude Code extension (same sign-in as the `claude` CLI)
+  - {id: anthropic.claude-code, required: false}

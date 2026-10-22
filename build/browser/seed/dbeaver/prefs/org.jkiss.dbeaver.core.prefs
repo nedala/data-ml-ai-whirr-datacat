@@ -1,0 +1,6 @@
+eclipse.preferences.version=1
+ui.show.tip.of.the.day=false
+ui.auto.update.check=false
+feature.tracking.enabled=false
+feature.tracking.skipConfirmation=true
+ai.disabled=true

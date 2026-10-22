@@ -1,0 +1,63 @@
+# Demo source systems — build/demo-sources (docs/data-pro/demo-sources.md).
+# MinIO, SQL Server and Oracle seeded with DataPlatform sample data so the
+# Integration Canvas example connections (minio-demo, care-mssql,
+# billing-oracle) work with no manual secrets: every password below is a
+# generated cred slot whose env name is the one those connections reference.
+services:
+  minio:
+    title: Demo MinIO (S3)
+    blurb: "S3-compatible object store with bucket bsp-demo (billing/YYYY-MM.parquet invoice files)"
+    profile: demo-sources
+    ram_mb: 128
+    kind: base
+    endpoints:
+      - {label: "S3 endpoint (inside the appliance)", value: "http://minio:9000 · bucket bsp-demo · prefix billing/"}
+      - {label: Canvas connection, value: "minio-demo (access key / secret = MINIO_ACCESS_KEY / MINIO_SECRET_KEY)"}
+      - {label: Files on disk, value: "<data root>/demo-sources/minio (host)"}
+    creds:
+      - {env: MINIO_ACCESS_KEY, label: "Demo MinIO access key (root user)", length: 20, policy: strong}
+      - {env: MINIO_SECRET_KEY, label: "Demo MinIO secret key (root password)", length: 40, policy: strong}
+  mssql:
+    title: Demo SQL Server
+    blurb: "SQL Server 2019 Developer with database care (dbo.care_orders keyed by BAN, dbo.care_agents)"
+    profile: demo-sources
+    ram_mb: 900
+    kind: base
+    endpoints:
+      - {label: "Host (inside the appliance)", value: "mssql:1433 · database care · user canvas_reader (read-only)"}
+      - {label: Tables, value: "dbo.care_orders (service orders / truck rolls, updated_at) · dbo.care_agents"}
+      - {label: Canvas connection, value: "care-mssql (password CARE_MSSQL_PASSWORD)"}
+    creds:
+      - {env: DEMO_MSSQL_SA_PASSWORD, user: sa, label: "Demo SQL Server sa password", length: 24, policy: strong}
+      - {env: CARE_MSSQL_PASSWORD, user: canvas_reader, label: "Demo SQL Server canvas_reader password", length: 24, policy: strong}
+  oracle:
+    title: Demo Oracle
+    blurb: "Oracle AI Database 26ai Free (gvenzl slim) with schema billing (INVOICES, TRANSACTIONS) keyed by BAN"
+    profile: demo-sources
+    ram_mb: 2048
+    kind: base
+    endpoints:
+      - {label: "Host (inside the appliance)", value: "oracle:1521 · service FREEPDB1 · user billing"}
+      - {label: Tables, value: "BILLING.INVOICES · BILLING.TRANSACTIONS (BAN key, UPDATED_AT cursor)"}
+      - {label: Canvas connection, value: "billing-oracle (password BILLING_ORA_PASSWORD)"}
+    creds:
+      - {env: DEMO_ORACLE_PASSWORD, user: "SYS / SYSTEM", label: "Demo Oracle SYS/SYSTEM password (first start only)", length: 20, policy: strong}
+      - {env: BILLING_ORA_PASSWORD, user: billing, label: "Demo Oracle billing password (first start only)", length: 20, policy: strong}
+  demo-seed:
+    title: Demo data seeder
+    blurb: "Seeds MinIO, SQL Server and Oracle with DataPlatform sample data (idempotent), then waits for `more` batches"
+    profile: demo-sources
+    ram_mb: 64
+    kind: base
+    needs: [minio, mssql, oracle]
+    endpoints:
+      - {label: "Add a batch (incremental demo)", value: "docker exec ${COMPOSE_PROJECT_NAME:-bsp_data}-demo-seed-1 python -m bsp_demo_sources.more minio|mssql|oracle|all"}
+      - {label: Seed log, value: "docker logs ${COMPOSE_PROJECT_NAME:-bsp_data}-demo-seed-1"}
+
+capabilities:
+  demo-sources:
+    title: Demo sources
+    tone: data
+    icon: database
+    services: [minio, mssql, oracle, demo-seed]
+    blurb: "Demo source systems: MinIO bucket, SQL Server and Oracle seeded with DataPlatform sample data for the Integration Canvas examples"

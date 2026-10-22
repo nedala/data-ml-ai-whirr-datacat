@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Antigravity
+Comment=Google Antigravity (agentic IDE) on your work folder
+Exec=appliance-antigravity %F
+Icon=/usr/share/appliance/icons/antigravity.png
+Categories=Development;IDE;
+StartupWMClass=Antigravity IDE

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Files
+Comment=My work and the shared lake
+Exec=appliance-files
+Icon=folder
+Categories=System;FileManager;

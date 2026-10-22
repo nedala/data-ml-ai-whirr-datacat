@@ -1,0 +1,53 @@
+version: 2
+
+models:
+  - name: int_customer_current_service
+    description: One row per account (BAN) — customer, serving location and CLLI, current subscription and plan, region.
+    config:
+      tags: ["pii"]
+    columns:
+      - name: ban
+        description: "{{ doc('ban') }}"
+        data_tests: [unique, not_null]
+      - name: technology
+        description: "{{ doc('technology') }}"
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments: {values: [copper, fiber]}
+      - name: clli
+        description: "{{ doc('clli') }}"
+        data_tests: [not_null]
+
+  - name: int_invoice_settlement
+    description: Invoice with its ledger payment (date, amount, method), days to pay, credits and disputes.
+    columns:
+      - name: invoice_id
+        data_tests: [unique, not_null]
+      - name: days_to_pay
+        data_tests: [non_negative]
+
+  - name: int_tickets_enriched
+    description: Tickets with CLLI, technology, state, the truck roll they triggered and the repeat-contact flag.
+    columns:
+      - name: ticket_id
+        data_tests: [unique, not_null]
+      - name: is_repeat_30d
+        data_tests: [not_null]
+
+  - name: int_wire_center_monthly_events
+    description: Outage, degradation and maintenance counts and minutes by CLLI × month.
+    data_tests:
+      - unique_combination:
+          arguments: {columns: [clli, event_month]}
+
+  - name: int_plant_quality_monthly
+    description: Fiber ONT optics and copper DSL line metrics per account × month in one shape.
+    data_tests:
+      - unique_combination:
+          arguments: {columns: [ban, metric_month]}
+    columns:
+      - name: technology
+        data_tests:
+          - accepted_values:
+              arguments: {values: [copper, fiber]}

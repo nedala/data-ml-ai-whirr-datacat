@@ -1,0 +1,23 @@
+# Example connections seeded into ${CANVAS_DIR}/connections.yaml on first start.
+# Only non-secret params; secrets are vault references set in Studio → Credentials.
+# minio-demo / care-mssql / billing-oracle are the Demo sources capability (build/demo-sources):
+# add 'Demo sources' in Studio and their hosts and generated secrets exist — no manual step.
+connections:
+  - name: minio-demo
+    type: s3
+    description: "Demo source (add 'Demo sources' in Studio) — MinIO bucket bsp-demo, billing/*.parquet; replace with your S3 / GCS connection"
+    params: {endpoint_url: "http://minio:9000", region: us-east-1, access_key_ref: "vault:MINIO_ACCESS_KEY",
+             secret_key_ref: "vault:MINIO_SECRET_KEY"}
+  - name: care-mssql
+    type: mssql
+    description: "Demo source (add 'Demo sources' in Studio) — customer-care SQL Server, database care (dbo.care_orders: dispatches by BAN / CLLI)"
+    params: {host: mssql, port: 1433, database: care, username: canvas_reader, password_ref: "vault:CARE_MSSQL_PASSWORD",
+             encrypt: true, trust_server_certificate: true, driver: auto}
+  - name: billing-oracle
+    type: oracle
+    description: "Demo source (add 'Demo sources' in Studio) — billing Oracle FREEPDB1, schema billing (INVOICES, TRANSACTIONS by BAN; thin mode)"
+    params: {host: oracle, port: 1521, service_name: FREEPDB1, username: billing, password_ref: "vault:BILLING_ORA_PASSWORD"}
+  - name: edw-gcs
+    type: gcs
+    description: Enterprise lake bucket on Google Cloud Storage (GCP_SA_JSON)
+    params: {project: "${GCP_PROJECT_ID}", credentials_ref: "vault:GCP_SA_JSON"}

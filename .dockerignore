@@ -1,0 +1,22 @@
+# Keep the build context lean — never ship host data or private keys into the image.
+.git
+.env
+.env.*
+!.env.example
+data
+build/tls
+build/certs/corporate
+*.key
+*.pem
+dbt_project/target
+dbt_project/dbt_packages
+dbt_project/logs
+**/__pycache__
+*.pyc
+.DS_Store
+**/node_modules
+**/.pytest_cache
+**/.ipynb_checkpoints
+**/.ruff_cache
+graft
+plan

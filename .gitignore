@@ -1,0 +1,38 @@
+# ── Secrets and local configuration ──────────────────────────────────────────
+.env
+.env.*
+!.env.example
+env.txt
+*.env.txt
+
+# Service-account / token JSON files
+tool-*.json
+*-[0-9a-f][0-9a-f][0-9a-f][0-9a-f]*.json
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+build/certs/
+build/tls/
+
+# ── Runtime data, saved credentials and user content ─────────────────────────
+data/
+data/**
+build/browser/profile/
+build/rag/corpus/
+build/connectors/fixtures/
+dbt_project/seeds/
+
+# ── Generated / cached ───────────────────────────────────────────────────────
+graft/
+.graft/
+dbt_project/target/
+dbt_project/logs/
+dbt_project/dbt_packages/
+__pycache__/
+*.py[cod]
+.venv/
+.ipynb_checkpoints/
+.DS_Store
+*.log

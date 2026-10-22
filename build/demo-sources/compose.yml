@@ -1,0 +1,124 @@
+# Demo source systems for the Integration Canvas examples — capability `demo-sources`.
+# MinIO (S3) · SQL Server · Oracle Free, seeded with DataPlatform sample data by
+# the demo-seed service. Internal network only (appliance-net), no host ports.
+# Secrets are Studio cred slots (build/studio/catalog.d/demo-sources.yaml),
+# generated into the vault and injected into the compose process — the same
+# names the shipped canvas connections reference (vault:MINIO_ACCESS_KEY …).
+# Included by the root docker-compose.yml with project_directory: .
+# Docs: docs/data-pro/demo-sources.md
+
+x-demo-no-proxy: &demo_no_proxy "localhost,127.0.0.1,minio,mssql,oracle,postgres"
+
+services:
+  minio:
+    image: ${DEMO_MINIO_IMAGE:-chainguard/minio:latest}
+    profiles: [demo-sources]
+    user: "1000:1000"
+    command: ["server", "/data", "--address", ":9000", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-}
+      MINIO_UPDATE: "off"
+      MINIO_BROWSER_REDIRECT: "off"
+      HOME: /tmp
+    volumes:
+      - ${DATA_ROOT:-./data}/demo-sources/minio:/data
+    networks: [appliance-net]
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/9000' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+  mssql:
+    image: ${DEMO_MSSQL_IMAGE:-mcr.microsoft.com/mssql/server:2019-latest}
+    profiles: [demo-sources]
+    user: "1000:1000"                      # runs fine as the appliance uid on a 1000-owned data dir
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${DEMO_MSSQL_SA_PASSWORD:-}
+      MSSQL_MEMORY_LIMIT_MB: "1280"
+      MSSQL_TELEMETRY_ENABLED: "false"
+      HOME: /var/opt/mssql
+    volumes:
+      - ${DATA_ROOT:-./data}/demo-sources/mssql:/var/opt/mssql
+    networks: [appliance-net]
+    mem_limit: 2g                          # SQL Server refuses to start below 2 GB
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -b -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' -l 5 >/dev/null"]
+      interval: 10s
+      timeout: 8s
+      retries: 30
+      start_period: 30s
+    restart: unless-stopped
+
+  # Oracle's data files must belong to uid 54321 (the image's `oracle` user);
+  # Studio (re)creates the folder as uid 1000 on every apply, so fix ownership
+  # before each start — only entries that are wrong, so it is instant.
+  oracle-init:
+    image: ${DEMO_ORACLE_IMAGE:-gvenzl/oracle-free:slim}
+    profiles: [demo-sources]
+    user: "0:0"
+    entrypoint: ["find", "/opt/oracle/oradata", "!", "-user", "54321", "-exec", "chown", "-h", "54321:54321", "{}", "+"]
+    volumes:
+      - ${DATA_ROOT:-./data}/demo-sources/oracle:/opt/oracle/oradata
+    network_mode: none
+    restart: "no"
+
+  oracle:
+    image: ${DEMO_ORACLE_IMAGE:-gvenzl/oracle-free:slim}
+    profiles: [demo-sources]
+    # image user `oracle` (54321), non-root
+    environment:
+      ORACLE_PASSWORD: ${DEMO_ORACLE_PASSWORD:-}
+      APP_USER: billing
+      APP_USER_PASSWORD: ${BILLING_ORA_PASSWORD:-}
+    volumes:
+      - ${DATA_ROOT:-./data}/demo-sources/oracle:/opt/oracle/oradata
+    networks: [appliance-net]
+    mem_limit: 2560m
+    depends_on:
+      oracle-init: {condition: service_completed_successfully}
+    healthcheck:
+      test: ["CMD", "/opt/oracle/healthcheck.sh"]
+      interval: 15s
+      timeout: 10s
+      retries: 40
+      start_period: 120s
+    restart: unless-stopped
+
+  # Seeds all three (idempotent), then idles so `more` batches can be added:
+  #   docker exec <project>-demo-seed-1 python -m bsp_demo_sources.more minio|mssql|oracle|all
+  # (Studio treats an exited container as failed, so it stays up; ~30 MB idle.)
+  demo-seed:
+    extends: {file: compose.base.yml, service: bsp-workload}
+    profiles: [demo-sources]
+    command: ["bash", "-c", "rm -f /tmp/demo-seeded; python -m bsp_demo_sources.seed && touch /tmp/demo-seeded && exec sleep infinity"]
+    working_dir: /opt/demo-sources
+    environment:
+      PYTHONPATH: /opt/demo-sources:/opt/common:/opt/seed
+      NO_PROXY: *demo_no_proxy
+      no_proxy: *demo_no_proxy
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-}
+      DEMO_MSSQL_SA_PASSWORD: ${DEMO_MSSQL_SA_PASSWORD:-}
+      CARE_MSSQL_PASSWORD: ${CARE_MSSQL_PASSWORD:-}
+      BILLING_ORA_PASSWORD: ${BILLING_ORA_PASSWORD:-}
+    volumes:
+      - ./build/demo-sources:/opt/demo-sources:ro
+    restart: "no"
+    mem_limit: 4g   # the 20k-BAN build (18 tables incl. monthly ONT/DSL metrics) peaks around 2–3 GB
+    depends_on:
+      minio: {condition: service_healthy}
+      mssql: {condition: service_healthy}
+      oracle: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/demo-seeded"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 600s

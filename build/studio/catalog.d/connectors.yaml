@@ -1,0 +1,34 @@
+# Enterprise connectors — build/connectors (plan/architecture.md §4).
+# External credentials (GCP_SA_JSON, M365_CLIENT_SECRET, ATLAN_API_TOKEN,
+# SAP_BRIM_USER/PASSWORD) are the core catalog's shared_credentials; each
+# system stays on its in-appliance mock until they are set.
+services:
+  connectors:
+    title: Enterprise Connectors
+    blurb: "Microsoft 365 (Outlook · SharePoint), Atlan, BigQuery, Power BI and SAP BRIM — mock until credentials are set"
+    profile: connectors
+    ram_mb: 384
+    kind: app
+    route: /connectors/
+    soft_needs: [postgres]
+    endpoints:
+      - {label: Status & test connection, value: "/connectors/"}
+      - {label: API docs, value: "/connectors/docs"}
+      - {label: Inside the appliance, value: "http://connectors:8092/connectors"}
+      - {label: Python SDK, value: "from bsp_connectors import m365, atlan, bigquery, powerbi, sap_brim, mode_of"}
+    # external creds: the core catalog's shared_credentials (injected into every compose start;
+    # a per-service slot with the same env name would be overridden by them)
+
+capabilities:
+  connectors:
+    title: Enterprise Connectors
+    tone: integrate
+    icon: globe
+    services: [connectors]
+    blurb: "Mock-or-live connectors and SDK for BigQuery, Atlan, Microsoft 365, Power BI and SAP BRIM"
+
+apps:
+  - {id: connectors, group: integrate, title: Enterprise Connectors, service: connectors, path: /connectors/, icon: plug,
+     blurb: "Check each company system and switch between demo and live"}
+  - {id: connectors-docs, group: integrate, title: Connectors API, service: connectors, path: /connectors/docs, icon: api,
+     blurb: "API reference for the company system connectors"}

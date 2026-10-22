@@ -1,0 +1,80 @@
+# DataPlatform EDW — dbt project `bsp_edw`.
+#
+#   staging       stg_*  1:1 views over the raw ISP tables (schema `raw`): renamed,
+#                        typed, light derivations. No joins.
+#   intermediate  int_*  joined business entities (current service per account,
+#                        invoice ⨝ payments ⨝ adjustments, ticket repeat flags, …).
+#   marts         dim_* / fct_* / mart_*  analysis-ready tables for Superset,
+#                        Power BI, the notebooks and the churn model.
+#
+# Targets (profiles.yml): postgres (default, local warehouse `bsp_edw`),
+# bigquery (enterprise EDW, project GCP_PROJECT_ID), trino (federated engine,
+# catalog `warehouse`). Pick with DBT_TARGET or --target.
+#
+#   dbt deps                       # no packages needed; harmless
+#   dbt seed && dbt build          # everything, with tests + snapshot
+#   dbt build --select marts.mart_churn_features+
+#   dbt source freshness
+#   dbt docs generate && dbt docs serve --port 8085
+name: bsp_edw
+version: "1.0.0"
+config-version: 2
+profile: bsp_edw
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+docs-paths: ["docs", "models"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+flags:
+  send_anonymous_usage_stats: false
+  require_certificate_validation: true
+
+vars:
+  # (the raw schema / dataset is env BSP_RAW_SCHEMA, default `raw` — see _sources.yml)
+  # "as of" date for tenure and freshness-style calculations: the synthetic
+  # data covers 2024-10 → 2026-09.
+  as_of_date: "2026-09-30"
+  # repeat-ticket window (days) for fct_service_ticket.is_repeat_30d
+  repeat_ticket_days: 30
+
+models:
+  bsp_edw:
+    +persist_docs:
+      relation: "{{ target.type != 'trino' }}"
+      columns: "{{ target.type != 'trino' }}"
+    staging:
+      # Trino's PostgreSQL connector cannot CREATE VIEW → tables there.
+      +materialized: "{{ 'table' if target.type == 'trino' else 'view' }}"
+      +schema: staging
+      +tags: ["staging"]
+    intermediate:
+      +materialized: "{{ 'table' if target.type == 'trino' else 'view' }}"
+      +schema: intermediate
+      +tags: ["intermediate"]
+    marts:
+      +materialized: table
+      +schema: marts
+      +tags: ["marts"]
+
+seeds:
+  bsp_edw:
+    +schema: reference
+    +tags: ["reference"]
+    plan_catalog:
+      +column_types:
+        plan_id: "{{ 'string' if target.type == 'bigquery' else 'varchar' }}"
+        speed_tier: "{{ 'string' if target.type == 'bigquery' else 'varchar' }}"
+        upgrade_target_plan_id: "{{ 'string' if target.type == 'bigquery' else 'varchar' }}"
+    state_region:
+      +column_types:
+        state: "{{ 'string' if target.type == 'bigquery' else 'varchar' }}"
+
+snapshots:
+  bsp_edw:
+    +tags: ["snapshot"]

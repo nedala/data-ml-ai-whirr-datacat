@@ -1,0 +1,5 @@
+version: 2
+
+models:
+  - name: stg_service_tickets
+    description: 1:1 view over raw.service_tickets.

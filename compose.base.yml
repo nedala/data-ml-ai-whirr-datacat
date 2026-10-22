@@ -1,0 +1,109 @@
+# Abstract service templates every component fragment `extends`.
+#   services:
+#     mysvc:
+#       extends: {file: compose.base.yml, service: bsp-workload}
+# Paths are relative to the repo root (fragments are included with
+# `project_directory: .`). No secret VALUES here — each fragment lists the
+# secret env vars it needs as `${NAME:-}` (Studio injects them from the vault);
+# bsp-workload itself references the cloud-identity variables (GCP_*_JSON).
+
+x-trust-env: &trust_env
+  HTTP_PROXY: http://px-proxy:3128
+  HTTPS_PROXY: http://px-proxy:3128
+  http_proxy: http://px-proxy:3128
+  https_proxy: http://px-proxy:3128
+  NO_PROXY: &no_proxy "localhost,127.0.0.1,.internal,nginx,studio,px-proxy,docs,postgres,appliance,code,superset,trino,canvas,connectors,mlflow,model-gateway,mlops,harness,mcp,ollama,disputes,ccai,browser,datahub-frontend,host.docker.internal"
+  no_proxy: *no_proxy
+  SSL_CERT_FILE: /trust/ca-bundle.pem
+  REQUESTS_CA_BUNDLE: /trust/ca-bundle.pem
+  CURL_CA_BUNDLE: /trust/ca-bundle.pem
+  PIP_CERT: /trust/ca-bundle.pem
+  UV_NATIVE_TLS: "1"
+  NODE_EXTRA_CA_CERTS: /trust/egress-ca.pem
+
+x-platform-env: &platform_env
+  APPLIANCE_ENV: ${APPLIANCE_ENV:-dev}
+  APPLIANCE_PERSONA: ${APPLIANCE_PERSONA:-data-pro}
+  USER_HANDLE: ${USER_HANDLE:-analyst}
+  PG_HOST: postgres
+  PG_PORT: "5432"
+  PG_DB: bsp_edw
+  PG_USER: analyst
+  LAKE_DIR: /data/lake
+  PYTHONPATH: /opt/common:/opt/seed:/opt/connectors
+  PUBLIC_FACADE_URL: https://${PUBLIC_FACADE_HOST:-localhost}:${FACADE_PORT:-31201}
+  # BigQuery / Vertex AI (non-secret)
+  GCP_PROJECT_ID: ${GCP_PROJECT_ID:-to-be-named-soon}
+  GCP_REGION: ${GCP_REGION:-us-central1}
+  BQ_LOCATION: ${BQ_LOCATION:-US}
+  VERTEX_ALLOWED_MODELS: ${VERTEX_ALLOWED_MODELS:-gemini-2.5-flash,gemini-2.5-pro,gemini-2.5-flash-lite}
+  # Claude Code on Vertex: auto (only when VERTEX_CLAUDE_MODEL is set) | 1 | 0
+  CLAUDE_VERTEX: ${CLAUDE_VERTEX:-auto}
+  VERTEX_CLAUDE_MODEL: ${VERTEX_CLAUDE_MODEL:-}
+  # internal service URLs
+  CONNECTORS_URL: http://connectors:8092/connectors
+  LLM_GATEWAY_URL: http://harness:8096/ai/v1
+  MLFLOW_TRACKING_URI: http://mlflow:5000/mlflow
+  TRINO_HOST: trino
+  TRINO_PORT: "8080"
+  MCP_URL: http://mcp:8095/mcp
+  # Microsoft 365 / Atlan / Power BI / SAP BRIM (non-secret; empty = mock)
+  M365_TENANT_ID: ${M365_TENANT_ID:-}
+  M365_CLIENT_ID: ${M365_CLIENT_ID:-}
+  SHAREPOINT_SITE: ${SHAREPOINT_SITE:-}
+  DISPUTES_MAILBOX: ${DISPUTES_MAILBOX:-billing-disputes@example.net}
+  CCAI_SHAREPOINT_SITE: ${CCAI_SHAREPOINT_SITE:-}
+  CCAI_SHAREPOINT_FOLDER: ${CCAI_SHAREPOINT_FOLDER:-CCAI/CallLogs}
+  POWERBI_WORKSPACE_ID: ${POWERBI_WORKSPACE_ID:-}
+  ATLAN_BASE_URL: ${ATLAN_BASE_URL:-}
+  SAP_BRIM_BASE_URL: ${SAP_BRIM_BASE_URL:-}
+  SAP_BRIM_MODE: ${SAP_BRIM_MODE:-mock}
+  HF_HOME: /data/hf_cache
+  PYTHONUSERBASE: /data/pyuser
+
+services:
+  # Generic non-root workload on the shared image, internal network only.
+  bsp-workload:
+    image: ${APPLIANCE_IMAGE:-bsp/appliance:latest}
+    user: "1000:1000"
+    environment:
+      <<: [*trust_env, *platform_env]
+      # Cloud identities (Studio → Cloud identities; registry:
+      # build/studio/gcp_consumers.yaml). SECRETS — Studio passes them through
+      # the compose process environment only, never via .env: each consumer's
+      # effective identity JSON (empty = fall back to GCP_SA_JSON / ADC), its
+      # data project (+ execution / extra data projects for BigQuery), and every
+      # identity by name for per-connection selection.
+      GCP_VERTEX_JSON: ${GCP_VERTEX_JSON:-}
+      GCP_BQ_JSON: ${GCP_BQ_JSON:-}
+      GCP_BQ_WRITE_JSON: ${GCP_BQ_WRITE_JSON:-}
+      GCP_TRINO_JSON: ${GCP_TRINO_JSON:-}
+      GCP_GCS_JSON: ${GCP_GCS_JSON:-}
+      GCP_MLFLOW_JSON: ${GCP_MLFLOW_JSON:-}
+      GCP_ARTIFACT_JSON: ${GCP_ARTIFACT_JSON:-}
+      GCP_CLOUDRUN_JSON: ${GCP_CLOUDRUN_JSON:-}
+      GCP_WORKSPACE_JSON: ${GCP_WORKSPACE_JSON:-}
+      GCP_VERTEX_PROJECT: ${GCP_VERTEX_PROJECT:-}
+      GCP_BQ_PROJECT: ${GCP_BQ_PROJECT:-}
+      GCP_BQ_EXEC_PROJECT: ${GCP_BQ_EXEC_PROJECT:-}
+      GCP_BQ_DATA_PROJECTS: ${GCP_BQ_DATA_PROJECTS:-}
+      GCP_BQ_WRITE_PROJECT: ${GCP_BQ_WRITE_PROJECT:-}
+      GCP_BQ_WRITE_EXEC_PROJECT: ${GCP_BQ_WRITE_EXEC_PROJECT:-}
+      GCP_TRINO_PROJECT: ${GCP_TRINO_PROJECT:-}
+      GCP_TRINO_EXEC_PROJECT: ${GCP_TRINO_EXEC_PROJECT:-}
+      GCP_TRINO_DATA_PROJECTS: ${GCP_TRINO_DATA_PROJECTS:-}
+      GCP_GCS_PROJECT: ${GCP_GCS_PROJECT:-}
+      GCP_MLFLOW_PROJECT: ${GCP_MLFLOW_PROJECT:-}
+      GCP_ARTIFACT_PROJECT: ${GCP_ARTIFACT_PROJECT:-}
+      GCP_CLOUDRUN_PROJECT: ${GCP_CLOUDRUN_PROJECT:-}
+      GCP_WORKSPACE_PROJECT: ${GCP_WORKSPACE_PROJECT:-}
+      GCP_IDENTITIES: ${GCP_IDENTITIES:-}
+      GCP_ASSIGNMENTS: ${GCP_ASSIGNMENTS:-}   # {consumer: identity name} (not secret)
+    volumes:
+      - ${DATA_ROOT:-./data}/trust:/trust:ro
+      - ./build/common:/opt/common:ro
+      - ./build/seed:/opt/seed:ro
+      - ./build/connectors:/opt/connectors:ro
+      - ./build/ui-kit:/opt/ui-kit:ro
+    networks: [appliance-net]
+    restart: unless-stopped

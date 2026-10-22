@@ -1,0 +1,77 @@
+# Open WebUI tool servers registered by bsp_owui_sync.py (managed entries,
+# ids prefixed "bsp-"; anything an admin adds by hand is left alone).
+#
+# MCP: the appliance MCP server (build/mcp, streamable HTTP, bearer MCP_TOKEN)
+# serves every group on its own endpoint, ${MCP_URL}/<mcp_group>. Each group
+# is registered as its own Open WebUI tool server (friendly name, description),
+# so model presets can enable just the groups they need. Fallback for an MCP
+# server without per-group endpoints: the root endpoint is registered once
+# per group with Open WebUI's function_name_filter_list set to the tool names
+# discovered by prefix ("<prefix>_…"). If the MCP server is unreachable, one
+# unfiltered "Appliance tools (all)" entry is registered and sync retries.
+mcp_groups:
+  - id: browser
+    mcp_group: browser
+    name: "Browser automation (Playwright)"
+    description: "Drives the visible desktop Chromium over CDP: open pages, click, fill, read and screenshot — watch it live in the Desktop app."
+    prefixes: [browser, playwright, pw]
+  - id: atlan
+    mcp_group: atlan
+    name: "Atlan data catalog"
+    description: "Search the catalog, read asset details, glossary terms, owners and column-level lineage."
+    prefixes: [atlan]
+  - id: catalog
+    mcp_group: catalog
+    name: "Data catalog (DataHub)"
+    description: "Find tables by business term before writing SQL: Trino names (catalog.schema.table), descriptions, glossary terms, PII tags and the ban join key."
+    prefixes: [catalog]
+  - id: bigquery
+    mcp_group: bigquery
+    name: "BigQuery EDW"
+    description: "List datasets and tables, read schemas and run read-only SQL against the enterprise warehouse."
+    prefixes: [bigquery, bq]
+  - id: warehouse
+    mcp_group: warehouse
+    name: "Local warehouse (Postgres bsp_edw)"
+    description: "Schemas, tables and read-only SQL on the appliance warehouse: raw, staging, marts, ml and ai schemas."
+    prefixes: [warehouse, postgres, pg]
+  - id: trino
+    mcp_group: trino
+    name: "Trino federated SQL"
+    description: "Federated read-only SQL across BigQuery, the local warehouse and lake files."
+    prefixes: [trino]
+  - id: powerbi
+    mcp_group: powerbi
+    name: "Power BI"
+    description: "Workspaces, reports and datasets; run DAX queries and trigger dataset refreshes."
+    prefixes: [powerbi, pbi]
+  - id: m365
+    mcp_group: m365
+    name: "Microsoft 365 (mail, calendar, Teams, SharePoint)"
+    description: "Outlook mail and calendar, Teams messages, OneDrive/SharePoint files and people lookup — read-only unless MCP_M365_WRITE=1."
+    prefixes: [m365, mail, outlook, calendar, teams, sharepoint, onedrive, people]
+  - id: mlflow
+    mcp_group: mlflow
+    name: "MLflow"
+    description: "Experiments, runs, metrics and the model registry (versions, stages, aliases)."
+    prefixes: [mlflow]
+  - id: sap_brim
+    mcp_group: sap
+    name: "SAP BRIM lookup"
+    description: "Look up contract accounts, invoices, open items and dispute cases in SAP BRIM (FI-CA)."
+    prefixes: [sap_brim, sap, brim]
+  - id: rag
+    mcp_group: rag
+    name: "Knowledge & RAG (MCP)"
+    description: "Governed search and cited answers over DataPlatform runbooks, policies and design docs; agent assist and runbook copilot."
+    prefixes: [rag, knowledge]
+
+# OpenAPI tool servers (Open WebUI calls them server-side)
+openapi:
+  - id: rag-openapi
+    name: "Knowledge & RAG (OpenAPI)"
+    description: "The rag service's OpenAPI tool server: search_knowledge, answer_with_citations, agent_assist, runbook_copilot."
+    url_env: RAG_TOOLS_URL
+    url_default: "http://rag:8101/rag/tools"
+    path: openapi.json
+    key_env: RAG_TOOLS_TOKEN

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Harness · DataPlatform</title>
+<link rel="icon" href="/ai/ui-kit/brand/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/ai/ui-kit/bsp.css">
+<link rel="stylesheet" href="/ai/static/app.css">
+<link rel="stylesheet" href="/ai/static/sqlstudio.css">
+</head>
+<body>
+<div class="bsp-app">
+  <header class="bsp-topbar">
+    <div class="bsp-brand"><span class="mark"></span>AI Harness <span class="sub">· LLM gateway, playground &amp; evals</span></div>
+    <div class="spacer"></div>
+    <span class="chip outline mono" id="gw-url" title="OpenAI-compatible base URL">/ai/v1</span>
+    <a class="btn ghost sm" href="/ai/docs" target="_blank">API</a>
+    <a class="btn ghost sm" href="/studio/">Studio</a>
+  </header>
+  <aside class="bsp-sidebar">
+    <nav class="bsp-nav" id="nav">
+      <div class="bsp-nav-group eyebrow">Build</div>
+      <a href="#playground" data-view="playground">Playground</a>
+      <a href="#compare" data-view="compare">Compare</a>
+      <a href="#sql" data-view="sql">Federated SQL</a>
+      <a href="#evals" data-view="evals">Evals</a>
+      <div class="bsp-nav-group eyebrow">Operate</div>
+      <a href="#routing" data-view="routing">Routing</a>
+      <a href="#telemetry" data-view="telemetry">Telemetry</a>
+      <a href="#providers" data-view="providers">Provider status</a>
+    </nav>
+  </aside>
+  <main class="bsp-main" id="main"></main>
+</div>
+<script src="/ai/ui-kit/bsp.js"></script>
+<script src="/ai/ui-kit/bsp-markdown.js"></script>
+<script src="/ai/static/app.js"></script>
+<script src="/ai/static/sqlstudio.js"></script>
+</body>
+</html>

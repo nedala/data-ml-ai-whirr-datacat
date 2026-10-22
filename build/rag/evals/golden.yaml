@@ -1,0 +1,181 @@
+# Golden Q&A set over the synthetic front-office corpus (build/rag/corpus).
+# expected_docs: doc_ids that contain the answer (document-level hit@k / MRR).
+# facts: short strings that a correct answer should contain (fact recall).
+# Questions with no expected_docs are out of scope: the right answer is
+# "I don't know" (abstention accuracy).
+version: 1
+questions:
+  - id: q01
+    question: How much is the late fee and when is it charged?
+    expected_docs: [POL-BIL-004, FAQ-BIL-001, DS-BIL-002]
+    facts: ["$10", "7 days"]
+  - id: q02
+    question: Can an agent reverse a second late fee within 12 months without approval?
+    expected_docs: [POL-BIL-004]
+    facts: ["supervisor"]
+  - id: q03
+    question: Customer has autopay but the stored card token was invalid after a card update and they got a late fee. What do I do?
+    expected_docs: [RB-BIL-012, POL-BIL-004]
+    facts: ["reverse"]
+  - id: q04
+    question: What are the steps to handle a billing dispute about an invoice?
+    expected_docs: [RB-BIL-001]
+    facts: ["verify", "dispute case"]
+  - id: q05
+    question: How long do we have to resolve a standard billing dispute?
+    expected_docs: [RB-BIL-001]
+    facts: ["10 business days"]
+  - id: q06
+    question: What is the goodwill credit limit for a Tier 1 care agent?
+    expected_docs: [POL-BIL-006]
+    facts: ["$25"]
+  - id: q07
+    question: When do outage credits apply and how are they calculated?
+    expected_docs: [RB-OUT-002, FAQ-TEC-002, DS-OUT-006]
+    facts: ["24"]
+  - id: q08
+    question: How often must we update customers during a SEV1 outage?
+    expected_docs: [RB-OUT-002, RB-NOC-011]
+    facts: ["60 minutes"]
+  - id: q09
+    question: The ONT LOS light is red. What should tier 2 check remotely?
+    expected_docs: [RB-TEC-003, FAQ-TEC-002]
+    facts: ["light levels"]
+  - id: q10
+    question: What receive power range is acceptable at a GPON ONT?
+    expected_docs: [RB-TEC-003, DS-NET-001]
+    facts: ["-27", "-8"]
+  - id: q11
+    question: What must be true before we dispatch a truck roll?
+    expected_docs: [RB-FLD-005]
+    facts: ["outage"]
+  - id: q12
+    question: What credit does the customer get when we miss a technician appointment?
+    expected_docs: [RB-FLD-005, POL-BIL-006]
+    facts: ["$20"]
+  - id: q13
+    question: Which save offer can I give a customer whose promo ended and who has been with us 3 years?
+    expected_docs: [RB-RET-006]
+    facts: ["OFF-LOYAL10"]
+  - id: q14
+    question: Who approves a competitor price match offer?
+    expected_docs: [RB-RET-006]
+    facts: ["supervisor"]
+  - id: q15
+    question: How long does a simple number port-in take and what does the customer need?
+    expected_docs: [RB-VOI-007]
+    facts: ["1 business day"]
+  - id: q16
+    question: Is the installation fee waived when a customer moves?
+    expected_docs: [RB-MOV-008, FAQ-ACC-003]
+    facts: ["6"]
+  - id: q17
+    question: Does the customer need to return the ONT when they cancel?
+    expected_docs: [RB-EQP-009, FAQ-ACC-003, FAQ-TEC-002]
+    facts: ["stays"]
+  - id: q18
+    question: What is the unreturned equipment fee for a leased Wi-Fi router?
+    expected_docs: [RB-EQP-009]
+    facts: ["$150"]
+  - id: q19
+    question: What past-due balance range qualifies for a payment arrangement?
+    expected_docs: [RB-BIL-007]
+    facts: ["$50", "$600"]
+  - id: q20
+    question: What happens if a customer misses an installment on a payment plan?
+    expected_docs: [RB-BIL-007]
+    facts: ["dunning"]
+  - id: q21
+    question: Who is the NOC duty manager contact for a SEV1 outage?
+    expected_docs: [RB-ESC-010]
+    facts: ["555-0100"]
+  - id: q22
+    question: How do I escalate a customer who threatens to complain to the state PUC?
+    expected_docs: [RB-ESC-010, RB-BIL-001]
+    facts: ["Regulatory"]
+  - id: q23
+    question: What should the NOC check first when there is a dying-gasp burst across many PONs?
+    expected_docs: [RB-NOC-011]
+    facts: ["power"]
+  - id: q24
+    question: What is the standard PON split ratio in our FTTH design?
+    expected_docs: [DS-NET-001]
+    facts: ["1:32"]
+  - id: q25
+    question: How do GPON and XGS-PON coexist on the same optical distribution network?
+    expected_docs: [DS-NET-001, DS-NET-007]
+    facts: ["wavelength"]
+  - id: q26
+    question: Describe the billing flow from rating to contract accounting.
+    expected_docs: [DS-BIL-002]
+    facts: ["Convergent Charging", "Convergent Invoicing"]
+  - id: q27
+    question: When is a customer suspended in the dunning process?
+    expected_docs: [DS-BIL-002, RB-BIL-007]
+    facts: ["40"]
+  - id: q28
+    question: Where does agent assist get its knowledge article suggestions?
+    expected_docs: [DS-CC-003]
+    facts: ["RAG"]
+  - id: q29
+    question: Which dbt mart holds outage minutes per wire center?
+    expected_docs: [DS-DAT-004]
+    facts: ["mart_network_reliability"]
+  - id: q30
+    question: What SNR margin indicates a copper DSL line problem?
+    expected_docs: [DS-NET-005, RB-TEC-013]
+    facts: ["6 dB"]
+  - id: q31
+    question: What should a field technician do first during storm restoration when a cabinet is on battery?
+    expected_docs: [RB-NOC-015, RB-NOC-011]
+    facts: ["generator"]
+  - id: q32
+    question: Who is the field ops supervisor for wire center RLGHNCXA?
+    expected_docs: [RB-FLD-014]
+    facts: ["Jordan Ellis"]
+  - id: q33
+    question: What wavelengths does XGS-PON use upstream and downstream?
+    expected_docs: [DS-NET-001, DS-NET-007]
+    facts: ["1577", "1270"]
+  - id: q34
+    question: Can I verify a caller with their date of birth before discussing their bill?
+    expected_docs: [POL-PRV-002]
+    facts: ["PIN"]
+  - id: q35
+    question: What are the four things a new front-office agent should do on every billing call?
+    expected_docs: [TRN-FO-001, RB-BIL-001, POL-PRV-002]
+    facts: []
+  - id: q36
+    question: What is the maximum copper loop length in kft for the CU-80 plan?
+    expected_docs: [DS-NET-005, RB-TEC-013]
+    facts: ["5 kft"]
+  - id: q37
+    question: What is the list price and promo of the FB-500 fiber plan?
+    expected_docs: [POL-MKT-003]
+    facts: ["$69"]
+  - id: q38
+    question: What is the format of a DataPlatform invoice number and account number (BAN)?
+    expected_docs: [DS-BIL-002, RB-BIL-001, FAQ-BIL-001]
+    facts: ["yymm", "10-digit"]
+  - id: q39
+    question: Which warehouse table holds payments, late fees and credits for an account?
+    expected_docs: [DS-BIL-002, DS-DAT-004]
+    facts: ["transactions"]
+  - id: q40
+    question: Which dispute category is recorded when a late fee was charged although autopay was on?
+    expected_docs: [RB-BIL-001, DS-BIL-002]
+    facts: ["late_fee_autopay"]
+  - id: q41
+    question: How do bridge taps and retrains affect a copper DSL line?
+    expected_docs: [DS-NET-005, RB-TEC-013]
+    facts: ["SNR margin"]
+  # ── out of scope: the right answer is "I don't know" ──
+  - id: x01
+    question: What is the dress code for the annual holiday party?
+    expected_docs: []
+  - id: x02
+    question: How do I configure BGP route reflectors on the core routers?
+    expected_docs: []
+  - id: x03
+    question: What was DataPlatform's stock price last quarter?
+    expected_docs: []

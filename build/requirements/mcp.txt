@@ -1,0 +1,16 @@
+# MCP server (bsp_mcp) — FastMCP over streamable HTTP. Python 3.12.
+fastmcp>=2.10,<3
+mcp>=1.10
+uvicorn[standard]>=0.29
+starlette>=0.37
+httpx>=0.27
+pyyaml>=6.0
+psycopg2-binary>=2.9
+trino>=0.328              # trino_* tools
+pypdf>=4.0                # sharepoint_read_file: pdf
+python-docx>=1.1          # sharepoint_read_file: docx
+openpyxl>=3.1             # sharepoint_read_file: xlsx
+pandas>=2.0
+# bsp_connectors (Atlan / BigQuery / M365 / Power BI) come from build/connectors (PYTHONPATH)
+# and bring google-cloud-bigquery etc. via build/requirements/connectors.txt.
+playwright>=1.49          # browser_* tools: connect_over_cdp to the desktop Chromium (no bundled browser needed)

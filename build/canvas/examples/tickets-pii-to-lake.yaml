@@ -1,0 +1,38 @@
+# Example: warehouse raw.service_tickets → enrich → PII mask/hash → lake parquet (partitioned by category)
+id: tickets-pii-to-lake
+name: Service tickets → PII-safe lake parquet
+description: Tickets joined to customer contact data, BANs hashed and contact fields masked, written as hive-partitioned parquet.
+example: true
+tags: [warehouse, pii, lake]
+schedule: {cron: "", enabled: false}
+nodes:
+  - id: src
+    type: source.database
+    label: raw.service_tickets
+    position: {x: 60, y: 140}
+    config: {connection: warehouse, schema: raw, table: service_tickets, backend: pyarrow, chunk_size: 50000}
+  - id: join
+    type: transform.join
+    label: + customer contact
+    position: {x: 330, y: 140}
+    config: {join_on: [ban], lookup_table: raw.customers, columns: [customer_name, email, phone, state], how: left}
+  - id: hash
+    type: transform.pii
+    label: Hash BAN
+    position: {x: 600, y: 80}
+    config: {columns: [ban], method: hash}
+  - id: mask
+    type: transform.pii
+    label: Mask contact fields
+    position: {x: 860, y: 140}
+    config: {columns: [customer_name, email, phone], method: mask}
+  - id: dest
+    type: dest.lake
+    label: lake exports/canvas
+    position: {x: 1120, y: 140}
+    config: {folder: exports/canvas, table: service_tickets_masked, format: parquet, partition_by: category, mode: full_refresh}
+edges:
+  - {from: src, to: join}
+  - {from: join, to: hash}
+  - {from: hash, to: mask}
+  - {from: mask, to: dest}

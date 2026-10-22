@@ -1,0 +1,74 @@
+# DataPlatform churn feature store — feature view definitions (system of record).
+#
+# bsp_mlops.featurestore reads this file, materialises each view to the
+# offline store (Postgres `features.fv_<name>_v<version>`), builds
+# point-in-time-correct training sets, and materialises the latest values per
+# customer to the online store (`features.online_features`) that the model
+# gateway reads when a request carries only a BAN (billing account number). The same
+# definitions are exported to a Feast repo (feature_repo/feast/) when Feast
+# is installed.
+#
+# Change a view's features → bump its `version`; old versions stay queryable.
+project: bsp_churn
+entity:
+  name: customer
+  join_key: ban
+  description: A DataPlatform broadband account, keyed by BAN — 10-digit billing account number (3100000008).
+source:
+  table: features.churn_base      # built by bsp_mlops.data.integrate()
+  timestamp: snapshot_month       # features are as of the first day of the month
+feature_views:
+  - name: customer_profile
+    version: 1
+    ttl_days: 400
+    owner: ml-scientist
+    description: Who the customer is and what they buy — technology, plan, tenure, payment profile.
+    features:
+      - {name: technology, dtype: string}
+      - {name: plan_id, dtype: string}
+      - {name: segment, dtype: string}
+      - {name: state, dtype: string}
+      - {name: credit_band, dtype: string}
+      - {name: autopay, dtype: int}
+      - {name: tenure_months, dtype: float}
+      - {name: competitor_fiber_available, dtype: int}
+  - name: billing_behaviour
+    version: 2
+    ttl_days: 62
+    owner: ml-scientist
+    description: Price and payment signals — current charge, price increases, promo roll-off, late payments, billing disputes.
+    features:
+      - {name: disputes_90d, dtype: float}
+      - {name: monthly_charge, dtype: float}
+      - {name: recent_price_increase, dtype: int}
+      - {name: promo_expired, dtype: int}
+      - {name: late_payments_decayed, dtype: float}
+      - {name: charge_x_increase, dtype: float}
+  - name: network_experience
+    version: 2
+    ttl_days: 62
+    owner: ml-scientist
+    description: Plant and service experience — usage, latency, outages, line / optical quality (fiber ONT, copper DSL), dispatches.
+    features:
+      - {name: gb_down, dtype: float}
+      - {name: avg_latency_ms, dtype: float}
+      - {name: outage_minutes, dtype: float}
+      - {name: line_quality_bad, dtype: int}
+      - {name: ont_rx_power_dbm, dtype: float}      # fiber only (NaN on copper → imputed + missing indicator)
+      - {name: ont_los_events, dtype: float}        # fiber only
+      - {name: dsl_snr_margin_db, dtype: float}     # copper only
+      - {name: dsl_retrains, dtype: float}          # copper only
+      - {name: dispatches_90d, dtype: float}
+      - {name: truck_rolls_90d, dtype: float}
+  - name: sentiment
+    version: 2
+    ttl_days: 400
+    owner: ml-scientist
+    description: Voice of the customer — care tickets and calls, latest NPS score (carried forward) and latest survey answer.
+    features:
+      - {name: tickets_month, dtype: float}
+      - {name: tickets_decayed, dtype: float}
+      - {name: calls_30d, dtype: float}
+      - {name: calls_decayed, dtype: float}
+      - {name: nps_last, dtype: float}
+      - {name: last_survey_score, dtype: float}

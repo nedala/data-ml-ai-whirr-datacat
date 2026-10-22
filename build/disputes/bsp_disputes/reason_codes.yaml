@@ -1,0 +1,14 @@
+# Dispute category → SAP BRIM case type / reason code (mock system codes;
+# replace with the customizing of your FI-CA dispute case types — transaction
+# SPRO › Contract Accounting › Dispute Management — before go-live).
+# Categories match raw.disputes.category (bsp_seed DISPUTE_CATEGORIES).
+categories:
+  late_fee_autopay: {label: "Late fee despite autopay",      case_type: FIN1, reason_code: LF01, default_resolution: credit}
+  promo_expired:    {label: "Promotion expired",             case_type: FIN1, reason_code: PR01, default_resolution: credit}
+  price_increase:   {label: "Price increase",                case_type: FIN1, reason_code: PI01, default_resolution: credit}
+  duplicate_charge: {label: "Duplicate charge",              case_type: PAY1, reason_code: DU01, default_resolution: refund}
+  outage_credit:    {label: "Outage / service credit",       case_type: SRV1, reason_code: SC01, default_resolution: credit}
+  equipment_fee:    {label: "Equipment non-return fee",      case_type: FIN1, reason_code: EQ01, default_resolution: waive}
+  final_bill:       {label: "Final bill after cancellation", case_type: FIN1, reason_code: FB01, default_resolution: waive}
+  install_fee:      {label: "Installation fee",              case_type: FIN1, reason_code: IN01, default_resolution: credit}
+  other:            {label: "Other billing dispute",         case_type: FIN1, reason_code: OT01, default_resolution: other}

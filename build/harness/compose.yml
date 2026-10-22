@@ -1,0 +1,74 @@
+# AI harness (LLM gateway + playground + evals) and the optional in-appliance Ollama.
+# Included by the root docker-compose.yml with project_directory: . (paths are repo-root relative).
+services:
+  harness:
+    extends: {file: compose.base.yml, service: bsp-workload}
+    profiles: [ai]
+    command: ["python", "-m", "bsp_harness"]
+    environment:
+      PYTHONPATH: /opt/common:/opt/seed:/opt/connectors:/opt/harness
+      HARNESS_PORT: "8096"
+      HARNESS_CONFIG: /opt/config/ai/providers.yaml
+      HARNESS_DATA_DIR: /data/harness
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+      # vertex | ollama | anthropic | openai_compatible: that provider leads every alias chain
+      LLM_PROVIDER: ${LLM_PROVIDER:-}
+      VERTEX_CLAUDE_REGION: ${VERTEX_CLAUDE_REGION:-us-east5}
+      RAG_URL: http://rag:8101/rag
+      BROWSER_VNC_URL: http://browser:6080
+      # secrets (vault → process env of `docker compose up`; empty = feature off)
+      GCP_SA_JSON: ${GCP_SA_JSON:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      LLM_GATEWAY_TOKEN: ${LLM_GATEWAY_TOKEN:-}
+      MCP_TOKEN: ${MCP_TOKEN:-}
+      # signs "acting as <user>" so M365 tools can use that user's delegated Graph token
+      MCP_DELEGATION_KEY: ${MCP_DELEGATION_KEY:-}
+      PG_PASS: ${PG_PASS:-}
+      # data catalog (bsp_common.catalog): DataHub side stack via the frontend's GMS proxy
+      DATAHUB_TOKEN: ${DATAHUB_TOKEN:-}
+      DATAHUB_GMS_URL: ${DATAHUB_GMS_URL:-http://datahub-frontend:9002/api/gms}
+    volumes:
+      - ./build/harness:/opt/harness:ro
+      - ./config/ai:/opt/config/ai:ro
+      - ${DATA_ROOT:-./data}/harness:/data/harness
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8096/ai/healthz', timeout=3).status == 200 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # Local LLM/VLM runtime (official image). The appliance network is internal
+  # (no internet): `ollama pull` reaches registry.ollama.ai through px-proxy,
+  # which must allow registry.ollama.ai + *.r2.cloudflarestorage.com (model blobs).
+  # Alternatively run Ollama on the host and set OLLAMA_BASE_URL=http://host.docker.internal:11434.
+  ollama:
+    image: ollama/ollama:${OLLAMA_IMAGE_TAG:-0.32.3}
+    profiles: [ollama]
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-10m}
+      OLLAMA_MAX_LOADED_MODELS: ${OLLAMA_MAX_LOADED_MODELS:-2}
+      HTTPS_PROXY: http://px-proxy:3128
+      HTTP_PROXY: http://px-proxy:3128
+      NO_PROXY: localhost,127.0.0.1,harness,ollama
+      SSL_CERT_FILE: /trust/ca-bundle.pem
+    volumes:
+      - ${DATA_ROOT:-./data}/ollama:/root/.ollama
+      - ${DATA_ROOT:-./data}/trust:/trust:ro
+    networks: [appliance-net]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    # NVIDIA GPU (needs nvidia-container-toolkit on the host) — uncomment:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]

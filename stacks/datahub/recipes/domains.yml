@@ -1,0 +1,16 @@
+# Business domains (Billing, Network, Customer Care, Sales) and their
+# steward groups, as metadata change proposals in domains.json.
+pipeline_name: bsp_domains
+source:
+  type: file
+  config:
+    path: /opt/bsp-datahub/recipes/domains.json
+
+# GMS has metadata-service auth ON; the ingest job authenticates with the
+# DataHub system client (secret from the generated secrets file).
+sink:
+  type: datahub-rest
+  config:
+    server: ${DATAHUB_GMS_URL}
+    extra_headers:
+      Authorization: "Basic __datahub_system:${DATAHUB_SYSTEM_CLIENT_SECRET}"

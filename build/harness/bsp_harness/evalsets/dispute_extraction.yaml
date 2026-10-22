@@ -1,0 +1,65 @@
+# Golden set: billing-dispute e-mail → structured case fields (bsp_disputes contract).
+# Scoring: per case, fraction of expected fields matched (strings case/space-insensitive,
+# numbers within 0.01). All data is synthetic; BANs and invoices exist in the seeded
+# warehouse (bsp_seed.build(customers=20000, seed=7)).
+suite: dispute_extraction
+type: extract
+description: Dispute e-mail field extraction (BAN, invoice, amount, reason category)
+default_routes: [extract-default]
+system: |
+  You extract billing-dispute facts from customer e-mails sent to DataPlatform (a US copper DSL and fiber internet provider).
+  Return JSON with exactly these keys: ban (billing account number, 10 digits, or null), invoice_id (format
+  <ban>-<yymm>, e.g. 3100000016-2609, or null), disputed_amount (number in USD or null), reason_category (one of:
+  late_fee_autopay, promo_expired, price_increase, duplicate_charge, outage_credit, equipment_fee, final_bill,
+  install_fee, other).
+schema:
+  type: object
+  properties:
+    ban: {type: [string, "null"]}
+    invoice_id: {type: [string, "null"]}
+    disputed_amount: {type: [number, "null"]}
+    reason_category: {type: string}
+cases:
+  - id: d1
+    input: |
+      Subject: Late fee even though I'm on autopay
+      I am on autopay and you still charged me a $10.00 late fee on invoice 3100008373-2603. BAN 3100008373.
+      Your autopay failed, not me. Remove the fee.
+    expected: {ban: "3100008373", invoice_id: 3100008373-2603, disputed_amount: 10.0, reason_category: late_fee_autopay}
+  - id: d2
+    input: |
+      Subject: promo ended??
+      My Fiber 2 Gig bill jumped this month (invoice 3100000261-2603, account number 3100000261). Nobody told me the
+      promotion was ending. I want the $46.41 difference back.
+    expected: {ban: "3100000261", invoice_id: 3100000261-2603, disputed_amount: 46.41, reason_category: promo_expired}
+  - id: d3
+    input: |
+      Subject: Billed twice
+      Hi, BAN 3100025792 here. Invoice 3100025792-2603 shows the same $60.95 charge two times on my copper internet line.
+      Please refund the duplicate. Thanks, Riley
+    expected: {ban: "3100025792", invoice_id: 3100025792-2603, disputed_amount: 60.95, reason_category: duplicate_charge}
+  - id: d4
+    input: |
+      Subject: Credit for outage
+      Our fiber was down most of a day last week (account 3100038707). I expect a credit of about $2.63 on my next bill.
+    expected: {ban: "3100038707", invoice_id: null, disputed_amount: 2.63, reason_category: outage_credit}
+  - id: d5
+    input: |
+      Hello — I cancelled service but invoice 3100093886-2603 still billed me $13.92 after my final bill.
+      Account 3100093886. Please waive it.
+    expected: {ban: "3100093886", invoice_id: 3100093886-2603, disputed_amount: 13.92, reason_category: final_bill}
+  - id: d6
+    input: |
+      I returned the modem at the store but my bill (3100034518-2603) now has a $40.81 unreturned equipment charge.
+      BAN 3100034518. Remove it please.
+    expected: {ban: "3100034518", invoice_id: 3100034518-2603, disputed_amount: 40.81, reason_category: equipment_fee}
+  - id: d7
+    input: |
+      Subject: price went up again
+      Without any notice my Fiber Gig price went up $5.00 this month. Account 3100001661, invoice 3100001661-2603.
+    expected: {ban: "3100001661", invoice_id: 3100001661-2603, disputed_amount: 5.0, reason_category: price_increase}
+  - id: d8
+    input: |
+      The installer told me installation was free, yet invoice 3100025200-2603 has a $35.68 install charge.
+      BAN 3100025200 — please credit it.
+    expected: {ban: "3100025200", invoice_id: 3100025200-2603, disputed_amount: 35.68, reason_category: install_fee}

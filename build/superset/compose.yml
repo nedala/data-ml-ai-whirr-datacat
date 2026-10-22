@@ -1,0 +1,34 @@
+# Apache Superset — BI dashboards + SQL Lab (profile `bi`, capability `bi`).
+# Runs from the shared workspace image's /opt/venvs/superset venv
+# (build/requirements/superset.txt). Served natively under /superset/
+# (SUPERSET_APP_ROOT) — nginx proxies the path unchanged (routes.d/superset.conf).
+# Secrets (vault → Studio): SUPERSET_ADMIN_PASS, SUPERSET_SECRET_KEY, PG_PASS.
+services:
+  superset:
+    extends: {file: compose.base.yml, service: bsp-workload}
+    profiles: [bi]
+    entrypoint: ["/bin/bash", "/opt/superset-assets/superset.sh"]
+    environment:
+      PG_PASS: ${PG_PASS:-}
+      SUPERSET_ADMIN_PASS: ${SUPERSET_ADMIN_PASS:-}
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:-}
+      SUPERSET_ADMIN_USER: ${SUPERSET_ADMIN_USER:-admin}
+      SUPERSET_APP_ROOT: /superset
+      SUPERSET_HOME: /data/superset
+      SUPERSET_CONFIG_PATH: /opt/superset-assets/superset_config.py
+      SUPERSET_VENV: /opt/venvs/superset
+      SUPERSET_META_DB: superset
+      SUPERSET_WORKERS: ${SUPERSET_WORKERS:-2}
+      SUPERSET_REGISTER_TRINO: ${SUPERSET_REGISTER_TRINO:-auto}
+      UI_KIT_DIR: /opt/ui-kit
+    volumes:
+      - ./build/superset:/opt/superset-assets:ro
+      - ${DATA_ROOT:-./data}/superset:/data/superset
+    expose: ["8088"]
+    healthcheck:
+      test: ["CMD", "/opt/venvs/superset/bin/python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8088/superset/healthz', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s

@@ -1,0 +1,36 @@
+# Which Trino catalogs / schemas `make ingest RECIPE=trino` crawls into DataHub
+# (and the default scope of the appliance's scoped refresh). Schema + columns
+# only — profiling, usage and lineage-from-queries stay off for every catalog.
+#
+#   allow / deny: regexes on the schema name (BigQuery dataset, lower case)
+#   lineage:      link Trino tables to the underlying platform's datasets
+#                 (only where that platform is ingested too)
+#   bulk:         read metadata in a few bulk queries (scripts/trino_bulk.py)
+#                 instead of DataHub's per-table trino source — default for
+#                 bq_* catalogs, where each per-table call is a BigQuery API
+#                 round trip (hours for a few hundred tables vs. minutes).
+#                 Bulk runs do not remove tables that later disappear.
+#   table_comments: bulk only — also read table descriptions (default off for
+#                 bq_*: slow, and regional datasets make it fail)
+#
+# The two TSA projects hold ~19k (da-tsa-dv) and ~79k (da-tsa-pr) tables,
+# mostly conversion snapshots, backups and mock runs: only the curated
+# reporting views (dp_base_*_v), control / reporting datasets and the ERP
+# extract are crawled. Widen a list here (or refresh one schema from the
+# harness) when a dataset is needed — each table costs one BigQuery
+# metadata call, no data is read.
+catalogs:
+  warehouse:      {lineage: {connector_database: bsp_edw}}
+  billing_oracle: {allow: ["^billing$"]}     # not the Oracle system schemas
+  care_mssql:     {allow: ["^dbo$"]}         # not the SQL Server role schemas
+  bq_rpt_enterprise_dv: {}          # 55 datasets / ~680 tables
+  bq_rpt_vco_cn_opq1: {}            # 19 / ~210
+  bq_rpt_vco_cn_pr_ed3: {}          # 8 / ~160
+  bq_tsa_dv:                        # 155 / ~18.9k → ~500
+    allow:
+      - "^dp_base_(?!lumen_ens_curef).*_v$"
+      - "^(etl_control|dp_int_control_center|dwstgora|bss_conv_dev_v|tsa_dq_poc|recon_data)$"
+  bq_tsa_pr:                        # 111 / ~78.9k → ~560
+    allow:
+      - "^dp_base_(?!lumen_ens_curef).*_v$"
+      - "^(etl_control|bss_conv_reports|bss_conv_ams|d_sap_ecc|t2_cabs_reporting|dp_cur_fw_bm)$"

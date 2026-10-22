@@ -1,0 +1,21 @@
+# Test fixture: stands in for the component fragments the root compose file includes.
+services:
+  superset:
+    extends: {file: compose.base.yml, service: bsp-workload}
+    profiles: ["bi"]
+    environment:
+      PG_PASS: ${PG_PASS:-}
+      SUPERSET_ADMIN_PASS: ${SUPERSET_ADMIN_PASS:-}
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:-}
+  connectors:
+    extends: {file: compose.base.yml, service: bsp-workload}
+    profiles: ["connectors"]
+    environment:
+      GCP_SA_JSON: ${GCP_SA_JSON:-}
+      M365_CLIENT_SECRET: ${M365_CLIENT_SECRET:-}
+      ATLAN_API_TOKEN: ${ATLAN_API_TOKEN:-}
+  trino:
+    image: trinodb/trino:476
+    profiles: ["trino"]
+    environment:
+      GCP_SA_JSON: ${GCP_SA_JSON:-}

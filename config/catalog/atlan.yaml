@@ -1,0 +1,32 @@
+# Atlan ↔ appliance configuration.
+#
+# `base_url` is the DataPlatform Atlan tenant. `ATLAN_BASE_URL` overrides it.
+# `bigquery.default/connections/projects` tell the MCP + notebooks which
+# Studio cloud identity and execution project to use for a BigQuery table that
+# came from Atlan. The identity value is a Studio identity name or id; the
+# signed-in caller must be on that identity's access list.
+base_url: https://atlan.example.com
+
+bigquery:
+  default:
+    identity: data.analyst@example.com
+    # Jobs / billing project. The DATA project comes from the Atlan asset
+    # (databaseName / the BigQuery project in its qualifiedName).
+    exec_project: example-project
+
+  # Per-Atlan-connection overrides. Preferred when you know the connection QN.
+  connections: {}
+  # Example:
+  # connections:
+  #   default/bigquery/1712345678:
+  #     project: example-project
+  #     identity: data.analyst@example.com
+  #     exec_project: example-project
+
+  # Per-data-project overrides.
+  projects: {}
+  # Example:
+  # projects:
+  #   example-project:
+  #     identity: data.analyst@example.com
+  #     exec_project: example-project

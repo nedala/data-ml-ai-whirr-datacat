@@ -1,0 +1,28 @@
+{
+	"folders": {},
+	"connections": {
+		"postgres-jdbc-appliance-warehouse": {
+			"provider": "postgresql",
+			"driver": "postgres-jdbc",
+			"name": "Appliance warehouse (bsp_edw)",
+			"save-password": false,
+			"show-system-objects": false,
+			"read-only": false,
+			"configuration": {
+				"host": "postgres",
+				"port": "5432",
+				"database": "bsp_edw",
+				"url": "jdbc:postgresql://postgres:5432/bsp_edw",
+				"configurationType": "MANUAL",
+				"home": "",
+				"type": "dev",
+				"user": "analyst",
+				"provider-properties": {
+					"@dbeaver-show-non-default-db@": "false",
+					"@dbeaver-show-template-db@": "false"
+				},
+				"auth-model": "native"
+			}
+		}
+	}
+}

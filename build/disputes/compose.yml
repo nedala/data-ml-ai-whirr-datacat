@@ -1,0 +1,53 @@
+# Dispute Desk — shared billing-disputes inbox → structured case → SAP BRIM
+# (profile `disputes`, capability `disputes`, route /disputes/, port 8099).
+# Contract: plan/architecture.md §1/§3/§4. Included by the root
+# docker-compose.yml with project_directory: . (paths are repo-root relative).
+#
+# Playwright mode drives the dispute UI in VISIBLE windows of the `browser`
+# service's Chromium over CDP (BROWSER_CDP_URL, watch at /browser/); when the
+# browser service is not running it falls back to a local headless Chromium
+# (needs `playwright install chromium` in the image).
+services:
+  disputes:
+    extends: {file: compose.base.yml, service: bsp-workload}
+    profiles: [disputes]
+    command: ["python", "-m", "uvicorn", "bsp_disputes.app:app", "--host", "0.0.0.0", "--port", "8099",
+              "--proxy-headers", "--forwarded-allow-ips", "*"]
+    working_dir: /opt/disputes
+    environment:
+      PYTHONPATH: /opt/common:/opt/seed:/opt/connectors:/opt/disputes
+      UI_KIT_DIR: /opt/ui-kit
+      CONNECTORS_FIXTURES_DIR: /opt/connectors/fixtures
+      CONNECTORS_STATE_DIR: /data/connectors   # shared mock state (mailbox read flags / moves)
+      DISPUTES_DATA_DIR: /data/disputes
+      DISPUTES_POLL_SECONDS: ${DISPUTES_POLL_SECONDS:-300}
+      DISPUTES_AUTO_SUBMIT: ${DISPUTES_AUTO_SUBMIT:-false}
+      DISPUTES_AUTO_APPROVE_THRESHOLD: ${DISPUTES_AUTO_APPROVE_THRESHOLD:-0.85}
+      DISPUTES_SLA_HOURS: ${DISPUTES_SLA_HOURS:-48}
+      DISPUTES_USE_LLM: ${DISPUTES_USE_LLM:-auto}
+      SAP_BRIM_CONCURRENCY: ${SAP_BRIM_CONCURRENCY:-4}
+      SAP_BRIM_SLOWMO_MS: ${SAP_BRIM_SLOWMO_MS:-250}
+      SAP_BRIM_HIGHLIGHT: ${SAP_BRIM_HIGHLIGHT:-true}
+      SAP_BRIM_KEEP_WINDOWS: ${SAP_BRIM_KEEP_WINDOWS:-false}
+      SAP_BRIM_SCREENSHOT_DIR: /data/disputes/screenshots
+      SAP_BRIM_UI_URL: ${SAP_BRIM_UI_URL:-}
+      SAP_BRIM_CLIENT: ${SAP_BRIM_CLIENT:-}
+      BROWSER_CDP_URL: ${BROWSER_CDP_URL:-http://browser:9223}
+      BROWSER_SCREEN: ${BROWSER_SCREEN:-1920x1080}
+      PLAYWRIGHT_BROWSERS_PATH: ${PLAYWRIGHT_BROWSERS_PATH:-/opt/ms-playwright}
+      # secrets (Studio injects them from the vault; empty = mock)
+      PG_PASS: ${PG_PASS:-}
+      M365_CLIENT_SECRET: ${M365_CLIENT_SECRET:-}
+      SAP_BRIM_USER: ${SAP_BRIM_USER:-}
+      SAP_BRIM_PASSWORD: ${SAP_BRIM_PASSWORD:-}
+    volumes:
+      - ./build/disputes:/opt/disputes:ro
+      - ${DATA_ROOT:-./data}/disputes:/data/disputes
+      - ${DATA_ROOT:-./data}/connectors:/data/connectors
+    expose: ["8099"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8099/disputes/healthz', timeout=3).status == 200 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s

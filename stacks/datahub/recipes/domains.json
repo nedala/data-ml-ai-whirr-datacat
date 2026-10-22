@@ -1,0 +1,221 @@
+[
+  {
+    "entityType": "corpGroup",
+    "entityUrn": "urn:li:corpGroup:data-governance",
+    "changeType": "UPSERT",
+    "aspectName": "corpGroupInfo",
+    "aspect": {
+      "json": {
+        "displayName": "Data Governance",
+        "description": "Owns the business glossary, domain model and stewardship process.",
+        "admins": [],
+        "members": [],
+        "groups": []
+      }
+    }
+  },
+  {
+    "entityType": "corpGroup",
+    "entityUrn": "urn:li:corpGroup:billing-data-stewards",
+    "changeType": "UPSERT",
+    "aspectName": "corpGroupInfo",
+    "aspect": {
+      "json": {
+        "displayName": "Billing Data Stewards",
+        "description": "Stewards for the Billing domain.",
+        "admins": [],
+        "members": [],
+        "groups": []
+      }
+    }
+  },
+  {
+    "entityType": "corpGroup",
+    "entityUrn": "urn:li:corpGroup:network-data-stewards",
+    "changeType": "UPSERT",
+    "aspectName": "corpGroupInfo",
+    "aspect": {
+      "json": {
+        "displayName": "Network Data Stewards",
+        "description": "Stewards for the Network domain.",
+        "admins": [],
+        "members": [],
+        "groups": []
+      }
+    }
+  },
+  {
+    "entityType": "corpGroup",
+    "entityUrn": "urn:li:corpGroup:care-data-stewards",
+    "changeType": "UPSERT",
+    "aspectName": "corpGroupInfo",
+    "aspect": {
+      "json": {
+        "displayName": "Customer Care Data Stewards",
+        "description": "Stewards for the Customer Care domain.",
+        "admins": [],
+        "members": [],
+        "groups": []
+      }
+    }
+  },
+  {
+    "entityType": "corpGroup",
+    "entityUrn": "urn:li:corpGroup:sales-data-stewards",
+    "changeType": "UPSERT",
+    "aspectName": "corpGroupInfo",
+    "aspect": {
+      "json": {
+        "displayName": "Sales Data Stewards",
+        "description": "Stewards for the Sales domain.",
+        "admins": [],
+        "members": [],
+        "groups": []
+      }
+    }
+  },
+  {
+    "entityType": "domain",
+    "entityUrn": "urn:li:domain:billing",
+    "changeType": "UPSERT",
+    "aspectName": "domainProperties",
+    "aspect": {
+      "json": {
+        "name": "Billing",
+        "description": "Invoicing, the transaction ledger (payments, late fees, credits), plans and subscriptions; revenue and ARPU reporting; billing disputes."
+      }
+    }
+  },
+  {
+    "entityType": "domain",
+    "entityUrn": "urn:li:domain:billing",
+    "changeType": "UPSERT",
+    "aspectName": "ownership",
+    "aspect": {
+      "json": {
+        "owners": [
+          {
+            "owner": "urn:li:corpGroup:billing-data-stewards",
+            "type": "BUSINESS_OWNER"
+          },
+          {
+            "owner": "urn:li:corpGroup:data-governance",
+            "type": "DATA_STEWARD"
+          }
+        ],
+        "lastModified": {
+          "time": 0,
+          "actor": "urn:li:corpuser:datahub"
+        }
+      }
+    }
+  },
+  {
+    "entityType": "domain",
+    "entityUrn": "urn:li:domain:network",
+    "changeType": "UPSERT",
+    "aspectName": "domainProperties",
+    "aspect": {
+      "json": {
+        "name": "Network",
+        "description": "Access network (copper DSL and fiber FTTH only), CLLI wire centers, service locations, usage, ONT optics and DSL line quality, network events and outages, wire-center reliability and fiber penetration."
+      }
+    }
+  },
+  {
+    "entityType": "domain",
+    "entityUrn": "urn:li:domain:network",
+    "changeType": "UPSERT",
+    "aspectName": "ownership",
+    "aspect": {
+      "json": {
+        "owners": [
+          {
+            "owner": "urn:li:corpGroup:network-data-stewards",
+            "type": "BUSINESS_OWNER"
+          },
+          {
+            "owner": "urn:li:corpGroup:data-governance",
+            "type": "DATA_STEWARD"
+          }
+        ],
+        "lastModified": {
+          "time": 0,
+          "actor": "urn:li:corpuser:datahub"
+        }
+      }
+    }
+  },
+  {
+    "entityType": "domain",
+    "entityUrn": "urn:li:domain:customer-care",
+    "changeType": "UPSERT",
+    "aspectName": "domainProperties",
+    "aspect": {
+      "json": {
+        "name": "Customer Care",
+        "description": "Service tickets, field dispatches and repeat dispatches, contact-center calls, first contact resolution, NPS surveys and customer sentiment."
+      }
+    }
+  },
+  {
+    "entityType": "domain",
+    "entityUrn": "urn:li:domain:customer-care",
+    "changeType": "UPSERT",
+    "aspectName": "ownership",
+    "aspect": {
+      "json": {
+        "owners": [
+          {
+            "owner": "urn:li:corpGroup:care-data-stewards",
+            "type": "BUSINESS_OWNER"
+          },
+          {
+            "owner": "urn:li:corpGroup:data-governance",
+            "type": "DATA_STEWARD"
+          }
+        ],
+        "lastModified": {
+          "time": 0,
+          "actor": "urn:li:corpuser:datahub"
+        }
+      }
+    }
+  },
+  {
+    "entityType": "domain",
+    "entityUrn": "urn:li:domain:sales",
+    "changeType": "UPSERT",
+    "aspectName": "domainProperties",
+    "aspect": {
+      "json": {
+        "name": "Sales",
+        "description": "Customers and accounts, acquisition, base management, churn and retention features."
+      }
+    }
+  },
+  {
+    "entityType": "domain",
+    "entityUrn": "urn:li:domain:sales",
+    "changeType": "UPSERT",
+    "aspectName": "ownership",
+    "aspect": {
+      "json": {
+        "owners": [
+          {
+            "owner": "urn:li:corpGroup:sales-data-stewards",
+            "type": "BUSINESS_OWNER"
+          },
+          {
+            "owner": "urn:li:corpGroup:data-governance",
+            "type": "DATA_STEWARD"
+          }
+        ],
+        "lastModified": {
+          "time": 0,
+          "actor": "urn:li:corpuser:datahub"
+        }
+      }
+    }
+  }
+]

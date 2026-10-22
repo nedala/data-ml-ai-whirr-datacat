@@ -1,0 +1,61 @@
+# Trino — federated SQL (profile `trino`, capability `trino`). Official image,
+# runs as its built-in non-root user `trino` (uid 1000), internal network only.
+# Catalogs (rendered at start by build/trino/entrypoint.sh):
+#   warehouse  PostgreSQL connector → postgres:5432/bsp_edw (PG_PASS)
+#   bigquery   only when the "Trino · BigQuery catalog" identity has no data-projects list (single project)
+#   bq_<proj>  one per data project in GCP_TRINO_DATA_PROJECTS (e.g. bq_tsa_dv for da-tsa-dv);
+#              a service-account key goes in bigquery.credentials-key, a personal
+#              (authorized_user) sign-in becomes Application Default Credentials
+#   tpch       generated demo data
+#   lake       Hive tables over ${DATA_ROOT}/lake (file metastore)
+#   billing_oracle / care_mssql  demo Oracle billing and SQL Server care systems (when Demo sources runs)
+# UI: https://<facade>/trino/ui/ (routes.d/trino.conf); in-appliance clients
+# use http://trino:8080 (TRINO_HOST/TRINO_PORT in compose.base.yml).
+services:
+  trino:
+    image: ${TRINO_IMAGE:-trinodb/trino:483}
+    profiles: [trino]
+    user: "1000:1000"
+    entrypoint: ["/bin/bash", "/etc/trino-bsp/entrypoint.sh"]
+    environment:
+      PG_HOST: postgres
+      PG_PORT: "5432"
+      PG_DB: bsp_edw
+      PG_USER: analyst
+      PG_PASS: ${PG_PASS:-}
+      GCP_PROJECT_ID: ${GCP_PROJECT_ID:-to-be-named-soon}
+      GCP_SA_JSON: ${GCP_SA_JSON:-}
+      GCP_TRINO_JSON: ${GCP_TRINO_JSON:-}      # "Trino · BigQuery catalog" identity (Studio → Cloud identities); wins over GCP_SA_JSON
+      GCP_TRINO_PROJECT: ${GCP_TRINO_PROJECT:-}            # bigquery.project-id (data)
+      GCP_TRINO_EXEC_PROJECT: ${GCP_TRINO_EXEC_PROJECT:-}  # bigquery.parent-project-id (jobs / billing)
+      GCP_TRINO_DATA_PROJECTS: ${GCP_TRINO_DATA_PROJECTS:-}  # one bq_<project> catalog each (comma list)
+      TRINO_QUERY_MAX_EXECUTION_TIME: ${TRINO_QUERY_MAX_EXECUTION_TIME:-15m}
+      # parent project for BigQuery jobs + Storage Read sessions: empty = GCP_TRINO_EXEC_PROJECT,
+      # `data` = each catalog's own project, or a project id (moves billing there)
+      TRINO_BQ_READ_PARENT: ${TRINO_BQ_READ_PARENT:-}
+      # Demo source systems (Demo sources capability): federated as billing_oracle / care_mssql
+      BILLING_ORA_PASSWORD: ${BILLING_ORA_PASSWORD:-}
+      CARE_MSSQL_PASSWORD: ${CARE_MSSQL_PASSWORD:-}
+      USER_HANDLE: ${USER_HANDLE:-analyst}
+      TRINO_QUERY_MAX_MEMORY: ${TRINO_QUERY_MAX_MEMORY:-2GB}
+      TRINO_QUERY_MAX_MEMORY_PER_NODE: ${TRINO_QUERY_MAX_MEMORY_PER_NODE:-1GB}
+      # BigQuery API calls leave through the allowlisted egress proxy
+      HTTP_PROXY: http://px-proxy:3128
+      HTTPS_PROXY: http://px-proxy:3128
+      NO_PROXY: "localhost,127.0.0.1,postgres,trino,.internal"
+    volumes:
+      - ./build/trino/etc:/etc/trino:ro
+      - ./build/trino/catalog:/etc/trino-bsp/catalog:ro
+      - ./build/trino/entrypoint.sh:/etc/trino-bsp/entrypoint.sh:ro
+      - ${DATA_ROOT:-./data}/lake:/data/lake
+      - ${DATA_ROOT:-./data}/trust:/trust:ro
+    expose: ["8080"]
+    mem_limit: ${TRINO_MEM_LIMIT:-4g}
+    networks: [appliance-net]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/v1/info"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 60s

@@ -1,0 +1,12 @@
+# CCAI call-log tagging service (bsp_ccai) — Python 3.12. No hard pins.
+fastapi>=0.110
+uvicorn[standard]>=0.27
+httpx>=0.26
+psycopg2-binary>=2.9
+pyyaml>=6
+numpy>=1.26
+pandas>=2.1
+scikit-learn>=1.4       # offline tagger: TF-IDF + logistic regression / nearest centroid
+openpyxl>=3.1           # Excel export
+pyarrow>=15             # Parquet export
+rank-bm25>=0.2          # optional: BM25 candidate retrieval (TF-IDF used when absent)

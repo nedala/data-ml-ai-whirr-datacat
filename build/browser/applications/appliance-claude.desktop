@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Claude Code
+Comment=Claude Code in a terminal on your work folder
+Exec=appliance-claude
+Icon=/usr/share/appliance/icons/claude-code.svg
+Categories=Development;

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MLOps Control Tower · DataPlatform</title>
+  <link rel="icon" href="/mlops/ui-kit/brand/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/mlops/ui-kit/bsp.css">
+  <link rel="stylesheet" href="/mlops/static/tower.css">
+  <link rel="stylesheet" href="/mlops/static/journey.css">
+</head>
+<body>
+  <div class="bsp-app">
+    <header class="bsp-topbar">
+      <div class="bsp-brand"><span class="mark"></span> MLOps Control Tower <span class="sub">· churn · bsp_churn</span></div>
+      <div class="spacer"></div>
+      <span id="top-status" class="row"></span>
+      <a class="btn ghost sm" href="/mlflow/" target="_blank" rel="noopener">MLflow</a>
+      <a class="btn ghost sm" href="/serve/docs" target="_blank" rel="noopener">Gateway API</a>
+      <a class="btn ghost sm" href="/studio/">Studio</a>
+    </header>
+    <nav class="bsp-sidebar">
+      <div class="bsp-nav">
+        <div class="bsp-nav-group eyebrow">Lifecycle</div>
+        <a href="#journey" data-page="journey">Model journey</a>
+        <a href="#overview" data-page="overview">Overview</a>
+        <a href="#leaderboard" data-page="leaderboard">Leaderboard</a>
+        <a href="#registry" data-page="registry">Registry &amp; Deployments</a>
+        <a href="#release" data-page="release">Release &amp; approvals</a>
+        <div class="bsp-nav-group eyebrow">Monitor</div>
+        <a href="#telemetry" data-page="telemetry">Telemetry</a>
+        <a href="#drift" data-page="drift">Drift</a>
+        <a href="#retrains" data-page="retrains">Retrains</a>
+        <a href="#outcomes" data-page="outcomes">Outcomes &amp; experiments</a>
+        <a href="#slo" data-page="slo">SLO, access &amp; alerts</a>
+        <div class="bsp-nav-group eyebrow">Data &amp; artifacts</div>
+        <a href="#features" data-page="features">Feature store</a>
+        <a href="#scores" data-page="scores">Scores dataset</a>
+        <a href="#frozen" data-page="frozen">Frozen &amp; export</a>
+        <div class="bsp-nav-group eyebrow">Teach</div>
+        <a href="#teach" data-page="teach">Capability evidence</a>
+      </div>
+    </nav>
+    <main class="bsp-main" id="main"></main>
+  </div>
+  <script src="/mlops/ui-kit/bsp.js"></script>
+  <script src="/mlops/static/charts.js"></script>
+  <script src="/mlops/static/journey.js"></script>
+  <script src="/mlops/static/release.js"></script>
+  <script src="/mlops/static/tower.js"></script>
+</body>
+</html>

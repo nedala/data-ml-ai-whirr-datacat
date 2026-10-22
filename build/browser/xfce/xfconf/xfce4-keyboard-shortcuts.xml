@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Appliance shortcuts. Commands are grabbed by xfsettingsd, window keys by
+     xfwm4 (one key per window action: a second key for the same action is
+     ignored, so maximise is Super+Up only). No lock / log-out keys (there is
+     no session to lock or leave).
+     Lines for apps missing from a build are removed at image build time. -->
+<channel name="xfce4-keyboard-shortcuts" version="1.0">
+  <property name="commands" type="empty">
+    <property name="default" type="empty">
+      <property name="&lt;Super&gt;d" type="string" value="appliance-restore-windows"/>
+      <property name="&lt;Primary&gt;&lt;Alt&gt;r" type="string" value="appliance-restore-windows"/>
+      <property name="&lt;Primary&gt;&lt;Alt&gt;t" type="string" value="x-terminal-emulator"/>
+      <property name="&lt;Primary&gt;&lt;Alt&gt;f" type="string" value="appliance-files"/>
+      <property name="&lt;Primary&gt;&lt;Alt&gt;d" type="string" value="appliance-dbeaver"/>
+      <property name="&lt;Primary&gt;&lt;Alt&gt;c" type="string" value="appliance-vscode"/>
+      <property name="&lt;Primary&gt;&lt;Alt&gt;b" type="string" value="appliance-browser-window"/>
+      <property name="&lt;Alt&gt;F1" type="string" value="xfce4-popup-whiskermenu"/>
+      <property name="&lt;Primary&gt;Escape" type="string" value="xfce4-popup-whiskermenu"/>
+    </property>
+    <property name="custom" type="empty">
+      <property name="override" type="bool" value="true"/>
+      <property name="&lt;Super&gt;d" type="string" value="appliance-restore-windows"/>
+      <property name="&lt;Primary&gt;&lt;Alt&gt;r" type="string" value="appliance-restore-windows"/>
+      <property name="&lt;Primary&gt;&lt;Alt&gt;t" type="string" value="x-terminal-emulator"/>
+      <property name="&lt;Primary&gt;&lt;Alt&gt;f" type="string" value="appliance-files"/>
+      <property name="&lt;Primary&gt;&lt;Alt&gt;d" type="string" value="appliance-dbeaver"/>
+      <property name="&lt;Primary&gt;&lt;Alt&gt;c" type="string" value="appliance-vscode"/>
+      <property name="&lt;Primary&gt;&lt;Alt&gt;b" type="string" value="appliance-browser-window"/>
+      <property name="&lt;Alt&gt;F1" type="string" value="xfce4-popup-whiskermenu"/>
+      <property name="&lt;Primary&gt;Escape" type="string" value="xfce4-popup-whiskermenu"/>
+    </property>
+  </property>
+  <property name="xfwm4" type="empty">
+    <property name="default" type="empty">
+      <property name="Escape" type="string" value="cancel_key"/>
+      <property name="Left" type="string" value="left_key"/>
+      <property name="Right" type="string" value="right_key"/>
+      <property name="Up" type="string" value="up_key"/>
+      <property name="Down" type="string" value="down_key"/>
+      <property name="&lt;Alt&gt;Tab" type="string" value="cycle_windows_key"/>
+      <property name="&lt;Alt&gt;&lt;Shift&gt;Tab" type="string" value="cycle_reverse_windows_key"/>
+      <property name="&lt;Alt&gt;F4" type="string" value="close_window_key"/>
+      <property name="&lt;Alt&gt;F7" type="string" value="move_window_key"/>
+      <property name="&lt;Alt&gt;F8" type="string" value="resize_window_key"/>
+      <property name="&lt;Alt&gt;F9" type="string" value="hide_window_key"/>
+      <property name="&lt;Alt&gt;F11" type="string" value="fullscreen_key"/>
+      <property name="&lt;Alt&gt;space" type="string" value="popup_menu_key"/>
+      <property name="&lt;Super&gt;Up" type="string" value="maximize_window_key"/>
+      <property name="&lt;Super&gt;Left" type="string" value="tile_left_key"/>
+      <property name="&lt;Super&gt;Right" type="string" value="tile_right_key"/>
+      <property name="&lt;Shift&gt;&lt;Alt&gt;Page_Up" type="string" value="raise_window_key"/>
+      <property name="&lt;Shift&gt;&lt;Alt&gt;Page_Down" type="string" value="lower_window_key"/>
+    </property>
+    <property name="custom" type="empty">
+      <property name="override" type="bool" value="true"/>
+      <property name="Escape" type="string" value="cancel_key"/>
+      <property name="Left" type="string" value="left_key"/>
+      <property name="Right" type="string" value="right_key"/>
+      <property name="Up" type="string" value="up_key"/>
+      <property name="Down" type="string" value="down_key"/>
+      <property name="&lt;Alt&gt;Tab" type="string" value="cycle_windows_key"/>
+      <property name="&lt;Alt&gt;&lt;Shift&gt;Tab" type="string" value="cycle_reverse_windows_key"/>
+      <property name="&lt;Alt&gt;F4" type="string" value="close_window_key"/>
+      <property name="&lt;Alt&gt;F7" type="string" value="move_window_key"/>
+      <property name="&lt;Alt&gt;F8" type="string" value="resize_window_key"/>
+      <property name="&lt;Alt&gt;F9" type="string" value="hide_window_key"/>
+      <property name="&lt;Alt&gt;F11" type="string" value="fullscreen_key"/>
+      <property name="&lt;Alt&gt;space" type="string" value="popup_menu_key"/>
+      <property name="&lt;Super&gt;Up" type="string" value="maximize_window_key"/>
+      <property name="&lt;Super&gt;Left" type="string" value="tile_left_key"/>
+      <property name="&lt;Super&gt;Right" type="string" value="tile_right_key"/>
+      <property name="&lt;Shift&gt;&lt;Alt&gt;Page_Up" type="string" value="raise_window_key"/>
+      <property name="&lt;Shift&gt;&lt;Alt&gt;Page_Down" type="string" value="lower_window_key"/>
+    </property>
+  </property>
+</channel>

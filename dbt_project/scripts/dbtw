@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# dbt wrapper for the DataPlatform appliances.
+#   * runs dbt with this project's profiles.yml (unless DBT_PROFILES_DIR is set)
+#   * GCP_SA_JSON may be raw JSON or base64 (Studio accepts both); dbt's Jinja
+#     cannot base64-decode, so a base64 key is decoded here into the process
+#     environment (DBT_GCP_SA_JSON) — never written to disk.
+#
+#   scripts/dbtw build                    # postgres (default)
+#   scripts/dbtw build --target bigquery
+#   DBT_TARGET=trino scripts/dbtw run --select marts
+set -euo pipefail
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+export DBT_PROFILES_DIR="${DBT_PROFILES_DIR:-$here}"
+export DBT_PROJECT_DIR="${DBT_PROJECT_DIR:-$here}"
+# BigQuery credential: the "BigQuery · write" cloud identity (Studio → Cloud
+# identities), then BigQuery · read, then GCP_SA_JSON (service_account or
+# authorized_user JSON; profiles.yml picks the dbt method from its type).
+gcp_src="${GCP_BQ_WRITE_JSON:-${GCP_BQ_JSON:-${GCP_SA_JSON:-}}}"
+if [[ -n "$gcp_src" && -z "${DBT_GCP_SA_JSON:-}" ]]; then
+  first="$(printf '%s' "$gcp_src" | tr -d '[:space:]' | cut -c1)"
+  if [[ "$first" != "{" ]]; then
+    DBT_GCP_SA_JSON="$(printf '%s' "$gcp_src" | base64 -d 2>/dev/null)" \
+      || { echo "dbtw: the BigQuery credential is neither JSON nor base64" >&2; exit 2; }
+  else
+    DBT_GCP_SA_JSON="$gcp_src"
+  fi
+  export DBT_GCP_SA_JSON
+fi
+unset gcp_src
+exec dbt "$@"

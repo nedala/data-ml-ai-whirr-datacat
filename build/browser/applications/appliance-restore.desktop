@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Restore all windows
+Exec=appliance-restore-windows
+Icon=view-restore
+Comment=Un-minimise and raise every window
+Categories=Utility;

@@ -1,0 +1,94 @@
+version: 2
+
+exposures:
+  - name: superset_executive
+    label: Executive overview (Superset)
+    type: dashboard
+    maturity: high
+    url: /superset/superset/dashboard/bsp-executive/
+    description: Revenue, ARPU, subscribers by technology and churn-rate trend.
+    depends_on:
+      - ref('fct_revenue_monthly')
+      - ref('mart_arpu_by_plan')
+    owner: {name: Data Professional appliance, email: data-platform@example.net}
+
+  - name: superset_fiber_penetration
+    label: Fiber penetration & upgrade opportunity (Superset)
+    type: dashboard
+    maturity: high
+    url: /superset/superset/dashboard/bsp-fiber-penetration/
+    description: Fiber passings, take rate and copper → fiber upgrade opportunity by state and CLLI wire center.
+    depends_on:
+      - ref('mart_fiber_penetration')
+    owner: {name: Data Professional appliance, email: data-platform@example.net}
+
+  - name: superset_network_reliability
+    label: Network reliability & servicing (Superset)
+    type: dashboard
+    maturity: high
+    url: /superset/superset/dashboard/bsp-network-reliability/
+    description: Outage minutes, tickets, dispatches and first-contact resolution by CLLI.
+    depends_on:
+      - ref('mart_network_reliability')
+      - ref('fct_service_ticket')
+    owner: {name: Data Professional appliance, email: data-platform@example.net}
+
+  - name: superset_customer_sentiment
+    label: Customer sentiment (Superset)
+    type: dashboard
+    maturity: high
+    url: /superset/superset/dashboard/bsp-customer-sentiment/
+    description: NPS trend by technology and verbatim themes.
+    depends_on:
+      - ref('mart_customer_sentiment')
+    owner: {name: Data Professional appliance, email: data-platform@example.net}
+
+  - name: superset_billing_collections
+    label: Billing & collections (Superset)
+    type: dashboard
+    maturity: high
+    url: /superset/superset/dashboard/bsp-billing-collections/
+    description: Late payments, days to pay, collections, ledger credits and billing disputes.
+    depends_on:
+      - ref('fct_invoice')
+      - ref('fct_transaction')
+      - ref('fct_dispute')
+      - ref('mart_billing_disputes')
+    owner: {name: Data Professional appliance, email: data-platform@example.net}
+
+  - name: superset_field_ops
+    label: Field Ops & Plant Quality (Superset)
+    type: dashboard
+    maturity: high
+    url: /superset/superset/dashboard/bsp-field-ops/
+    description: Dispatches, repeat dispatch rate, causes, ONT rx power distribution, DSL SNR by CLLI and worst wire centers.
+    depends_on:
+      - ref('fct_dispatch')
+      - ref('fct_plant_quality_monthly')
+      - ref('mart_network_reliability')
+    owner: {name: Data Professional appliance, email: data-platform@example.net}
+
+  - name: superset_contact_center
+    label: Contact Center (Superset)
+    type: dashboard
+    maturity: high
+    url: /superset/superset/dashboard/bsp-contact-center/
+    description: Calls by queue and reason, repeat-call rate, average handle time and sentiment.
+    depends_on:
+      - ref('mart_contact_center')
+      - ref('fct_customer_call')
+    owner: {name: Data Professional appliance, email: data-platform@example.net}
+
+  - name: churn_model
+    label: Churn propensity model (MLflow registry `bsp_churn`)
+    type: ml
+    maturity: medium
+    url: /mlflow/
+    description: >
+      Gradient-boosted churn classifier trained on mart_churn_features
+      (label_complete = true) and served by the model gateway; scores land in
+      mlops.scored_customers.
+    depends_on:
+      - ref('mart_churn_features')
+      - ref('dim_customer')
+    owner: {name: ML Scientist appliance, email: ml-platform@example.net}

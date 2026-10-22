@@ -1,0 +1,33 @@
+# Apache Superset — installed into its OWN venv /opt/venvs/superset by the
+# workspace image build (Superset pins Flask/SQLAlchemy/pandas tightly, so it
+# never shares a resolution with the notebook/dbt stack).
+#
+#   python -m venv /opt/venvs/superset
+#   /opt/venvs/superset/bin/pip install -r build/requirements/superset.txt
+#
+# 6.x is required for SUPERSET_APP_ROOT (native hosting under /superset/ —
+# Superset 4.1/5.0 have no app-root support and their frontend hard-codes
+# /static and /api paths, which breaks behind the /superset/ prefix).
+apache-superset==6.1.0
+gunicorn>=23,<24              # WSGI server (superset.sh execs it)
+psycopg2-binary>=2.9.9,<3     # metadata DB + "DataPlatform warehouse" connection
+trino[sqlalchemy]>=0.333,<1   # "Trino (federated)" connection: trino://trino:8080/warehouse
+sqlalchemy-bigquery>=1.11,<2  # optional direct BigQuery connection (when GCP_SA_JSON is set)
+google-cloud-bigquery>=3.25,<4
+pyyaml>=6
+requests>=2.32
+rich                          # superset CLI (db upgrade) imports it
+cachetools                    # superset db_engine_specs
+
+# ── fences (Superset 6.1's own lock, made explicit; verified in a clean venv) ──
+# flask-caching 2.4+/2.5 changed _memoize_make_cache_key(): Superset's
+# CacheManager override then crashes in `superset db upgrade`.
+flask-caching==2.3.1
+cachelib==0.13.0
+# holidays is fenced loosely by Superset; unpinned, the resolver backtracks for ages
+holidays==0.63
+numpy>=1.26,<2
+pandas>=2.1.4,<2.2
+SQLAlchemy>=1.4.54,<2
+pyarrow>=16.1,<19
+sqlglot>=28.10,<29

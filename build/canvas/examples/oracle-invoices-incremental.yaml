@@ -1,0 +1,21 @@
+# Example: Oracle billing.INVOICES → landing.oracle_invoices, incremental on updated_at, upsert on invoice_id
+id: oracle-invoices-incremental
+name: Oracle billing.INVOICES → landing.oracle_invoices (incremental)
+description: "Demo source (add 'Demo sources' in Studio). Chunked dlt sql_database extraction over python-oracledb thin; each run reads only invoices with UPDATED_AT above the saved high-water mark and merges on invoice_id."
+example: true
+tags: [database, oracle, incremental]
+schedule: {cron: "30 * * * *", enabled: false}
+nodes:
+  - id: src
+    type: source.database
+    label: billing.invoices
+    position: {x: 60, y: 140}
+    config: {connection: billing-oracle, schema: billing, table: invoices, cursor_column: updated_at, backend: pyarrow,
+             chunk_size: 20000}
+  - id: dest
+    type: dest.warehouse
+    label: landing.oracle_invoices
+    position: {x: 380, y: 140}
+    config: {schema: landing, table: oracle_invoices, mode: merge, primary_key: [invoice_id]}
+edges:
+  - {from: src, to: dest}

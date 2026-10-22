@@ -1,0 +1,352 @@
+version: 2
+
+models:
+  - name: stg_wire_centers
+    description: Wire centers (central offices) keyed by CLLI, with fiber passings and copper lines.
+    columns:
+      - name: clli
+        description: "{{ doc('clli') }}"
+        data_tests: [unique, not_null]
+      - name: state
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('state_region'), field: state}
+      - name: fiber_passings
+        data_tests: [not_null, non_negative]
+
+  - name: stg_customers
+    description: Billing accounts, typed. Holds the PII columns of the warehouse.
+    config:
+      tags: ["pii"]
+    columns:
+      - name: ban
+        description: "{{ doc('ban') }}"
+        data_tests: [unique, not_null]
+      - name: customer_name
+        config: {meta: {pii: true, pii_type: person_name}}
+      - name: email
+        config: {meta: {pii: true, pii_type: email}}
+      - name: phone
+        config: {meta: {pii: true, pii_type: phone}}
+      - name: zip
+        config: {meta: {pii: true, pii_type: postal_code}}
+      - name: census_block
+        config: {meta: {pii: true, pii_type: location}}
+      - name: latitude
+        config: {meta: {pii: true, pii_type: location}}
+      - name: longitude
+        config: {meta: {pii: true, pii_type: location}}
+      - name: segment
+        data_tests:
+          - accepted_values:
+              arguments: {values: [residential, smb]}
+      - name: state
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('state_region'), field: state}
+      - name: clli
+        description: "{{ doc('clli') }}"
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('stg_wire_centers'), field: clli}
+      - name: credit_band
+        data_tests:
+          - accepted_values:
+              arguments: {values: [A, B, C, D]}
+
+  - name: stg_service_locations
+    columns:
+      - name: location_id
+        data_tests: [unique, not_null]
+      - name: ban
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments: {to: ref('stg_customers'), field: ban}
+      - name: technology
+        description: "{{ doc('technology') }}"
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments: {values: [copper, fiber]}
+      - name: clli
+        description: "{{ doc('clli') }}"
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('stg_wire_centers'), field: clli}
+
+  - name: stg_plans
+    columns:
+      - name: plan_id
+        description: "{{ doc('plan_id') }}"
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments: {to: ref('plan_catalog'), field: plan_id}
+      - name: technology
+        description: "{{ doc('technology') }}"
+        data_tests:
+          - accepted_values:
+              arguments: {values: [copper, fiber]}
+      - name: list_price
+        data_tests: [not_null, non_negative]
+
+  - name: stg_subscriptions
+    columns:
+      - name: subscription_id
+        data_tests: [unique, not_null]
+      - name: ban
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('stg_customers'), field: ban}
+      - name: plan_id
+        data_tests:
+          - relationships:
+              arguments: {to: ref('stg_plans'), field: plan_id}
+      - name: subscription_status
+        data_tests:
+          - accepted_values:
+              arguments: {values: [active, cancelled]}
+      - name: cancel_reason
+        data_tests:
+          - accepted_values:
+              arguments: {values: [price, competitor_fiber, outages, moving, service_quality, billing_issue]}
+
+  - name: stg_usage_monthly
+    data_tests:
+      - unique_combination:
+          arguments: {columns: [ban, usage_month]}
+
+  - name: stg_ont_metrics
+    description: Fiber ONT optics per account × month (fiber accounts only).
+    data_tests:
+      - unique_combination:
+          arguments: {columns: [ban, metric_month]}
+    columns:
+      - name: ban
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('stg_customers'), field: ban}
+      - name: rx_power_dbm
+        description: "{{ doc('ont_rx_power') }}"
+        data_tests: [not_null]
+      - name: los_events
+        data_tests: [non_negative]
+
+  - name: stg_copper_line_metrics
+    description: Copper DSL line quality per account × month (copper accounts only).
+    data_tests:
+      - unique_combination:
+          arguments: {columns: [ban, metric_month]}
+    columns:
+      - name: ban
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('stg_customers'), field: ban}
+      - name: snr_margin_db
+        description: "{{ doc('dsl_snr_margin') }}"
+        data_tests: [not_null]
+      - name: retrains
+        data_tests: [non_negative]
+
+  - name: stg_network_events
+    columns:
+      - name: event_id
+        data_tests: [unique, not_null]
+      - name: clli
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('stg_wire_centers'), field: clli}
+      - name: event_type
+        data_tests:
+          - accepted_values:
+              arguments: {values: [outage, degradation, maintenance]}
+      - name: duration_minutes
+        data_tests: [non_negative]
+
+  - name: stg_service_tickets
+    columns:
+      - name: ticket_id
+        data_tests: [unique, not_null]
+      - name: ban
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('stg_customers'), field: ban}
+      - name: category
+        data_tests:
+          - accepted_values:
+              arguments: {values: [billing, technical, installation, account]}
+      - name: channel
+        data_tests:
+          - accepted_values:
+              arguments: {values: [phone, chat, app]}
+      - name: resolution_hours
+        data_tests: [non_negative]
+
+  - name: stg_customer_calls
+    columns:
+      - name: call_id
+        data_tests: [unique, not_null]
+      - name: ban
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('stg_customers'), field: ban}
+      - name: queue
+        data_tests:
+          - accepted_values:
+              arguments: {values: [billing, technical, retention, sales, move]}
+      - name: disposition
+        data_tests:
+          - accepted_values:
+              arguments: {values: [resolved, transferred, escalated, callback]}
+      - name: handle_time_sec
+        data_tests: [non_negative]
+      - name: sentiment_score
+        data_tests:
+          - between:
+              arguments: {min_value: -1, max_value: 1}
+
+  - name: stg_dispatches
+    columns:
+      - name: dispatch_id
+        data_tests: [unique, not_null]
+      - name: ban
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('stg_customers'), field: ban}
+      - name: ticket_id
+        data_tests:
+          - relationships:
+              arguments: {to: ref('stg_service_tickets'), field: ticket_id}
+      - name: clli
+        data_tests:
+          - relationships:
+              arguments: {to: ref('stg_wire_centers'), field: clli}
+      - name: dispatch_type
+        data_tests:
+          - accepted_values:
+              arguments: {values: [repair, install, upgrade]}
+      - name: dispatch_status
+        data_tests:
+          - accepted_values:
+              arguments: {values: [completed, missed, rescheduled, cancelled]}
+      - name: is_repeat_dispatch_30d
+        description: "{{ doc('repeat_dispatch') }}"
+        data_tests: [not_null]
+
+  - name: stg_invoices
+    columns:
+      - name: invoice_id
+        description: "{{ doc('invoice_id') }}"
+        data_tests: [unique, not_null]
+      - name: ban
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('stg_customers'), field: ban}
+      - name: invoice_status
+        data_tests:
+          - accepted_values:
+              arguments: {values: [paid, late, open, written_off]}
+      - name: amount_due
+        data_tests: [not_null]
+      - name: recurring_charges
+        data_tests: [not_null, non_negative]
+
+  - name: stg_transactions
+    columns:
+      - name: txn_id
+        data_tests: [unique, not_null]
+      - name: ban
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('stg_customers'), field: ban}
+      - name: invoice_id
+        data_tests:
+          - relationships:
+              arguments: {to: ref('stg_invoices'), field: invoice_id}
+      - name: txn_type
+        data_tests:
+          - accepted_values:
+              arguments: {values: [payment, late_fee, credit, refund, adjustment]}
+      - name: payment_method
+        data_tests:
+          - accepted_values:
+              arguments: {values: [autopay, card, ach, check, store]}
+
+  - name: stg_disputes
+    columns:
+      - name: dispute_id
+        data_tests: [unique, not_null]
+      - name: ban
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('stg_customers'), field: ban}
+      - name: invoice_id
+        data_tests:
+          - relationships:
+              arguments: {to: ref('stg_invoices'), field: invoice_id}
+      - name: category
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [late_fee_autopay, promo_expired, price_increase, duplicate_charge, outage_credit,
+                         equipment_fee, final_bill, install_fee]
+      - name: dispute_status
+        data_tests:
+          - accepted_values:
+              arguments: {values: [approved, partial, denied, open]}
+      - name: credit_amount
+        data_tests: [non_negative]
+
+  - name: stg_revenue
+    data_tests:
+      - unique_combination:
+          arguments: {columns: [ban, revenue_month]}
+    columns:
+      - name: technology
+        data_tests:
+          - accepted_values:
+              arguments: {values: [copper, fiber]}
+
+  - name: stg_nps_surveys
+    columns:
+      - name: survey_id
+        data_tests: [unique, not_null]
+      - name: nps_score
+        data_tests:
+          - not_null
+          - between:
+              arguments: {min_value: 0, max_value: 10}
+      - name: nps_band
+        data_tests:
+          - accepted_values:
+              arguments: {values: [promoter, passive, detractor]}
+
+  - name: stg_customer_monthly
+    data_tests:
+      - unique_combination:
+          arguments: {columns: [ban, snapshot_month]}
+    columns:
+      - name: technology
+        data_tests:
+          - accepted_values:
+              arguments: {values: [copper, fiber]}
+      - name: churned_next_90d
+        description: "{{ doc('churned_next_90d') }}"
+        data_tests: [not_null]

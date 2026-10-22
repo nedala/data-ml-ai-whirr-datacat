@@ -1,0 +1,21 @@
+# Workbench (build/workbench/) — FastAPI app serving /pkg/ (packages),
+# /files/, /ingress/ (import & export) and /dbt/ (dbt Studio) on :8002 in the
+# analyst workspace container. `uv` (CLI) is also required (base.txt).
+fastapi>=0.110
+uvicorn>=0.29
+starlette>=0.37
+pydantic>=2.5
+python-multipart
+requests>=2.31
+packaging>=23.2
+pyarrow>=15
+# Import & Export: Postgres warehouse (psycopg2), DuckDB for reading/typing
+# uploads, pandas + openpyxl / xlrd for Excel (.xlsx / .xls), openpyxl for the
+# DataPlatform-styled Excel export.
+psycopg2-binary
+duckdb>=1.1
+pandas>=2.1
+openpyxl>=3.1
+xlrd>=2.0
+# dbt Studio: comment/order-preserving YAML round-trip of schema.yml files
+ruamel.yaml>=0.18

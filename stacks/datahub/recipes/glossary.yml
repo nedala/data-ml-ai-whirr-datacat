@@ -1,0 +1,17 @@
+# DataPlatform business glossary (business_glossary.yml) → DataHub glossary
+# nodes + terms with owners and domains. Run after domains.yml.
+pipeline_name: bsp_glossary
+source:
+  type: datahub-business-glossary
+  config:
+    file: /opt/bsp-datahub/recipes/business_glossary.yml
+    enable_auto_id: false
+
+# GMS has metadata-service auth ON; the ingest job authenticates with the
+# DataHub system client (secret from the generated secrets file).
+sink:
+  type: datahub-rest
+  config:
+    server: ${DATAHUB_GMS_URL}
+    extra_headers:
+      Authorization: "Basic __datahub_system:${DATAHUB_SYSTEM_CLIENT_SECRET}"

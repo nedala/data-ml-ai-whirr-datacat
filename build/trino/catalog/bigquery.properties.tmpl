@@ -1,0 +1,21 @@
+# BigQuery catalogs `bq_<project>` (or a single `bigquery`; rendered by entrypoint.sh
+# from the "Trino · BigQuery catalog" cloud identity; credentials stay in the
+# container's /tmp, never in the repo).
+# project-id = the DATA project, parent-project-id = the EXECUTION (job / billing)
+# project. The credentials line is replaced by bigquery.credentials-key for a
+# service-account key, or removed for a personal sign-in (Application Default
+# Credentials via GOOGLE_APPLICATION_CREDENTIALS).
+connector.name=bigquery
+bigquery.project-id=@GCP_PROJECT_ID@
+bigquery.parent-project-id=@GCP_EXEC_PROJECT@
+bigquery.credentials-key=@CREDENTIALS_KEY@
+bigquery.case-insensitive-name-matching=true
+bigquery.views-enabled=true
+bigquery.arrow-serialization.enabled=true
+# cost / load guards: label every BigQuery job so spend is attributable in the
+# execution project's billing export, and cache metadata so catalog crawls
+# (DataHub) do not re-list datasets on every call
+bigquery.job.label-name=bsp_trino
+bigquery.job.label-format=@CATALOG@
+bigquery.metadata.cache-ttl=@TRINO_BQ_METADATA_TTL@
+bigquery.max-read-rows-retries=2

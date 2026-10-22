@@ -1,0 +1,147 @@
+# RAG component fragment — vector store + RAG service (profile `rag`) and
+# Open WebUI (profile `chatui`). Included by docker-compose.yml with
+# `project_directory: .` (paths are repo-root relative). Contract:
+# plan/architecture.md §1 (rag 8101 /rag/, qdrant 6333 internal, openwebui
+# 8080 behind the dedicated gated nginx server on ${OPENWEBUI_PORT}).
+# Secrets arrive from Studio's vault in the process environment only.
+
+x-no-proxy: &no_proxy "localhost,127.0.0.1,.internal,nginx,studio,px-proxy,docs,postgres,appliance,code,superset,trino,canvas,connectors,mlflow,model-gateway,mlops,harness,mcp,ollama,disputes,ccai,rag,qdrant,openwebui,browser,host.docker.internal"
+
+services:
+  # ── Knowledge & RAG service (bsp_rag) ──────────────────────────────────
+  rag:
+    extends: {file: compose.base.yml, service: bsp-workload}
+    profiles: [rag]
+    entrypoint: ["python", "-m", "bsp_rag", "serve", "--port", "8101"]
+    environment:
+      PYTHONPATH: /opt/rag:/opt/common:/opt/seed:/opt/connectors
+      NO_PROXY: *no_proxy
+      no_proxy: *no_proxy
+      PG_PASS: ${PG_PASS:-}
+      M365_CLIENT_SECRET: ${M365_CLIENT_SECRET:-}
+      LLM_GATEWAY_TOKEN: ${LLM_GATEWAY_TOKEN:-}
+      RAG_VECTOR_BACKEND: ${RAG_VECTOR_BACKEND:-qdrant}
+      RAG_META_STORE: postgres
+      RAG_EMBEDDER: ${RAG_EMBEDDER:-auto}
+      RAG_USE_LLM: ${RAG_USE_LLM:-auto}
+      RAG_DEFAULT_COLLECTION: frontoffice
+      # demo corpus seeded into BOTH backends on first start (offline embedder if the gateway is down)
+      RAG_AUTOSEED_COLLECTIONS: ${RAG_AUTOSEED_COLLECTIONS:-frontoffice:qdrant,frontoffice-pg:pgvector}
+      RAG_SHAREPOINT_FOLDER: ${RAG_SHAREPOINT_FOLDER:-FrontOffice/Runbooks}
+      RAG_TOOLS_TOKEN: ${RAG_TOOLS_TOKEN:-}
+      QDRANT_URL: http://qdrant:6333
+      RAG_DATA_DIR: /data/rag
+      CONNECTORS_STATE_DIR: /data/connectors
+      UI_KIT_DIR: /opt/ui-kit
+      OPENWEBUI_PORT: ${OPENWEBUI_PORT:-37081}
+      PUBLIC_FACADE_HOST: ${PUBLIC_FACADE_HOST:-localhost}
+    volumes:
+      - ./build/rag:/opt/rag:ro
+      - ${DATA_ROOT:-./data}/rag:/data/rag
+      - ${DATA_ROOT:-./data}/lake:/data/lake:ro
+      - ${DATA_ROOT:-./data}/connectors:/data/connectors
+    depends_on:
+      qdrant: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; urllib.request.urlopen('http://127.0.0.1:8101/rag/healthz', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # ── Qdrant vector database (internal only, non-root image) ─────────────
+  qdrant:
+    image: qdrant/qdrant:v1.19.2-unprivileged
+    profiles: [rag]
+    user: "1000:1000"
+    environment:
+      QDRANT__TELEMETRY_DISABLED: "true"
+      QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY:-}
+    volumes:
+      - ${DATA_ROOT:-./data}/qdrant/storage:/qdrant/storage
+      - ${DATA_ROOT:-./data}/qdrant/snapshots:/qdrant/snapshots
+    networks: [appliance-net]
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+
+  # ── Open WebUI on the LLM gateway + MCP tools + RAG (profile chatui) ───
+  # Served ONLY through nginx conf.d/openwebui.conf (dedicated gated port);
+  # identity comes from Studio via trusted headers; all model traffic goes to
+  # the harness gateway (no Ollama/direct connections from Open WebUI).
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:v0.11.4
+    profiles: [chatui]
+    user: "1000:1000"
+    working_dir: /app/backend
+    # start the bootstrap/sync (tool servers + model presets) next to the server
+    entrypoint: ["bash", "-c", "python /opt/bsp-openwebui/bsp_owui_sync.py & exec bash /app/backend/start.sh"]
+    environment:
+      HOME: /app/backend/data
+      NO_PROXY: *no_proxy
+      no_proxy: *no_proxy
+      HTTP_PROXY: http://px-proxy:3128
+      HTTPS_PROXY: http://px-proxy:3128
+      SSL_CERT_FILE: /trust/ca-bundle.pem
+      REQUESTS_CA_BUNDLE: /trust/ca-bundle.pem
+      DATA_DIR: /app/backend/data
+      STATIC_DIR: /app/backend/data/static       # non-root: Open WebUI copies its static assets here at start
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY:-}
+      WEBUI_SECRET_KEY_FILE: /app/backend/data/.webui_secret_key   # only used if the vault slot is empty
+      WEBUI_NAME: DataPlatform Chat
+      WEBUI_URL: https://${PUBLIC_FACADE_HOST:-localhost}:${OPENWEBUI_PORT:-37081}
+      CORS_ALLOW_ORIGIN: https://${PUBLIC_FACADE_HOST:-localhost}:${OPENWEBUI_PORT:-37081}
+      # models: ONLY the appliance gateway (aliases chat-default, embed-default … appear as models)
+      ENABLE_OPENAI_API: "true"
+      OPENAI_API_BASE_URL: http://harness:8096/ai/v1
+      OPENAI_API_KEY: ${LLM_GATEWAY_TOKEN:-bsp-gateway}
+      ENABLE_OLLAMA_API: "false"
+      ENABLE_DIRECT_CONNECTIONS: "false"
+      BYPASS_MODEL_ACCESS_CONTROL: "true"       # gateway aliases visible to every user; governance lives in the gateway
+      DEFAULT_MODELS: chat-default
+      # built-in knowledge (optional) embeds through the gateway too — no local model downloads
+      RAG_EMBEDDING_ENGINE: openai
+      RAG_EMBEDDING_MODEL: embed-default
+      RAG_OPENAI_API_BASE_URL: http://harness:8096/ai/v1
+      RAG_OPENAI_API_KEY: ${LLM_GATEWAY_TOKEN:-bsp-gateway}
+      # SSO: Studio gate → nginx trusted headers (conf.d/openwebui.conf)
+      WEBUI_AUTH: "true"
+      WEBUI_AUTH_TRUSTED_EMAIL_HEADER: X-Auth-Email
+      WEBUI_AUTH_TRUSTED_NAME_HEADER: X-Auth-Name
+      WEBUI_AUTH_TRUSTED_ROLE_HEADER: X-OWUI-Role
+      ENABLE_SIGNUP: "false"
+      ENABLE_LOGIN_FORM: "false"
+      DEFAULT_USER_ROLE: user
+      WEBUI_SESSION_COOKIE_SECURE: "true"
+      WEBUI_AUTH_COOKIE_SECURE: "true"
+      # privacy / governance
+      ENABLE_COMMUNITY_SHARING: "false"
+      ENABLE_ADMIN_EXPORT: "false"
+      ENABLE_WEB_SEARCH: "false"
+      ENABLE_EVALUATION_ARENA_MODELS: "false"
+      OFFLINE_MODE: "true"
+      HF_HUB_OFFLINE: "1"
+      ANONYMIZED_TELEMETRY: "false"
+      DO_NOT_TRACK: "true"
+      SCARF_NO_ANALYTICS: "true"
+      ENABLE_PERSISTENT_CONFIG: "false"        # env is the source of truth on every start
+      # tool servers + presets (bsp_owui_sync.py)
+      MCP_URL: http://mcp:8095/mcp
+      MCP_TOKEN: ${MCP_TOKEN:-}
+      RAG_TOOLS_URL: http://rag:8101/rag/tools
+      RAG_TOOLS_TOKEN: ${RAG_TOOLS_TOKEN:-}
+    volumes:
+      - ${DATA_ROOT:-./data}/openwebui:/app/backend/data
+      - ./build/rag/openwebui:/opt/bsp-openwebui:ro
+      - ${DATA_ROOT:-./data}/trust:/trust:ro
+    networks: [appliance-net]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:8080/health >/dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+    restart: unless-stopped

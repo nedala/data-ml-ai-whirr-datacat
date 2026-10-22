@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=DBeaver
+Comment=SQL IDE: appliance warehouse, Trino
+Exec=appliance-dbeaver
+Icon=dbeaver
+StartupWMClass=DBeaver
+Categories=Development;Database;

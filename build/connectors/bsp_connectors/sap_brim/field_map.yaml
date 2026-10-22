@@ -1,0 +1,52 @@
+# SAP BRIM dispute field map — case dict (bsp_disputes) → OData entity.
+#
+# Modelled on the released S/4HANA API "Contract Accounting Dispute Case"
+# (SAP Business Accelerator Hub: sap-s4-CE_CADISPUTECASE_0002-v2 / on-premise
+# sap-s4-OP_CADISPUTECASE_0002-v2, OData V4, successor of OP_CADISPUTECASE_0001).
+# Server path below is the one published on the Hub.
+#
+# !! The ENTITY-SET and PROPERTY NAMES below are PLACEHOLDERS that the
+# in-appliance mock implements. The real EDMX is behind an SAP login on the
+# Hub, so they were not verified. Before go-live: GET <service>/$metadata on
+# your system and edit `entity_set`, `key`, the `target` names and the
+# navigation names. The client is $metadata-driven: properties that are not
+# in the target system's $metadata are dropped (and reported) rather than
+# sent, so a wrong name fails visibly in the submission log, never silently.
+
+service_path: /sap/opu/odata4/sap/api_cadisputecase/srvd_a2x/sap/cadisputecase/0002
+odata_version: "4.0"
+entity_set: DisputeCase
+key: CaseID                       # property returned as the dispute number
+external_reference: CaseExternalReference   # used for search-before-create (idempotency)
+
+fields:
+  - {target: CaseType,              source: case_type}
+  - {target: CaseReason,            source: reason_code}
+  - {target: CaseTitle,             template: "{category_label}: {customer_name}", max_len: 80}
+  - {target: CaseExternalReference, source: case_ref}
+  - {target: BusinessPartner,       source: business_partner}
+  - {target: ContractAccount,       source: contract_account}
+  - {target: DisputedAmount,        source: disputed_amount, type: decimal}
+  - {target: DisputedAmountCurrency, source: currency, default: USD}
+  - {target: InvoiceReference,      source: invoice_id}
+  - {target: CasePriority,          source: priority, default: "3"}
+  - {target: CustomerContactEmail,  source: contact_email}
+  - {target: CustomerContactPhone,  source: contact_phone}
+
+# deep insert of disputed objects + note (navigation properties)
+navigation:
+  disputed_objects:
+    target: _DisputedObject
+    items:
+      - {when: contract_account, ObjectType: CONTRACT_ACCOUNT, ObjectKey: "{contract_account}"}
+      - {when: invoice_id,       ObjectType: FICA_DOCUMENT,    ObjectKey: "{invoice_id}"}
+  note:
+    target: _Note
+    items:
+      - {when: notes, NoteType: "0001", NoteText: "{notes}"}
+
+# BRIM reference data the mock exposes (and the Playwright form offers)
+case_types:
+  FIN1: Billing dispute
+  PAY1: Payment dispute
+  SRV1: Service credit

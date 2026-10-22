@@ -1,0 +1,21 @@
+version: 2
+
+models:
+  # tickets, typed and flagged
+  - name: int_tickets
+    description: One row per ticket, latest update wins; typed and flagged.
+    columns:
+      - name: ticket_id
+        tests: [unique, not_null]
+      - name: minutes_open
+        tests: [not_null]
+      - name: is_outage
+        description: 1 when the ticket is attached to a network outage.
+        tests: [{accepted_values: {arguments: {values: [0, 1], quote: false}}}]
+      - name: ban
+        tests:
+          - relationships: {arguments: {to: ref('int_accounts'), field: ban}, config: {severity: warn}}
+  - name: int_accounts
+    columns:
+      - name: ban
+        tests: [unique, not_null]

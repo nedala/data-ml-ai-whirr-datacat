@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knowledge &amp; RAG · DataPlatform</title>
+<link rel="icon" href="/rag/ui-kit/brand/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/rag/ui-kit/bsp.css">
+<link rel="stylesheet" href="/rag/static/app.css">
+</head>
+<body>
+<div class="bsp-app">
+  <header class="bsp-topbar">
+    <div class="bsp-brand"><span class="mark"></span>Knowledge &amp; RAG <span class="sub">· runbooks, design docs &amp; front-office automation</span></div>
+    <div class="spacer"></div>
+    <span class="chip outline" id="llm-chip" title="LLM gateway status">gateway …</span>
+    <a class="btn ghost sm" href="/rag/chat/" target="_blank" title="Open WebUI on its dedicated port">Open WebUI</a>
+    <a class="btn ghost sm" href="/rag/docs" target="_blank">API</a>
+    <a class="btn ghost sm" href="/studio/">Studio</a>
+  </header>
+  <aside class="bsp-sidebar">
+    <nav class="bsp-nav" id="nav">
+      <div class="bsp-nav-group eyebrow">Knowledge</div>
+      <a href="#collections" data-view="collections">Collections</a>
+      <a href="#ingest" data-view="ingest">Ingest</a>
+      <a href="#explore" data-view="explore">Explore</a>
+      <a href="#ask" data-view="ask">Ask</a>
+      <div class="bsp-nav-group eyebrow">Front office</div>
+      <a href="#assist" data-view="assist">Agent assist</a>
+      <a href="#copilot" data-view="copilot">Runbook copilot</a>
+      <a href="#design" data-view="design">Design Q&amp;A</a>
+      <div class="bsp-nav-group eyebrow">Quality</div>
+      <a href="#evals" data-view="evals">Evals</a>
+      <a href="#queries" data-view="queries">Query log</a>
+      <a href="#settings" data-view="settings">Settings</a>
+    </nav>
+  </aside>
+  <main class="bsp-main" id="main"></main>
+</div>
+<script src="/rag/ui-kit/bsp.js"></script>
+<script src="/rag/static/app.js"></script>
+</body>
+</html>

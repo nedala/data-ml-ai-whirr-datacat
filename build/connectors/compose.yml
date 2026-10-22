@@ -1,0 +1,34 @@
+# Enterprise connectors (mock-or-live): Microsoft 365 Graph, Atlan, BigQuery,
+# Power BI, SAP BRIM — FastAPI at /connectors/ (docs /connectors/docs).
+# Contract: plan/architecture.md §4. Included by the root docker-compose.yml
+# with project_directory: . (paths are repo-root relative).
+services:
+  connectors:
+    extends: {file: compose.base.yml, service: bsp-workload}
+    profiles: [connectors]
+    command: ["python", "-m", "uvicorn", "bsp_connectors.app:app", "--host", "0.0.0.0", "--port", "8092",
+              "--proxy-headers", "--forwarded-allow-ips", "*"]
+    working_dir: /opt/connectors
+    environment:
+      CONNECTORS_FIXTURES_DIR: /opt/connectors/fixtures   # read-only seed (build/connectors/fixtures)
+      CONNECTORS_STATE_DIR: /data/connectors              # mutable mock state (read flags, moves, uploads)
+      UI_KIT_DIR: /opt/ui-kit
+      DBT_MANIFEST_PATH: /opt/dbt_project/target/manifest.json
+      ATLAN_CONNECTION_QN: ${ATLAN_CONNECTION_QN:-}
+      # secrets (Studio injects from the vault; empty = mock)
+      PG_PASS: ${PG_PASS:-}
+      M365_CLIENT_SECRET: ${M365_CLIENT_SECRET:-}
+      ATLAN_API_TOKEN: ${ATLAN_API_TOKEN:-}
+      GCP_SA_JSON: ${GCP_SA_JSON:-}
+      SAP_BRIM_USER: ${SAP_BRIM_USER:-}
+      SAP_BRIM_PASSWORD: ${SAP_BRIM_PASSWORD:-}
+    volumes:
+      - ${DATA_ROOT:-./data}/connectors:/data/connectors
+      - ${DATA_ROOT:-./data}/lake:/data/lake:ro
+      - ./dbt_project:/opt/dbt_project:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8092/connectors/healthz', timeout=3).status == 200 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s

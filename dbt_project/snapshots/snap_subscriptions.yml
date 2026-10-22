@@ -1,0 +1,17 @@
+version: 2
+
+snapshots:
+  - name: snap_subscriptions
+    description: >
+      SCD type 2 history of each account's subscription — plan changes,
+      cancellations and contract term — captured on every `dbt snapshot` /
+      `dbt build` (check strategy; the source has no reliable updated_at).
+    relation: ref('stg_subscriptions')
+    config:
+      schema: snapshots
+      unique_key: subscription_id
+      strategy: check
+      check_cols: [plan_id, subscription_status, end_date, cancel_reason, contract_term]
+    columns:
+      - name: subscription_id
+        data_tests: [not_null]

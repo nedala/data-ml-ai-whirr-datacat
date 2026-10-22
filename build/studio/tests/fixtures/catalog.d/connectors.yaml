@@ -1,0 +1,12 @@
+services:
+  connectors:
+    title: Enterprise connectors
+    blurb: Mock-or-live connectors
+    profile: connectors
+    ram_mb: 384
+    kind: app
+    route: /connectors/
+capabilities:
+  connectors: {title: Connectors, tone: integrate, icon: globe, services: [connectors], blurb: "Atlan, BigQuery, M365"}
+app_groups:
+  - {id: integrate, title: Enterprise Systems (fragment override), icon: globe, blurb: "overridden by a fragment"}

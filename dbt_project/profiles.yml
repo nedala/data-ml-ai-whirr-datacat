@@ -1,0 +1,74 @@
+# dbt profiles for the DataPlatform appliances. Pick the target with
+# DBT_TARGET (default postgres) or `--target`. Every credential comes from the
+# container environment (Studio injects vault secrets) — nothing is stored here.
+#
+#   DBT_PROFILES_DIR=~/work/dbt_project  (or run dbt from this folder)
+bsp_edw:
+  target: "{{ env_var('DBT_TARGET', 'postgres') }}"
+  outputs:
+
+    # ── Local warehouse (default) ────────────────────────────────────────
+    # Postgres `bsp_edw` on the `postgres` service. Raw ISP data in schema
+    # `raw`; dbt writes staging / intermediate / marts / reference / snapshots.
+    postgres:
+      type: postgres
+      host: "{{ env_var('PG_HOST', 'postgres') }}"
+      port: "{{ env_var('PG_PORT', '5432') | int }}"
+      user: "{{ env_var('PG_USER', 'analyst') }}"
+      password: "{{ env_var('PG_PASS', '') }}"
+      dbname: "{{ env_var('PG_DB', 'bsp_edw') }}"
+      schema: "{{ env_var('DBT_PG_SCHEMA', 'staging') }}"
+      threads: "{{ env_var('DBT_THREADS', '4') | int }}"
+      connect_timeout: 10
+
+    # ── BigQuery (enterprise EDW) ────────────────────────────────────────
+    # Datasets = layers (raw, staging, intermediate, marts, reference,
+    # snapshots) in project GCP_PROJECT_ID. Credentials:
+    #   * a key from Studio → Cloud identities (BigQuery · write) or GCP_SA_JSON
+    #     → service-account-json / oauth-secrets by its type, in memory only;
+    #   * otherwise → oauth (gcloud application-default login / workload
+    #     identity / GOOGLE_APPLICATION_CREDENTIALS).
+    bigquery:
+      type: bigquery
+      # GCP_SA_JSON must be raw JSON here (dbt's Jinja cannot base64-decode);
+      # scripts/dbtw decodes a base64 key into DBT_GCP_SA_JSON for you.
+      # Key: DBT_GCP_SA_JSON (scripts/dbtw) → GCP_BQ_WRITE_JSON → GCP_BQ_JSON →
+      # GCP_SA_JSON. service_account → service-account-json; authorized_user (a
+      # personal gcloud sign-in, Studio → Cloud identities) → oauth-secrets.
+      method: "{% set k = (env_var('DBT_GCP_SA_JSON', '') or env_var('GCP_BQ_WRITE_JSON', '') or env_var('GCP_BQ_JSON', '') or env_var('GCP_SA_JSON', '')) | trim %}{% set j = fromjson(k) if k.startswith('{') else {} %}{{ 'oauth-secrets' if j.get('type') == 'authorized_user' else ('service-account-json' if j else 'oauth') }}"
+      keyfile_json: "{% set k = (env_var('DBT_GCP_SA_JSON', '') or env_var('GCP_BQ_WRITE_JSON', '') or env_var('GCP_BQ_JSON', '') or env_var('GCP_SA_JSON', '')) | trim %}{% set j = fromjson(k) if k.startswith('{') else {} %}{{ j if j and j.get('type') != 'authorized_user' else none }}"
+      refresh_token: "{% set k = (env_var('DBT_GCP_SA_JSON', '') or env_var('GCP_BQ_WRITE_JSON', '') or env_var('GCP_BQ_JSON', '') or env_var('GCP_SA_JSON', '')) | trim %}{% set j = fromjson(k) if k.startswith('{') else {} %}{{ j.get('refresh_token') if j.get('type') == 'authorized_user' else none }}"
+      client_id: "{% set k = (env_var('DBT_GCP_SA_JSON', '') or env_var('GCP_BQ_WRITE_JSON', '') or env_var('GCP_BQ_JSON', '') or env_var('GCP_SA_JSON', '')) | trim %}{% set j = fromjson(k) if k.startswith('{') else {} %}{{ j.get('client_id') if j.get('type') == 'authorized_user' else none }}"
+      client_secret: "{% set k = (env_var('DBT_GCP_SA_JSON', '') or env_var('GCP_BQ_WRITE_JSON', '') or env_var('GCP_BQ_JSON', '') or env_var('GCP_SA_JSON', '')) | trim %}{% set j = fromjson(k) if k.startswith('{') else {} %}{{ j.get('client_secret') if j.get('type') == 'authorized_user' else none }}"
+      token_uri: "{% set k = (env_var('DBT_GCP_SA_JSON', '') or env_var('GCP_BQ_WRITE_JSON', '') or env_var('GCP_BQ_JSON', '') or env_var('GCP_SA_JSON', '')) | trim %}{% set j = fromjson(k) if k.startswith('{') else {} %}{{ j.get('token_uri', 'https://oauth2.googleapis.com/token') if j.get('type') == 'authorized_user' else none }}"
+      # DATA project = BigQuery · write's project; EXECUTION (job / billing)
+      # project = its execution project (Studio → Cloud identities)
+      project: "{{ env_var('GCP_BQ_WRITE_PROJECT', '') or env_var('GCP_PROJECT_ID', 'to-be-named-soon') }}"
+      execution_project: "{{ env_var('BQ_EXECUTION_PROJECT', '') or env_var('GCP_BQ_WRITE_EXEC_PROJECT', '') or env_var('GCP_BQ_WRITE_PROJECT', '') or env_var('GCP_PROJECT_ID', 'to-be-named-soon') }}"
+      dataset: "{{ env_var('BQ_DATASET', 'staging') }}"
+      location: "{{ env_var('BQ_LOCATION', 'US') }}"
+      threads: "{{ env_var('DBT_THREADS', '4') | int }}"
+      job_execution_timeout_seconds: 600
+      job_retries: 1
+      priority: interactive
+      maximum_bytes_billed: "{{ env_var('BQ_MAX_BYTES_BILLED', '50000000000') | int }}"
+
+    # ── Trino (federated SQL) ─────────────────────────────────────────────
+    # Catalog `warehouse` = the same Postgres bsp_edw through Trino's
+    # PostgreSQL connector. Models land in trino_<layer> schemas (see
+    # macros/generate_schema_name.sql) so they never overwrite the postgres
+    # target. Federated sources: the `bigquery` catalog (rendered only when
+    # GCP_SA_JSON is set) is addressable as bigquery.<dataset>.<table>; set
+    # DBT_TRINO_CATALOG=bigquery to build INTO BigQuery through Trino.
+    trino:
+      type: trino
+      method: none
+      host: "{{ env_var('TRINO_HOST', 'trino') }}"
+      port: "{{ env_var('TRINO_PORT', '8080') | int }}"
+      user: "{{ env_var('TRINO_USER', env_var('USER_HANDLE', 'analyst')) }}"
+      database: "{{ env_var('DBT_TRINO_CATALOG', 'warehouse') }}"
+      schema: "{{ env_var('DBT_TRINO_SCHEMA', 'staging') }}"
+      http_scheme: http
+      threads: "{{ env_var('DBT_THREADS', '4') | int }}"
+      session_properties:
+        query_max_run_time: 10m

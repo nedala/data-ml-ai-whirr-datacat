@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Browser
+Exec=appliance-browser-window %U
+Icon=chromium
+Comment=Chromium with your SSO sessions (the browser automation drives)
+Categories=Network;WebBrowser;
+MimeType=text/html;x-scheme-handler/http;x-scheme-handler/https;

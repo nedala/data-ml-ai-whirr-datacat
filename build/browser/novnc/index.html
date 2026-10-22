@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Appliance desktop</title>
+<script>
+  // Land straight in a connected session. The websocket path is derived from
+  // where this page is served, so it works at /browser/ behind nginx and at /
+  // when the container is reached directly.
+  (function () {
+    var base = window.location.pathname.replace(/[^/]*$/, "");
+    var path = (base + "websockify").replace(/^\/+/, "");
+    var q = new URLSearchParams(window.location.search);
+    var defaults = {
+      autoconnect: "true",
+      reconnect: "true",
+      reconnect_delay: "2000",
+      resize: "scale",
+      show_dot: "true",
+      path: path
+    };
+    Object.keys(defaults).forEach(function (k) { if (!q.has(k)) q.set(k, defaults[k]); });
+    window.location.replace(base + "vnc.html?" + q.toString());
+  })();
+</script>
+</head>
+<body>
+<noscript>Open <a href="vnc.html?autoconnect=true&amp;resize=scale&amp;path=browser/websockify">vnc.html</a>.</noscript>
+</body>
+</html>

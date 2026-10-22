@@ -1,0 +1,77 @@
+# Local warehouse bsp_edw (postgres:5432, user analyst) → DataHub.
+# Layers: raw (seed), staging / intermediate / marts / reference / snapshots
+# (dbt). Profiling ON. Tables are assigned to the four business domains and
+# columns get glossary terms by name pattern (run domains + glossary first).
+pipeline_name: bsp_edw_postgres
+source:
+  type: postgres
+  config:
+    host_port: ${PG_HOST}:${PG_PORT}
+    database: ${PG_DB}
+    username: ${PG_USER}
+    password: ${PG_PASS}
+    env: ${DATAHUB_ENV}
+    schema_pattern:
+      allow: ["^raw$", "^landing$", "^staging$", "^intermediate$", "^marts$", "^reference$", "^snapshots$"]
+    include_tables: true
+    include_views: true
+    include_view_lineage: true
+    include_table_location_lineage: true
+    profiling:
+      enabled: true
+      profile_table_level_only: false
+      include_field_sample_values: true
+      include_field_histogram: false
+      max_workers: 4
+    stateful_ingestion:
+      enabled: true
+      remove_stale_metadata: true
+    # dataset name is <db>.<schema>.<table>
+    domain:
+      "urn:li:domain:billing":
+        allow:
+          - '.*\.(stg_|int_|fct_|mart_)?(invoices?|transactions?|disputes?|revenue|plans|subscriptions|invoice_settlement|revenue_monthly|arpu_by_plan|billing_disputes|plan_catalog|snap_subscriptions)$'
+      "urn:li:domain:network":
+        allow:
+          - '.*\.(stg_|int_|dim_|fct_|mart_)?(network_events|service_locations|usage_monthly|wire_centers?|ont_metrics|copper_line_metrics|plant_quality_monthly|network_reliability|fiber_penetration|wire_center_monthly_events|state_region)$'
+      "urn:li:domain:customer-care":
+        allow:
+          - '.*\.(stg_|int_|fct_|mart_)?(service_tickets?|tickets_enriched|customer_calls?|dispatch(es)?|contact_center|nps_surveys|customer_sentiment)$'
+      "urn:li:domain:sales":
+        allow:
+          - '.*\.(stg_|int_|dim_|mart_)?(customers?|customer_monthly|customer_current_service|churn_features)$'
+
+transformers:
+  - type: pattern_add_dataset_schema_terms
+    config:
+      semantics: PATCH
+      term_pattern:
+        rules:
+          '(?i).*arpu.*': ["urn:li:glossaryTerm:bsp.arpu"]
+          '(?i).*churn.*': ["urn:li:glossaryTerm:bsp.churn"]
+          '(?i).*nps.*': ["urn:li:glossaryTerm:bsp.nps"]
+          '(?i).*truck_roll.*': ["urn:li:glossaryTerm:bsp.truck-roll"]
+          '(?i).*(first_contact|fcr).*': ["urn:li:glossaryTerm:bsp.fcr"]
+          '(?i).*wire_center.*': ["urn:li:glossaryTerm:bsp.wire-center"]
+          '(?i)^clli$': ["urn:li:glossaryTerm:bsp.clli"]
+          '(?i)^technology$': ["urn:li:glossaryTerm:bsp.technology"]
+          '(?i).*(ont_|rx_power).*': ["urn:li:glossaryTerm:bsp.ont"]
+          '(?i).*snr_margin.*': ["urn:li:glossaryTerm:bsp.dsl-snr"]
+          '(?i).*repeat_dispatch.*': ["urn:li:glossaryTerm:bsp.repeat-dispatch"]
+          '(?i).*repeat_call.*': ["urn:li:glossaryTerm:bsp.repeat-call"]
+          '(?i).*dispute.*': ["urn:li:glossaryTerm:bsp.billing-dispute"]
+          '(?i).*fiber_penetration.*': ["urn:li:glossaryTerm:bsp.fiber-penetration"]
+          '(?i)^ban$': ["urn:li:glossaryTerm:bsp.ban"]
+  - type: simple_add_dataset_tags
+    config:
+      semantics: PATCH
+      tag_urns: ["urn:li:tag:bsp_edw"]
+
+# GMS has metadata-service auth ON; the ingest job authenticates with the
+# DataHub system client (secret from the generated secrets file).
+sink:
+  type: datahub-rest
+  config:
+    server: ${DATAHUB_GMS_URL}
+    extra_headers:
+      Authorization: "Basic __datahub_system:${DATAHUB_SYSTEM_CLIENT_SECRET}"

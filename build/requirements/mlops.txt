@@ -1,0 +1,23 @@
+# ML Scientist — MLOps services (MLflow tracking + registry, model gateway,
+# control tower, drift monitor, retrain orchestrator) and notebook runners.
+# MLflow 3.x: server runs with the Postgres backend store (db `mlflow`).
+mlflow>=3.4,<4
+psycopg2-binary>=2.9
+sqlalchemy>=2.0,<3
+fastapi>=0.110
+uvicorn[standard]>=0.29
+httpx>=0.27
+apscheduler>=3.10,<4
+prometheus-client>=0.20
+pyyaml>=6
+# headless notebook execution (demo + CI of work_templates/ml)
+nbclient>=0.10
+nbformat>=5.9
+jupytext>=1.16
+ipykernel>=6.29
+# Feature store: bsp_mlops.featurestore is the system of record (Postgres
+# `features` schema, PIT-correct joins, online table). When Feast is present
+# the same YAML definitions are exported to a Feast repo under
+# /data/mlops/feature_repo (file offline store + sqlite online store) and
+# `feast apply` / materialize run alongside. Optional — code degrades cleanly.
+feast>=0.40

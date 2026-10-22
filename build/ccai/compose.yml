@@ -1,0 +1,29 @@
+# CCAI call-log tagging service (plan §1: service `ccai`, profile `ccai`, :8100, route /ccai/).
+# Included by the root docker-compose.yml with `project_directory: .` (paths are repo-root relative).
+services:
+  ccai:
+    extends: {file: compose.base.yml, service: bsp-workload}
+    profiles: [ccai]
+    command: ["python", "-m", "bsp_ccai"]
+    environment:
+      PYTHONPATH: /opt/ccai:/opt/common:/opt/seed:/opt/connectors
+      CCAI_DATA_DIR: /data/ccai
+      CCAI_TAXONOMY: /opt/taxonomy/ccai_taxonomy.yaml
+      CCAI_PUBLISH_FOLDER: ${CCAI_PUBLISH_FOLDER:-CCAI/Tagged}
+      CCAI_SCHEDULE_MINUTES: ${CCAI_SCHEDULE_MINUTES:-60}
+      CONNECTORS_STATE_DIR: /data/connectors
+      # secrets — injected by Studio from the vault into the `docker compose up` environment
+      PG_PASS: ${PG_PASS:-}
+      M365_CLIENT_SECRET: ${M365_CLIENT_SECRET:-}
+      LLM_GATEWAY_TOKEN: ${LLM_GATEWAY_TOKEN:-}
+    volumes:
+      - ./build/ccai:/opt/ccai:ro
+      - ./config/taxonomy:/opt/taxonomy:ro
+      - ${DATA_ROOT:-./data}/ccai:/data/ccai
+      - ${DATA_ROOT:-./data}/connectors:/data/connectors
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8100/ccai/healthz', timeout=4).status == 200 else 1)"]
+      interval: 30s
+      timeout: 6s
+      retries: 3
+      start_period: 60s

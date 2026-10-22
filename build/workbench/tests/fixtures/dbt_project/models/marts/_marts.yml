@@ -1,0 +1,5 @@
+version: 2
+
+models:
+  - name: mart_ticket_volume
+    description: Tickets per region.

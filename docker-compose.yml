@@ -1,0 +1,34 @@
+# DataPlatform Data & AI Appliances — compose entry point.
+# Contract: plan/architecture.md · catalog: build/studio/catalog.yaml + catalog.d/
+#
+# `make up APPLIANCE=data|ml|ai` starts the always-on control plane (nginx ·
+# studio · px-proxy · docs) for one appliance; Studio then starts capability
+# profiles with vault secrets in the process environment. Every component
+# owns a fragment below; fragments use repo-root-relative paths.
+
+name: ${COMPOSE_PROJECT_NAME:-bsp_data}
+
+include:
+  - {path: build/platform.compose.yml,    project_directory: .}
+  - {path: build/superset/compose.yml,    project_directory: .}
+  - {path: build/trino/compose.yml,       project_directory: .}
+  - {path: build/canvas/compose.yml,      project_directory: .}
+  - {path: build/connectors/compose.yml,  project_directory: .}
+  - {path: build/mlops/compose.yml,       project_directory: .}
+  - {path: build/harness/compose.yml,     project_directory: .}
+  - {path: build/mcp/compose.yml,         project_directory: .}
+  - {path: build/disputes/compose.yml,    project_directory: .}
+  - {path: build/ccai/compose.yml,        project_directory: .}
+  - {path: build/rag/compose.yml,         project_directory: .}
+  - {path: build/demo-sources/compose.yml, project_directory: .}
+
+networks:
+  # Workloads: NO internet route.
+  appliance-net:
+    name: ${APPLIANCE_NETWORK:-bsp-data-net}
+    driver: bridge
+    internal: true
+  # Routable: only nginx (ingress) and px-proxy (egress).
+  edge:
+    name: ${APPLIANCE_NETWORK:-bsp-data-net}-edge
+    driver: bridge

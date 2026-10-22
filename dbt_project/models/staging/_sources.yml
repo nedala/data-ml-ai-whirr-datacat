@@ -1,0 +1,131 @@
+version: 2
+
+sources:
+  - name: raw
+    description: >
+      Raw ISP operational data (billing, ledger, disputes, servicing, contact
+      center, field dispatch, plant quality, network, surveys) as landed by
+      `python -m bsp_seed --target postgres` (local warehouse) or
+      `--target bigquery` (dataset `raw` in GCP_PROJECT_ID). DataPlatform sells
+      copper (DSL) and fiber (FTTH) internet only. Account-level tables are
+      keyed by `ban`; wire centers by `clli`. Column types are normalised in
+      staging, so the loader may land timestamps as text.
+    schema: "{{ env_var('BSP_RAW_SCHEMA', 'raw') }}"
+    loader: bsp_seed
+    config:
+      freshness:
+        # the synthetic window ends 2026-09; a live feed would use hours
+        warn_after: {count: 60, period: day}
+        error_after: {count: 400, period: day}
+    tables:
+      - name: wire_centers
+        config: {freshness: null}   # reference / no load timestamp
+        description: Central offices (wire centers) with fiber passings, copper lines, OLT / DSLAM counts.
+        columns:
+          - name: clli
+            description: "{{ doc('clli') }}"
+            data_tests: [unique, not_null]
+      - name: customers
+        config: {freshness: null}   # reference / no load timestamp
+        description: One row per billing account (residential or SMB). Contains PII (name, e-mail, phone, address keys).
+        columns:
+          - name: ban
+            description: "{{ doc('ban') }}"
+            data_tests: [unique, not_null]
+      - name: service_locations
+        config: {freshness: null}   # reference / no load timestamp
+        description: Serviceable location per account — technology (copper | fiber), CLLI, plant, ONT model / loop length.
+        columns:
+          - name: location_id
+            data_tests: [unique, not_null]
+      - name: plans
+        config: {freshness: null}   # reference / no load timestamp
+        description: Rate card — plan, technology, speeds, list and promo price.
+        columns:
+          - name: plan_id
+            data_tests: [unique, not_null]
+      - name: subscriptions
+        config: {freshness: null}   # reference / no load timestamp
+        description: Primary broadband subscription per account; end_date / cancel_reason when cancelled.
+        columns:
+          - name: subscription_id
+            data_tests: [unique, not_null]
+      - name: usage_monthly
+        config:
+          loaded_at_field: "cast(usage_month as timestamp)"
+        description: Monthly usage, latency and experienced outage minutes per account.
+      - name: ont_metrics
+        config:
+          loaded_at_field: "cast(metric_month as timestamp)"
+        description: Fiber ONT optics per account × month — rx/tx power, LOS events, BIP errors, reboots, uptime.
+      - name: copper_line_metrics
+        config:
+          loaded_at_field: "cast(metric_month as timestamp)"
+        description: Copper DSL line quality per account × month — SNR margin, attenuation, sync rate, retrains, CRC errors.
+      - name: network_events
+        description: Outages, degradations and planned maintenance by CLLI wire center.
+        config:
+          loaded_at_field: "cast(started_at as timestamp)"
+        columns:
+          - name: event_id
+            data_tests: [unique, not_null]
+      - name: service_tickets
+        description: Trouble and care tickets with channel and first-contact-resolution flag.
+        config:
+          loaded_at_field: "cast(opened_at as timestamp)"
+        columns:
+          - name: ticket_id
+            data_tests: [unique, not_null]
+      - name: customer_calls
+        description: Contact-center calls — queue, reason, disposition, handle time, 7-day repeat flag, sentiment.
+        config:
+          loaded_at_field: "cast(call_start as timestamp)"
+        columns:
+          - name: call_id
+            data_tests: [unique, not_null]
+      - name: dispatches
+        description: Field dispatches / truck rolls (repair, install) with cause and 30-day repeat flag.
+        config:
+          loaded_at_field: "cast(scheduled_at as timestamp)"
+        columns:
+          - name: dispatch_id
+            data_tests: [unique, not_null]
+      - name: invoices
+        description: Monthly invoices — recurring, one-time, taxes & fees, credits, late fee, amount due.
+        config:
+          loaded_at_field: "cast(invoice_date as timestamp)"
+        columns:
+          - name: invoice_id
+            description: "{{ doc('invoice_id') }}"
+            data_tests: [unique, not_null]
+      - name: transactions
+        description: Account ledger — payments (negative), late fees, dispute credits (negative). Replaces payments + adjustments.
+        config:
+          loaded_at_field: "cast(txn_date as timestamp)"
+        columns:
+          - name: txn_id
+            data_tests: [unique, not_null]
+      - name: disputes
+        description: Billing disputes — category, disputed amount, status and credit outcome.
+        config:
+          loaded_at_field: "cast(opened_date as timestamp)"
+        columns:
+          - name: dispute_id
+            data_tests: [unique, not_null]
+      - name: revenue
+        description: Recognised revenue per account × month — recurring, one-time, late fees, credits, net.
+        config:
+          loaded_at_field: "cast(revenue_month as timestamp)"
+      - name: nps_surveys
+        description: Relationship NPS survey responses with free-text verbatim.
+        config:
+          loaded_at_field: "cast(survey_date as timestamp)"
+        columns:
+          - name: survey_id
+            data_tests: [unique, not_null]
+      - name: customer_monthly
+        config:
+          loaded_at_field: "cast(snapshot_month as timestamp)"
+        description: >
+          Feature-ready monthly snapshot per active account with the churn label
+          `churned_next_90d` (label_complete = false for the last two months).

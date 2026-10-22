@@ -1,0 +1,33 @@
+# Trino (trino:8080) → DataHub, one catalog per run: ingest.sh loops over the
+# catalogs in trino_scopes.yml that Trino really serves (or TRINO_CATALOGS) and
+# applies each one's schema allow / deny list there. Asset names are exactly
+# how queries are written: catalog.schema.table. Warehouse tables are linked
+# as siblings / lineage to the underlying postgres (bsp_edw) datasets.
+pipeline_name: bsp_trino_${TRINO_CATALOG}
+source:
+  type: trino
+  config:
+    host_port: ${TRINO_HOST}:${TRINO_PORT}
+    database: ${TRINO_CATALOG}
+    username: ${TRINO_USER}
+    env: ${DATAHUB_ENV}
+    schema_pattern:
+      deny: ["^information_schema$"]
+    include_views: true
+    ingest_lineage_to_connectors: true
+    trino_as_primary: false
+    catalog_to_connector_details: {}   # per catalog, from trino_scopes.yml
+    profiling:
+      enabled: false
+    stateful_ingestion:
+      enabled: true
+      remove_stale_metadata: true
+
+# GMS has metadata-service auth ON; the ingest job authenticates with the
+# DataHub system client (secret from the generated secrets file).
+sink:
+  type: datahub-rest
+  config:
+    server: ${DATAHUB_GMS_URL}
+    extra_headers:
+      Authorization: "Basic __datahub_system:${DATAHUB_SYSTEM_CLIENT_SECRET}"

@@ -1,0 +1,17 @@
+{
+  "telemetry.telemetryLevel": "off",
+  "update.mode": "none",
+  "update.showReleaseNotes": false,
+  "workbench.startupEditor": "none",
+  "workbench.tips.enabled": false,
+  "window.titleBarStyle": "native",
+  "window.restoreWindows": "all",
+  "files.autoSave": "afterDelay",
+  "http.proxyStrictSSL": true,
+  "http.proxySupport": "off",
+  "chat.disableAIFeatures": true,
+  "workbench.welcomePage.walkthroughs.openOnInstall": false,
+  "security.workspace.trust.enabled": false,
+  "python.defaultInterpreterPath": "/usr/local/bin/python3",
+  "python.venvPath": "/opt/kernels"
+}

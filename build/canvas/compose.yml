@@ -1,0 +1,55 @@
+# No-code integration canvas (dlt engine) — FastAPI + static UI at /canvas/.
+# Contract: plan/architecture.md §1 (service canvas, port 8093, profile canvas).
+# Included by the root docker-compose.yml with project_directory: .
+services:
+  canvas:
+    extends: {file: compose.base.yml, service: bsp-workload}
+    profiles: [canvas]
+    command: ["python", "-m", "uvicorn", "bsp_canvas.app:app", "--host", "0.0.0.0", "--port", "8093",
+              "--proxy-headers", "--forwarded-allow-ips", "*"]
+    working_dir: /opt/canvas
+    environment:
+      PYTHONPATH: /opt/common:/opt/seed:/opt/connectors:/opt/canvas
+      # base NO_PROXY + the demo sources (capability demo-sources): S3 calls to http://minio:9000 must not go via px-proxy
+      NO_PROXY: &canvas_no_proxy "localhost,127.0.0.1,.internal,nginx,studio,px-proxy,docs,postgres,appliance,code,superset,trino,canvas,connectors,mlflow,model-gateway,mlops,harness,mcp,ollama,disputes,ccai,browser,host.docker.internal,minio,mssql,oracle"
+      no_proxy: *canvas_no_proxy
+      CANVAS_DIR: /data/canvas                           # pipelines/*.yaml, state, runs, lineage, uploads
+      CONNECTORS_FIXTURES_DIR: /opt/connectors/fixtures  # in-process mock mode for the M365/Atlan/Power BI SDK
+      CONNECTORS_STATE_DIR: /data/connectors
+      UI_KIT_DIR: /opt/ui-kit
+      CANVAS_SCHEDULER: ${CANVAS_SCHEDULER:-on}
+      DLT_DATA_DIR: /data/canvas/dlt
+      RUNTIME__LOG_LEVEL: WARNING
+      RUNTIME__DLTHUB_TELEMETRY: "false"                # restricted egress: no telemetry
+      ATLAN_CONNECTION_QN: ${ATLAN_CONNECTION_QN:-}
+      # optional lineage targets (off unless set): DataHub GMS (stacks/datahub) / any OpenLineage backend
+      DATAHUB_GMS_URL: ${DATAHUB_GMS_URL:-}
+      OPENLINEAGE_URL: ${OPENLINEAGE_URL:-}
+      # secrets (Studio injects from the vault; empty = mock / not configured)
+      PG_PASS: ${PG_PASS:-}
+      GCP_SA_JSON: ${GCP_SA_JSON:-}
+      M365_CLIENT_SECRET: ${M365_CLIENT_SECRET:-}
+      ATLAN_API_TOKEN: ${ATLAN_API_TOKEN:-}
+      DATAHUB_TOKEN: ${DATAHUB_TOKEN:-}
+      # principal switch: this service's token for Studio's internal gcp-token endpoint (never routed by nginx)
+      CANVAS_STUDIO_TOKEN: ${CANVAS_STUDIO_TOKEN:-}
+      # connection secrets referenced as vault:NAME by the shipped example connections
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-}
+      CARE_MSSQL_PASSWORD: ${CARE_MSSQL_PASSWORD:-}
+      # every secret added in Studio → Credentials → Connection secrets, as one JSON object
+      CANVAS_CONNECTION_SECRETS: ${CANVAS_CONNECTION_SECRETS:-}
+      BILLING_ORA_PASSWORD: ${BILLING_ORA_PASSWORD:-}
+    volumes:
+      - ./build/canvas:/opt/canvas:ro
+      - ${DATA_ROOT:-./data}/canvas:/data/canvas
+      - ${DATA_ROOT:-./data}/connectors:/data/connectors
+      - ${DATA_ROOT:-./data}/lake:/data/lake
+    depends_on:
+      postgres: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8093/canvas/healthz', timeout=3).status == 200 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s

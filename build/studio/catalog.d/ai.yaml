@@ -1,0 +1,76 @@
+# AI Engineering — build/harness (LLM gateway + playground + evals), build/mcp (MCP tools)
+# and the optional in-appliance Ollama (plan/architecture.md §1, §2, §5).
+# Shared external credentials used here (core catalog): GCP_SA_JSON (Vertex AI + BigQuery),
+# ANTHROPIC_API_KEY, M365_CLIENT_SECRET, ATLAN_API_TOKEN.
+services:
+  harness:
+    title: AI Harness
+    blurb: "OpenAI-compatible LLM/VLM gateway routing aliases to Ollama, Vertex AI (Gemini, Claude) and Anthropic — playground, compare, routing, telemetry, evals"
+    profile: ai
+    ram_mb: 384
+    kind: app
+    route: /ai/
+    needs: [postgres]
+    soft_needs: [ollama, mcp, rag, browser]
+    endpoints:
+      - {label: Playground & admin, value: "/ai/"}
+      - {label: "Gateway (OpenAI-compatible) — inside the appliance", value: "http://harness:8096/ai/v1"}
+      - {label: "Gateway via the front door", value: "/ai/v1 (Studio session or Bearer LLM_GATEWAY_TOKEN)"}
+      - {label: Model aliases, value: "chat-default · extract-default · classify-default · vlm-default · embed-default · sql-default"}
+      - {label: Routing config, value: "config/ai/providers.yaml (+ <data root>/harness/providers.override.yaml)"}
+      - {label: Telemetry, value: "ai.llm_calls · ai.eval_runs"}
+    creds:
+      - {env: LLM_GATEWAY_TOKEN, label: "LLM gateway bearer token (optional — when set, every /ai/v1 client must send it)", external: true}
+  mcp:
+    title: MCP Tools
+    blurb: "MCP server (streamable HTTP) for agents: warehouse, Trino, BigQuery, Atlan, Power BI, Microsoft 365, MLflow, SAP BRIM, browser, knowledge base"
+    profile: ai
+    ram_mb: 384
+    kind: api
+    route: /mcp/info
+    needs: [postgres]
+    soft_needs: [connectors, browser, trino, mlflow, rag]
+    endpoints:
+      - {label: "Inside the appliance", value: "http://mcp:8095/mcp"}
+      - {label: "Claude Code / Codex / VS Code on this laptop", value: "http://127.0.0.1:${MCP_PORT:-8765}/mcp"}
+      - {label: "One tool group", value: "…/mcp/<group> (warehouse, trino, bigquery, atlan, powerbi, m365, mlflow, sap, browser, rag)"}
+      - {label: Tool roster, value: "/mcp/info · /mcp/tools.json"}
+      - {label: Client setup guide, value: "/docs/ai-engineer/mcp-clients/"}
+      - {label: Audit log, value: "<data root>/mcp/audit/*.jsonl · ai.mcp_tool_calls"}
+    creds:
+      - {env: MCP_TOKEN, label: "MCP bearer token (Authorization: Bearer …)", length: 40, policy: alnum}
+      - {env: MCP_DELEGATION_KEY, label: "MCP user-delegation signing key (harness ↔ MCP only)", hidden: true, length: 48, policy: alnum}
+  ollama:
+    title: Ollama
+    blurb: "Local LLM / VLM runtime (official image) — models persist under <data root>/ollama; pulls go through the egress proxy"
+    profile: ollama
+    ram_mb: 6144
+    kind: base
+    endpoints:
+      - {label: "Inside the appliance", value: "http://ollama:11434"}
+      - {label: "Use Ollama on the host instead", value: "OLLAMA_BASE_URL=http://host.docker.internal:11434"}
+      - {label: Recommended models, value: "qwen2.5:7b-instruct · llama3.1:8b · qwen2.5vl:7b · nomic-embed-text"}
+
+capabilities:
+  ai:
+    title: AI Harness & MCP Tools
+    tone: ai
+    icon: chat
+    services: [harness, mcp]
+    requires: [workspace, connectors]
+    blurb: "Config-driven LLM gateway (Ollama ↔ Vertex AI) with playground, evals and telemetry, plus MCP tools for agents"
+  ollama:
+    title: Ollama (local models)
+    tone: ai
+    icon: stacks
+    services: [ollama]
+    blurb: "Run open models inside the appliance (or point the harness at Ollama on the host). 8–16 GB RAM; GPU optional"
+
+app_groups:
+  - {id: ai-engineering, title: Build with AI, icon: bot, blurb: "Models, tools and knowledge for AI apps"}
+
+apps:
+  - {id: ai-harness, group: ai-engineering, title: AI Harness, service: harness, path: /ai/, icon: bot,
+     blurb: "Try models side by side, route requests and run evals"}
+  - {id: mcp-tools, group: ai-engineering, title: MCP Tools, service: mcp, path: /mcp/info, cred: MCP_TOKEN, icon: plug,
+     blurb: "Connect your coding assistant to the platform's tools"}

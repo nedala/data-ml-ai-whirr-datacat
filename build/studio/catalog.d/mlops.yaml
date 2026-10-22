@@ -1,0 +1,65 @@
+# MLOps — build/mlops (plan/architecture.md §1, §2). ML Scientist appliance.
+# PG_PASS is the core warehouse credential (shared). ARTIFACTORY_TOKEN is an
+# optional external key: with ARTIFACTORY_URL set, frozen bundles are pushed
+# to JFrog Artifactory; otherwise to the local file artifactory under
+# <data root>/mlops/artifactory.
+services:
+  mlflow:
+    title: MLflow
+    blurb: "MLflow 3 tracking server + model registry (champion / challenger aliases) on the warehouse Postgres"
+    profile: mlops
+    ram_mb: 768
+    kind: app
+    route: /mlflow/
+    needs: [postgres]
+    endpoints:
+      - {label: Tracking URI (inside the appliance), value: "http://mlflow:5000/mlflow"}
+      - {label: Registered model, value: "bsp_churn  (aliases: champion, challenger)"}
+      - {label: Artifacts on disk, value: "<data root>/mlops/artifacts (host)"}
+  model-gateway:
+    title: Model Gateway
+    blurb: "Serves the churn model from the registry — single, blue/green, canary and shadow routing; every inference logged"
+    profile: mlops
+    ram_mb: 768
+    kind: app
+    route: /serve/docs
+    needs: [postgres, mlflow]
+    endpoints:
+      - {label: Predict (inside the appliance), value: "POST http://model-gateway:8098/serve/v1/predict"}
+      - {label: Prometheus metrics, value: "/serve/metrics"}
+      - {label: Inference log, value: "postgres · bsp_edw · mlops.inference_log"}
+  mlops:
+    title: MLOps Control Tower
+    blurb: "Leaderboard, registry & deployments, telemetry, drift, retrains, feature store, scores and frozen artifacts"
+    profile: mlops
+    ram_mb: 1536
+    kind: app
+    route: /mlops/
+    needs: [postgres, mlflow, model-gateway]
+    endpoints:
+      - {label: Control tower, value: "/mlops/"}
+      - {label: API docs, value: "/mlops/api/docs"}
+      - {label: Headless end-to-end demo, value: "python -m bsp_mlops.demo   (JupyterLab terminal)"}
+      - {label: Frozen bundles, value: "<data root>/mlops/artifactory (host) or JFrog when ARTIFACTORY_URL is set"}
+    creds:
+      - {env: ARTIFACTORY_TOKEN, label: "JFrog Artifactory token (optional — local file artifactory when unset)", external: true}
+
+capabilities:
+  mlops:
+    title: MLOps
+    tone: ml
+    icon: chart
+    services: [mlflow, model-gateway, mlops]
+    requires: [workspace]
+    blurb: "MLflow tracking + registry, model gateway (blue/green · canary · shadow), drift monitor, automatic retraining, frozen artifacts"
+
+app_groups:
+  - {id: ml, title: Build and run models, icon: flask, blurb: "Train, compare, serve and watch the churn model"}
+
+apps:
+  - {id: mlops, group: ml, title: MLOps Control Tower, service: mlops, path: /mlops/, icon: activity,
+     blurb: "Pick the champion model, roll it out safely and watch for drift"}
+  - {id: mlflow, group: ml, title: MLflow, service: mlflow, path: /mlflow/, icon: flask,
+     blurb: "Experiments, runs, metrics and the model registry in one place"}
+  - {id: model-gateway, group: ml, title: Model Gateway API, service: model-gateway, path: /serve/docs, icon: rocket,
+     blurb: "API reference to score customers and change model routing"}

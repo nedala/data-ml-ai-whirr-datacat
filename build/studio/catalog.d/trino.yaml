@@ -1,0 +1,26 @@
+# Trino — capability `trino`. Merged into the Studio catalog.
+services:
+  trino:
+    title: Trino
+    blurb: Federated SQL across the local warehouse, BigQuery (when connected), lake files and TPC-H
+    profile: trino
+    ram_mb: 3072
+    kind: app
+    route: /trino/ui/
+    health: /trino/healthz
+    needs: [postgres]
+    endpoints:
+      - {label: "Inside the appliance (JDBC / Python / dbt)", value: "http://trino:8080 · catalogs warehouse, bigquery, lake, tpch"}
+      - {label: JDBC URL, value: "jdbc:trino://trino:8080/warehouse"}
+      - {label: Web UI, value: "/trino/ui/"}
+    # BigQuery key: the shared GCP_SA_JSON credential (core catalog) — no per-service slot
+
+apps:
+  # Opens the AI harness Federated SQL tab (catalog, editor, saved queries) with Trino's own system
+  # dashboard embedded on the right; the dashboard alone is one click away (alt).
+  - {id: trino, group: data, title: Trino, service: trino, path: "/ai/#sql?monitor=1", icon: server,
+     blurb: "Query the warehouse, Oracle, SQL Server and BigQuery together, and watch Trino run it",
+     alt: {label: "Trino system dashboard", url: "/trino/ui/"}}
+
+capabilities:
+  trino: {title: Federated SQL, tone: data, icon: database, services: [trino], blurb: "Trino over the warehouse, BigQuery and lake files"}

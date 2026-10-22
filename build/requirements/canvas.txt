@@ -1,0 +1,16 @@
+# bsp_canvas — no-code integration canvas (Python 3.12). Pulls connectors.txt.
+# Lower bounds only (the shared image also carries mlflow / dbt).
+-r connectors.txt
+dlt[postgres,bigquery,filesystem,sql_database]>=1.4
+croniter>=2.0
+jsonpath-ng>=1.6
+# object storage (fsspec backends for dlt filesystem)
+gcsfs>=2024.2
+s3fs>=2024.2
+adlfs>=2024.2
+# enterprise databases (SQLAlchemy dialects)
+oracledb>=2.0            # thin mode: no Oracle Instant Client needed
+pyodbc>=5.0              # SQL Server via ODBC Driver 18 (image needs unixodbc + msodbcsql18)
+pymssql>=2.3             # SQL Server fallback when the ODBC driver is missing
+pymysql>=1.1             # MySQL / MariaDB
+connectorx>=0.3.3        # optional fast arrow extraction (dlt sql_database backend="connectorx")

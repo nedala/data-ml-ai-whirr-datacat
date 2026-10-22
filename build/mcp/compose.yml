@@ -1,0 +1,46 @@
+# MCP server (FastMCP, streamable HTTP at http://mcp:8095/mcp, bearer MCP_TOKEN).
+# Laptop loopback 127.0.0.1:${MCP_PORT:-8765} is published by nginx (platform), which proxies to mcp:8095.
+services:
+  mcp:
+    extends: {file: compose.base.yml, service: bsp-workload}
+    profiles: [ai]
+    command: ["python", "-m", "bsp_mcp"]
+    environment:
+      PYTHONPATH: /opt/common:/opt/seed:/opt/connectors:/opt/mcp:/opt/rag
+      MCP_PORT: "8095"                     # container port (the HOST loopback port is MCP_HOST_PORT)
+      MCP_HOST_PORT: ${MCP_PORT:-8765}
+      MCP_DATA_DIR: /data/mcp
+      DBT_PROJECT_DIR: /opt/dbt_project
+      BROWSER_CDP_URL: ${BROWSER_CDP_URL:-http://browser:9223}
+      # egress (default): follow Studio → Egress · allowlist: also restrict to MCP_BROWSER_ALLOW_DOMAINS
+      MCP_BROWSER_POLICY: ${MCP_BROWSER_POLICY:-egress}
+      MCP_BROWSER_ALLOW_DOMAINS: ${MCP_BROWSER_ALLOW_DOMAINS:-}
+      MCP_BROWSER_EVAL: ${MCP_BROWSER_EVAL:-0}
+      MCP_M365_WRITE: ${MCP_M365_WRITE:-0}
+      MCP_MAILBOXES: ${MCP_MAILBOXES:-}
+      MCP_GROUPS: ${MCP_GROUPS:-}
+      MCP_DISABLE_GROUPS: ${MCP_DISABLE_GROUPS:-}
+      CONNECTORS_STATE_DIR: /data/connectors
+      # secrets
+      MCP_TOKEN: ${MCP_TOKEN:-}
+      # signs "acting as <user>" so M365 tools can use that user's delegated Graph token
+      MCP_DELEGATION_KEY: ${MCP_DELEGATION_KEY:-}
+      PG_PASS: ${PG_PASS:-}
+      # data catalog (bsp_common.catalog): DataHub side stack via the frontend's GMS proxy
+      DATAHUB_TOKEN: ${DATAHUB_TOKEN:-}
+      DATAHUB_GMS_URL: ${DATAHUB_GMS_URL:-http://datahub-frontend:9002/api/gms}
+      GCP_SA_JSON: ${GCP_SA_JSON:-}
+      M365_CLIENT_SECRET: ${M365_CLIENT_SECRET:-}
+      ATLAN_API_TOKEN: ${ATLAN_API_TOKEN:-}
+    volumes:
+      - ./build/mcp:/opt/mcp:ro
+      - ./build/rag:/opt/rag:ro
+      - ./dbt_project:/opt/dbt_project:ro
+      - ${DATA_ROOT:-./data}/mcp:/data/mcp
+      - ${DATA_ROOT:-./data}/connectors:/data/connectors
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8095/healthz', timeout=3).status == 200 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s

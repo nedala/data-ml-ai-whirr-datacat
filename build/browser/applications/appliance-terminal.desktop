@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Terminal
+Exec=x-terminal-emulator
+Icon=org.xfce.terminal
+Comment=Shell with the workspace Python
+Categories=System;TerminalEmulator;

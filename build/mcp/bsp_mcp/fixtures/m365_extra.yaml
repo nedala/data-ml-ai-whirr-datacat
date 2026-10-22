@@ -1,0 +1,43 @@
+# Mock Microsoft 365 data for the m365_* tools that bsp_connectors.m365 does not
+# cover (calendar, Teams, people). Synthetic. Event times are relative to "today"
+# (day offset + HH:MM, US/Eastern shown as UTC-4/-5 is ignored: all UTC).
+people:
+  - {id: u-001, displayName: Avery Brooks, mail: avery.brooks@example.net, jobTitle: Billing Operations Manager, department: Revenue Operations, officeLocation: Monroe LA}
+  - {id: u-002, displayName: Jordan Patel, mail: jordan.patel@example.net, jobTitle: Network Operations Lead, department: Network Operations, officeLocation: Charlotte NC}
+  - {id: u-003, displayName: Morgan Lee, mail: morgan.lee@example.net, jobTitle: Data Engineer, department: Data & AI, officeLocation: Remote}
+  - {id: u-004, displayName: Casey Rivera, mail: casey.rivera@example.net, jobTitle: Customer Care Analytics Lead, department: Customer Care, officeLocation: Wake Forest NC}
+  - {id: u-005, displayName: Riley Chen, mail: riley.chen@example.net, jobTitle: ML Scientist, department: Data & AI, officeLocation: Remote}
+calendars:
+  avery.brooks@example.net:
+    - {subject: Dispute backlog stand-up, day: 0, start: "13:00", end: "13:30", location: Teams, organizer: avery.brooks@example.net}
+    - {subject: SAP BRIM change review, day: 0, start: "15:00", end: "16:00", location: Teams, organizer: casey.rivera@example.net}
+    - {subject: Billing accuracy QBR, day: 1, start: "14:00", end: "15:30", location: Monroe 3F, organizer: avery.brooks@example.net}
+  jordan.patel@example.net:
+    - {subject: Outage post-mortem (wire center RLGHNCXA), day: 0, start: "14:00", end: "15:00", location: Teams, organizer: jordan.patel@example.net}
+    - {subject: Fiber build weekly, day: 1, start: "13:00", end: "14:00", location: Charlotte, organizer: jordan.patel@example.net}
+  morgan.lee@example.net:
+    - {subject: dbt marts review, day: 0, start: "16:00", end: "16:30", location: Teams, organizer: morgan.lee@example.net}
+teams:
+  - id: team-billing
+    displayName: Billing Operations
+    description: Billing accuracy, disputes and credits
+    channels:
+      - id: ch-billing-general
+        displayName: General
+        messages:
+          - {from: Avery Brooks, at: "-1 09:12", text: "Dispute volume up 18% after the October price change — please tag promo_expired cases."}
+          - {from: Casey Rivera, at: "-1 10:40", text: "CCAI shows BIL.CHG.PROMO_EXPIRED is the #2 contact reason this week."}
+      - id: ch-billing-disputes
+        displayName: Disputes automation
+        messages:
+          - {from: Morgan Lee, at: "-2 15:05", text: "Extraction model now routes to extract-default (local first, Vertex fallback)."}
+          - {from: Avery Brooks, at: "-1 11:20", text: "BAN 3100008373 (Internet 140 copper): late fee on invoice 3100008373-2603 with autopay on, credited $10 under late_fee_autopay."}
+          - {from: Casey Rivera, at: "-1 16:02", text: "BAN 3100000261 disputes $46.41 on 3100000261-2603 after the fiber promo ended; partial credit proposed."}
+  - id: team-netops
+    displayName: Network Operations
+    description: Outages, truck rolls and reliability
+    channels:
+      - id: ch-netops-outages
+        displayName: Outages
+        messages:
+          - {from: Jordan Patel, at: "0 07:30", text: "Copper (DSLAM) outage in RLGHNCXA restored 06:55; ~270 copper BANs affected, outage credits per policy. Fiber (ONT) customers unaffected."}

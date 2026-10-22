@@ -1,0 +1,49 @@
+# dbt project bsp_edw (dbt_project/) → models, sources, seeds, snapshots,
+# tests and test results, with lineage stitched to the postgres datasets
+# (target_platform postgres). Reads dbt artifacts from DBT_TARGET_DIR
+# (default dbt_project/target, mounted read-only at /opt/bsp-datahub/dbt-target).
+# ingest.sh drops catalog_path / run_results_paths when those files are absent.
+pipeline_name: bsp_edw_dbt
+source:
+  type: dbt
+  config:
+    manifest_path: /opt/bsp-datahub/dbt-target/manifest.json
+    catalog_path: /opt/bsp-datahub/dbt-target/catalog.json
+    run_results_paths: ["/opt/bsp-datahub/dbt-target/run_results.json"]
+    target_platform: postgres
+    convert_urns_to_lowercase: false
+    env: ${DATAHUB_ENV}
+    entities_enabled:
+      models: "YES"
+      sources: "YES"
+      seeds: "YES"
+      snapshots: "YES"
+      test_definitions: "YES"
+      test_results: "YES"
+    include_column_lineage: true
+    write_semantics: PATCH
+    # dbt meta / tags → DataHub tags, owners and terms
+    enable_meta_mapping: true
+    tag_prefix: "dbt:"
+    meta_mapping:
+      owner:
+        match: ".*"
+        operation: add_owner
+        config: {owner_type: group}
+    column_meta_mapping:
+      pii:
+        match: "True|true"
+        operation: add_tag
+        config: {tag: pii}
+    stateful_ingestion:
+      enabled: true
+      remove_stale_metadata: true
+
+# GMS has metadata-service auth ON; the ingest job authenticates with the
+# DataHub system client (secret from the generated secrets file).
+sink:
+  type: datahub-rest
+  config:
+    server: ${DATAHUB_GMS_URL}
+    extra_headers:
+      Authorization: "Basic __datahub_system:${DATAHUB_SYSTEM_CLIENT_SECRET}"

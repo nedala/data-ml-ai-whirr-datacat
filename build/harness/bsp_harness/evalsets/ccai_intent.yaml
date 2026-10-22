@@ -1,0 +1,28 @@
+# Golden set: call-log snippet → contact-reason leaf (subset of config/taxonomy/ccai_taxonomy.yaml).
+# Scoring: exact label match (case-insensitive; a reply that contains exactly one label counts).
+suite: ccai_intent
+type: classify
+description: CCAI contact-reason classification (taxonomy leaf ids)
+default_routes: [classify-default]
+labels:
+  BIL.CHG.HIGH_BILL: Bill higher than expected
+  BIL.CHG.PROMO_EXPIRED: Promotional price ended
+  BIL.ADJ.LATE_FEE_DISPUTE: Late fee dispute
+  BIL.ADJ.OUTAGE_CREDIT: Credit for an outage
+  BIL.PAY.AUTOPAY_FAIL: Autopay failed
+  TEC.CON.NO_INTERNET: No internet at all
+  TEC.CON.SLOW_SPEED: Slow speeds
+  TEC.WIFI.COVERAGE: Wi-Fi does not reach parts of the home
+  OUT.STAT.AREA_OUTAGE_STATUS: Asking about an area outage
+system: |
+  Classify the customer's main contact reason. Answer with exactly one label id from the list and nothing else.
+cases:
+  - {id: c1, input: "Customer: my bill is way higher this month and I don't know why, it's usually fifty five.", expected: BIL.CHG.HIGH_BILL}
+  - {id: c2, input: "Customer: I was paying forty nine for fiber and now it's fifty nine, did my deal end?", expected: BIL.CHG.PROMO_EXPIRED}
+  - {id: c3, input: "Customer: the internet has been completely down since this morning, no lights on the box.", expected: TEC.CON.NO_INTERNET}
+  - {id: c4, input: "Customer: I pay for a gig but speed tests show like 80 megs on wired.", expected: TEC.CON.SLOW_SPEED}
+  - {id: c5, input: "Customer: wifi is fine in the living room but the upstairs bedrooms get nothing.", expected: TEC.WIFI.COVERAGE}
+  - {id: c6, input: "Customer: is there an outage in Wake Forest? my neighbors are down too.", expected: OUT.STAT.AREA_OUTAGE_STATUS}
+  - {id: c7, input: "Customer: you charged me a late fee but I've been on autopay for years.", expected: BIL.ADJ.LATE_FEE_DISPUTE}
+  - {id: c8, input: "Customer: we were down for three days last week, I want a credit for that.", expected: BIL.ADJ.OUTAGE_CREDIT}
+  - {id: c9, input: "Customer: my autopay didn't go through this month even though the card is good.", expected: BIL.PAY.AUTOPAY_FAIL}

@@ -1,0 +1,32 @@
+# Example: Outlook billing-disputes mailbox → landing.dispute_emails (metadata only, merge on message id)
+id: outlook-dispute-emails
+name: Billing-disputes mailbox → landing.dispute_emails
+description: Message metadata (no bodies) from the disputes mailbox, with the billing account number (BAN) parsed from the sender (ban<10 digits>@…). Upserts on message_id.
+example: true
+tags: [outlook, m365, disputes]
+schedule: {cron: "*/30 * * * *", enabled: false}
+nodes:
+  - id: src
+    type: source.outlook
+    label: billing-disputes inbox
+    position: {x: 60, y: 140}
+    config: {mailbox: "${DISPUTES_MAILBOX}", folder: inbox, top: 1000, include_preview: false, include_body: false}
+  - id: acct
+    type: transform.derive
+    label: BAN from sender
+    position: {x: 340, y: 140}
+    config: {column: ban, expression: "regex_extract(from_address, '^ban(\\d{10})@')"}
+  - id: dedupe
+    type: transform.dedupe
+    label: One row per message
+    position: {x: 600, y: 140}
+    config: {keys: [message_id], keep: last}
+  - id: dest
+    type: dest.warehouse
+    label: landing.dispute_emails
+    position: {x: 860, y: 140}
+    config: {schema: landing, table: dispute_emails, mode: merge, primary_key: [message_id]}
+edges:
+  - {from: src, to: acct}
+  - {from: acct, to: dedupe}
+  - {from: dedupe, to: dest}

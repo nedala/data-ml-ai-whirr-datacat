@@ -1,0 +1,42 @@
+# Example: SharePoint "Finance/Reports" Excel → landing.finance_monthly (full refresh)
+id: sharepoint-finance-monthly
+name: SharePoint Finance → landing.finance_monthly
+description: Monthly revenue pack (Excel on the Finance SharePoint site) into the warehouse, typed and with fiber share.
+example: true
+tags: [sharepoint, finance, excel]
+schedule: {cron: "0 6 * * 1-5", enabled: false, timezone: America/Chicago}
+nodes:
+  - id: src
+    type: source.sharepoint
+    label: Finance/Reports · Monthly_Revenue_Summary.xlsx
+    position: {x: 60, y: 140}
+    config: {mode: file, site: "", folder: Finance/Reports, pattern: Monthly_Revenue_Summary.xlsx, format: excel, sheet: Monthly Summary}
+  - id: rename
+    type: transform.select
+    label: Rename columns
+    position: {x: 340, y: 140}
+    config:
+      rename: {Month: month, Region: region, State: state, Active Subscribers: active_subscribers,
+               Fiber Subscribers: fiber_subscribers, Revenue (USD): revenue_usd, ARPU (USD): arpu_usd,
+               Churn Rate: churn_rate, Truck Rolls: truck_rolls}
+  - id: cast
+    type: transform.cast
+    label: Types
+    position: {x: 600, y: 140}
+    config: {types: {month: string, active_subscribers: integer, fiber_subscribers: integer, revenue_usd: float,
+                     arpu_usd: float, churn_rate: float, truck_rolls: integer}, errors: "null"}
+  - id: derive
+    type: transform.derive
+    label: Fiber share
+    position: {x: 860, y: 140}
+    config: {column: fiber_share, expression: "round(fiber_subscribers / active_subscribers, 4)"}
+  - id: dest
+    type: dest.warehouse
+    label: landing.finance_monthly
+    position: {x: 1120, y: 140}
+    config: {schema: landing, table: finance_monthly, mode: full_refresh}
+edges:
+  - {from: src, to: rename}
+  - {from: rename, to: cast}
+  - {from: cast, to: derive}
+  - {from: derive, to: dest}

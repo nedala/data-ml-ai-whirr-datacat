@@ -1,0 +1,21 @@
+# Example: object storage (MinIO / S3 / GCS) parquet files → landing.bucket_invoices, incremental by file modified time
+id: bucket-parquet-to-landing
+name: Bucket parquet → landing.bucket_invoices
+description: "Demo source (add 'Demo sources' in Studio). New parquet files under billing/ in the demo bucket (connection minio-demo; switch it to a GCS connection for production) appended to the warehouse."
+example: true
+tags: [object-storage, s3, gcs, parquet]
+schedule: {cron: "15 * * * *", enabled: false}
+nodes:
+  - id: src
+    type: source.storage
+    label: s3://bsp-demo/billing/*.parquet
+    position: {x: 60, y: 140}
+    config: {connection: minio-demo, bucket: bsp-demo, pattern: "billing/*.parquet", format: parquet, incremental: true,
+             add_file_column: true}
+  - id: dest
+    type: dest.warehouse
+    label: landing.bucket_invoices
+    position: {x: 380, y: 140}
+    config: {schema: landing, table: bucket_invoices, mode: append}
+edges:
+  - {from: src, to: dest}

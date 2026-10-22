@@ -1,0 +1,10 @@
+services:
+  trino:
+    title: Trino
+    blurb: Federated SQL
+    profile: trino
+    ram_mb: 1536
+    kind: app
+    route: /trino/
+capabilities:
+  trino: {title: Trino, tone: data, icon: database, services: [trino], blurb: "Federated SQL"}

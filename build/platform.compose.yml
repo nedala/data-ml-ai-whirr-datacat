@@ -1,0 +1,360 @@
+# Platform fragment — the always-on control plane (nginx · studio · px-proxy
+# · docs) plus the shared workloads: warehouse (postgres, profile `base`),
+# workspace (appliance, `workspace`), VS Code (code, `vscode`) and the
+# desktop (browser, `browser`). Included by docker-compose.yml with
+# `project_directory: .` — every path is repo-root relative and every bind
+# mount lives under ${DATA_ROOT:-./data}.
+#
+# START MODEL: `make up APPLIANCE=…` starts the control plane only. Studio
+# then runs `docker compose --profile <p> up -d …` (same project, env files
+# and DATA_ROOT) with every secret in the PROCESS ENVIRONMENT of that call —
+# a plain `docker compose up` of a profile service starts it without
+# credentials and its entrypoint refuses to run.
+
+x-trust-env: &trust_env
+  HTTP_PROXY: http://px-proxy:3128
+  HTTPS_PROXY: http://px-proxy:3128
+  http_proxy: http://px-proxy:3128
+  https_proxy: http://px-proxy:3128
+  NO_PROXY: &no_proxy "localhost,127.0.0.1,.internal,nginx,studio,px-proxy,docs,postgres,appliance,code,superset,trino,canvas,connectors,mlflow,model-gateway,mlops,harness,mcp,ollama,disputes,ccai,rag,qdrant,openwebui,browser,host.docker.internal"
+  no_proxy: *no_proxy
+  SSL_CERT_FILE: /trust/ca-bundle.pem
+  REQUESTS_CA_BUNDLE: /trust/ca-bundle.pem
+  CURL_CA_BUNDLE: /trust/ca-bundle.pem
+
+x-px-dep: &px_dep
+  px-proxy:
+    condition: service_healthy
+
+services:
+  # ══════════════════════ ALWAYS-ON CONTROL PLANE ══════════════════════════
+
+  # Single front door — the only published ports (facade + loopback extras).
+  nginx:
+    image: ${APPLIANCE_IMAGE:-bsp/appliance:latest}
+    user: "1000:1000"
+    entrypoint:
+      - bash
+      - -c
+      - |
+        mkdir -p /tmp/nginx
+        cat > /tmp/nginx/runtime.conf <<EOF
+        # gated servers on other ports send people to the facade's sign-in page
+        map \$$server_port \$$studio_login_url {
+            443     /studio/login?next=\$$request_uri;
+            8080    /studio/login?next=\$$request_uri;   # single-port gateway
+            default https://\$$host:${FACADE_PORT:-31201}/studio/login;
+        }
+        # the loopback SSO callback server sends everything else to the facade
+        map \$$host \$$facade_origin {
+            default https://\$$host:${FACADE_PORT:-31201};
+        }
+        EOF
+        exec /usr/sbin/nginx -c /etc/nginx/nginx.conf -g 'daemon off;'
+    volumes:
+      - ./build/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # directories, not single files: editors replace files atomically
+      - ./build/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./build/nginx/snippets:/etc/nginx/snippets:ro
+      - ./build/nginx/routes.d:/etc/nginx/routes.d:ro
+      # facade cert: dev = issued by Studio's appliance CA; preprod/prod =
+      # corporate PKI files dropped into <data root>/tls (same names).
+      - ${DATA_ROOT:-./data}/tls:/etc/nginx/tls:ro
+    networks: [edge, appliance-net]
+    ports:
+      - "${FACADE_BIND:-0.0.0.0}:${FACADE_PORT:-31201}:443"
+      # browser DevTools (CDP) for automation on this host — loopback only
+      - "127.0.0.1:${CDP_PORT:-9222}:9222"
+      # MCP tools for MCP clients on this host — loopback only
+      - "127.0.0.1:${MCP_PORT:-8765}:8765"
+      # dedicated noVNC port (VNC password; NOT behind the Studio gate) —
+      # loopback unless NOVNC_BIND is set deliberately (docs/platform/desktop.md)
+      - "${NOVNC_BIND:-127.0.0.1}:${NOVNC_PORT:-36081}:6080"
+      # Open WebUI's dedicated gated server (conf.d/openwebui.conf, build/rag)
+      - "${OPENWEBUI_BIND:-127.0.0.1}:${OPENWEBUI_PORT:-37081}:8444"
+      # optional DataHub stack's gated server (conf.d/datahub.conf, `make datahub-up`)
+      - "${DATAHUB_BIND:-127.0.0.1}:${DATAHUB_PORT:-38081}:8445"
+      # loopback SSO callback (http://localhost:<port>/auth/callback) — see conf.d/sso-callback.conf
+      - "127.0.0.1:${SSO_CALLBACK_PORT:-31211}:8446"
+    depends_on:
+      studio: {condition: service_healthy}
+    restart: unless-stopped
+
+  # Studio — sign-in, vault, launchpad, composer, credentials, egress policy,
+  # certificates, backup/restore. Root: Docker socket + host folder ownership.
+  studio:
+    image: ${APPLIANCE_IMAGE:-bsp/appliance:latest}
+    user: "0:0"
+    working_dir: /opt/studio
+    entrypoint: ["python", "-m", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8010", "--proxy-headers", "--forwarded-allow-ips", "*"]
+    environment:
+      <<: *trust_env
+      APPLIANCE: ${APPLIANCE:-}
+      APPLIANCE_ENV: ${APPLIANCE_ENV:-dev}
+      APPLIANCE_PERSONA: ${APPLIANCE_PERSONA:-data-pro}
+      APPLIANCE_NETWORK: ${APPLIANCE_NETWORK:-bsp-data-net}
+      USER_HANDLE: ${USER_HANDLE:-analyst}
+      STUDIO_BREAK_GLASS: ${STUDIO_BREAK_GLASS:-}
+      STUDIO_LOCAL_EMAIL_DOMAIN: ${STUDIO_LOCAL_EMAIL_DOMAIN:-local}
+      TLS_TERMINATION: ${TLS_TERMINATION:-nginx}
+      HOST_PROJECT_ROOT: ${HOST_PROJECT_ROOT:-}
+      # the repo is mounted at its HOST path (HOST_PROJECT_ROOT, exported by
+      # the Makefile): compose resolves `include:` files and bind-mount
+      # sources against it, so in-container and host paths must agree
+      PROJECT_DIR: ${HOST_PROJECT_ROOT:-/host-project}
+      # DATA_ROOT as compose sees it (host-relative); DATA_DIR = its mount here
+      DATA_ROOT: ${DATA_ROOT:-./data}
+      DATA_DIR: /appliance-data
+      VAULT_DIR: /appliance-data/vault
+      STUDIO_SESSION_SECRET_FILE: /appliance-data/vault/session.key
+      COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-bsp_data}
+      DOCKER_HOST: unix:///var/run/docker.sock
+      FACADE_PORT: ${FACADE_PORT:-31201}
+      PUBLIC_FACADE_HOST: ${PUBLIC_FACADE_HOST:-localhost}
+      NOVNC_PORT: ${NOVNC_PORT:-36081}
+      NOVNC_HOST: ${NOVNC_HOST:-localhost}
+      OPENWEBUI_PORT: ${OPENWEBUI_PORT:-37081}
+      DATAHUB_PORT: ${DATAHUB_PORT:-38081}
+      CDP_PORT: ${CDP_PORT:-9222}
+      MCP_PORT: ${MCP_PORT:-8765}
+      ANTIGRAVITY_ENABLED: ${ANTIGRAVITY_ENABLED:-1}
+      APPLIANCE_MASTER_PASSWORD: ${APPLIANCE_MASTER_PASSWORD:-}
+      APPLIANCE_MASTER_PASSWORD_FILE: ${APPLIANCE_MASTER_PASSWORD_FILE:-}
+      SSO_PROVIDER: ${SSO_PROVIDER:-}
+      OIDC_TENANT_ID: ${OIDC_TENANT_ID:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      OIDC_REDIRECT_URI: ${OIDC_REDIRECT_URI:-}
+      OIDC_ADMIN_GROUP: ${OIDC_ADMIN_GROUP:-}
+      OIDC_ADMIN_USERS: ${OIDC_ADMIN_USERS:-}
+      OIDC_GRAPH_SCOPES: ${OIDC_GRAPH_SCOPES:-}
+      UI_KIT_DIR: /opt/ui-kit
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:${HOST_PROJECT_ROOT:-/host-project}:rw
+      - ${DATA_ROOT:-./data}:/appliance-data:rw
+      - ./build/studio:/opt/studio:ro
+      - ./build/ui-kit:/opt/ui-kit:ro
+      - ${DATA_ROOT:-./data}/trust:/trust:ro
+    networks: [appliance-net]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:8010/studio/healthz >/dev/null"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  # Egress gateway — allowlisted forward proxy that owns the corporate trust
+  # store and issues the appliance egress CA (/trust for every workload).
+  px-proxy:
+    image: ${APPLIANCE_IMAGE:-bsp/appliance:latest}
+    user: "1000:1000"
+    entrypoint: ["/opt/venvs/egress/bin/python", "/opt/px-proxy/run.py"]
+    environment:
+      APPLIANCE_ENV: ${APPLIANCE_ENV:-dev}
+      EGRESS_UPSTREAM_PROXY: ${EGRESS_UPSTREAM_PROXY:-}
+      EGRESS_UPSTREAM_AUTH: ${EGRESS_UPSTREAM_AUTH:-}
+      EGRESS_MODE: ${EGRESS_MODE:-enforce}
+      EGRESS_ALLOW_AUDIT: ${EGRESS_ALLOW_AUDIT:-1}
+      EGRESS_TLS_INSPECT: ${EGRESS_TLS_INSPECT:-1}
+      EGRESS_ALLOWLIST: /data/egress/allowlist.yaml
+      EGRESS_DECISIONS: /data/egress/decisions.jsonl
+      EGRESS_EXTRA_HOSTS: ${EGRESS_EXTRA_HOSTS:-}
+      CORPORATE_CA_DIR: /certs/corporate
+      # hosts allowed from configuration (in memory, on top of the allowlist)
+      SAP_BRIM_BASE_URL: ${SAP_BRIM_BASE_URL:-}
+      ATLAN_BASE_URL: ${ATLAN_BASE_URL:-}
+      SHAREPOINT_SITE: ${SHAREPOINT_SITE:-}
+    volumes:
+      - ./build/px-proxy:/opt/px-proxy:ro
+      - ./build/certs/corporate:/certs/corporate:ro
+      - ${DATA_ROOT:-./data}/egress:/data/egress
+      - ${DATA_ROOT:-./data}/trust:/trust
+      # the egress CA private key (0700) — px-proxy only
+      - ${DATA_ROOT:-./data}/egress/ca:/home/analyst/.mitmproxy
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    networks: [edge, appliance-net]
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /trust/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
+    restart: unless-stopped
+
+  docs:
+    image: ${APPLIANCE_IMAGE:-bsp/appliance:latest}
+    user: "1000:1000"
+    # docs/mkdocs.yml rendered to /tmp with docs_dir=/opt/docs (mkdocs refuses
+    # a docs_dir equal to the config's own folder); auto-nav from the tree.
+    entrypoint:
+      - bash
+      - -c
+      - |
+        { grep -v '^docs_dir:' /opt/docs/mkdocs.yml; echo 'docs_dir: /opt/docs'; } > /tmp/mkdocs.yml
+        exec mkdocs serve -f /tmp/mkdocs.yml -a 0.0.0.0:8005 --no-livereload
+    volumes:
+      - ./docs:/opt/docs:ro
+    networks: [appliance-net]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:8005/docs/ >/dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    restart: unless-stopped
+
+  # ══════════════════════ WAREHOUSE (profile: base) ═════════════════════
+  # Postgres 16 + pgvector: bsp_edw (raw · landing · staging/intermediate/
+  # marts · features · mlops · ai · rag · disputes · ccai) and the superset /
+  # mlflow metadata databases. Files in <data root>/warehouse/postgres.
+  postgres:
+    profiles: ["base"]
+    image: ${POSTGRES_IMAGE:-pgvector/pgvector:0.8.0-pg16}
+    environment:
+      POSTGRES_USER: analyst
+      POSTGRES_PASSWORD: ${PG_PASS:-}
+      POSTGRES_DB: bsp_edw
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ${DATA_ROOT:-./data}/warehouse/postgres:/var/lib/postgresql/data
+      - ./build/postgres/init:/docker-entrypoint-initdb.d:ro
+    networks: [appliance-net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U analyst -d bsp_edw"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  # ══════════════════════ CAPABILITIES ═════════════════════════════════════
+
+  # Workspace: JupyterLab (:8888) + Workbench (:8002 — dbt Studio, import &
+  # export, files, Python packages).
+  appliance:
+    extends: {file: compose.base.yml, service: bsp-workload}
+    profiles: ["workspace"]
+    command: ["start"]
+    environment:
+      PG_PASS: ${PG_PASS:-}
+      JUPYTER_TOKEN: ${JUPYTER_TOKEN:-}
+      MCP_TOKEN: ${MCP_TOKEN:-}
+      WB_STUDIO_TOKEN: ${WB_STUDIO_TOKEN:-}     # Import & Export → Studio gcp-token (principal switch; user proven by session)
+      GCP_SA_JSON: ${GCP_SA_JSON:-}
+      M365_CLIENT_SECRET: ${M365_CLIENT_SECRET:-}
+      ATLAN_API_TOKEN: ${ATLAN_API_TOKEN:-}
+      SAP_BRIM_USER: ${SAP_BRIM_USER:-}
+      SAP_BRIM_PASSWORD: ${SAP_BRIM_PASSWORD:-}
+      DBT_PROFILES_DIR: /home/analyst/work/dbt_project
+      DBT_TARGET: ${DBT_TARGET:-postgres}
+      BROWSER_CDP_URL: http://browser:9223
+      UI_KIT_DIR: /opt/ui-kit
+      TEMPLATES_DIR: /opt/templates
+      MODEL_GATEWAY_URL: http://model-gateway:8098/serve
+      MLOPS_URL: http://mlops:8097/mlops
+      MLFLOW_ALLOW_PICKLE_DESERIALIZATION: "true"
+      PYTHONPATH: /opt/common:/opt/seed:/opt/connectors:/opt/mlops:/opt/rag
+    volumes:
+      - ./build/claude:/etc/claude-code:ro
+      - ${DATA_ROOT:-./data}/${USER_HANDLE:-analyst}/work:/home/analyst/work
+      - ${DATA_ROOT:-./data}/${USER_HANDLE:-analyst}/hf_cache:/data/hf_cache
+      - ${DATA_ROOT:-./data}/${USER_HANDLE:-analyst}/pyuser:/data/pyuser
+      - ${DATA_ROOT:-./data}/${USER_HANDLE:-analyst}/ssh:/home/analyst/.ssh
+      - ${DATA_ROOT:-./data}/${USER_HANDLE:-analyst}/logs:/data/logs
+      - ${DATA_ROOT:-./data}/lake:/data/lake
+      - ./build/mlops:/opt/mlops:ro
+      - ./build/rag:/opt/rag:ro
+      - ${DATA_ROOT:-./data}/mlops:/data/mlops
+      - ./build/entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
+      - ./build/services:/opt/services:ro
+      - ./build/workbench:/opt/workbench:ro
+      - ./work_templates:/opt/templates:ro
+      - ./dbt_project:/home/analyst/work/dbt_project
+      - ./config:/opt/config:ro
+    depends_on:
+      <<: *px_dep
+      postgres: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:8002/pkg/api/health >/dev/null && curl -sf -o /dev/null http://127.0.0.1:8888/jupyter/api/status?token=$$JUPYTER_TOKEN"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  code:
+    extends: {file: compose.base.yml, service: bsp-workload}
+    profiles: ["vscode"]
+    entrypoint: ["bash", "/opt/services/code.sh"]
+    environment:
+      PG_PASS: ${PG_PASS:-}
+      CODE_PASSWORD: ${CODE_PASSWORD:-}
+      MCP_TOKEN: ${MCP_TOKEN:-}
+      GCP_SA_JSON: ${GCP_SA_JSON:-}
+      DBT_PROFILES_DIR: /home/analyst/work/dbt_project
+      DBT_TARGET: ${DBT_TARGET:-postgres}
+      BROWSER_CDP_URL: http://browser:9223
+      MODEL_GATEWAY_URL: http://model-gateway:8098/serve
+      MLOPS_URL: http://mlops:8097/mlops
+      MLFLOW_ALLOW_PICKLE_DESERIALIZATION: "true"
+      PYTHONPATH: /opt/common:/opt/seed:/opt/connectors:/opt/mlops:/opt/rag
+    volumes:
+      - ./build/claude:/etc/claude-code:ro
+      - ./build/mlops:/opt/mlops:ro
+      - ./build/rag:/opt/rag:ro
+      - ${DATA_ROOT:-./data}/mlops:/data/mlops
+      - ${DATA_ROOT:-./data}/${USER_HANDLE:-analyst}/work:/home/analyst/work
+      - ${DATA_ROOT:-./data}/${USER_HANDLE:-analyst}/pyuser:/data/pyuser
+      - ${DATA_ROOT:-./data}/${USER_HANDLE:-analyst}/code-server:/home/analyst/.local/share/code-server
+      - ${DATA_ROOT:-./data}/${USER_HANDLE:-analyst}/ssh:/home/analyst/.ssh
+      - ${DATA_ROOT:-./data}/lake:/data/lake
+      - ./dbt_project:/home/analyst/work/dbt_project
+      - ./build/services:/opt/services:ro
+    depends_on: *px_dep
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:8080/healthz >/dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # Desktop: XFCE + Chromium on Xvfb under supervisord, built FROM the
+  # workspace image. noVNC :6080 (gated /browser/), :6081 (VNC password,
+  # dedicated host port via nginx), CDP http://browser:9223 for Playwright.
+  browser:
+    extends: {file: compose.base.yml, service: bsp-workload}
+    profiles: ["browser"]
+    image: ${BROWSER_IMAGE:-bsp/browser:latest}
+    environment:
+      BROWSER_HOME_URL: ${BROWSER_HOME_URL:-about:blank}
+      BROWSER_GEOMETRY: ${BROWSER_GEOMETRY:-1920x1080x24}
+      # on | off | auto — auto falls back to --no-sandbox under Docker's default seccomp
+      BROWSER_SANDBOX: ${BROWSER_SANDBOX:-auto}
+      VNC_PASSWORD: ${VNC_PASSWORD:-}
+      MCP_TOKEN: ${MCP_TOKEN:-}
+      GCP_SA_JSON: ${GCP_SA_JSON:-}
+      # loopback aliases so the desktop browser reaches the appliance as
+      # "localhost" — the https facade and Entra's loopback SSO callback
+      # (http://localhost:<SSO_CALLBACK_PORT>/auth/callback). See
+      # docs/platform/sso.md § "Linux Desktop".
+      FACADE_PORT: ${FACADE_PORT:-31201}
+      SSO_CALLBACK_PORT: ${SSO_CALLBACK_PORT:-31211}
+    volumes:
+      - ./build/claude:/etc/claude-code:ro
+      # the appliance's own CA (signs the https facade) → trusted in Chromium
+      - ${DATA_ROOT:-./data}/tls:/trust-tls:ro
+      - ${DATA_ROOT:-./data}/${USER_HANDLE:-analyst}/browser:/home/analyst/.config/chromium
+      # desktop app state (DBeaver, XFCE panel, Antigravity, keyring)
+      - ${DATA_ROOT:-./data}/${USER_HANDLE:-analyst}/desktop:/home/analyst/.local/share/appliance
+      - ${DATA_ROOT:-./data}/${USER_HANDLE:-analyst}/pyuser:/data/pyuser
+      - ${DATA_ROOT:-./data}/${USER_HANDLE:-analyst}/work:/home/analyst/work
+      - ${DATA_ROOT:-./data}/lake:/data/lake
+      - ./build/services:/opt/services:ro     # gcp-adc.sh (Google ADC + OpenCode defaults)
+    shm_size: 1gb
+    mem_limit: 6g
+    depends_on: *px_dep
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/browser-healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s

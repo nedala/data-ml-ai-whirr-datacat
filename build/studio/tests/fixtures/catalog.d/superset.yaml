@@ -1,0 +1,17 @@
+# Test fixture: a component fragment like build/studio/catalog.d/<component>.yaml
+services:
+  superset:
+    title: Superset
+    blurb: Dashboards and SQL Lab
+    profile: bi
+    ram_mb: 1024
+    kind: app
+    route: /superset/
+    needs: [postgres]
+    creds:
+      - {env: SUPERSET_ADMIN_PASS, user: admin, label: Superset admin}
+      - {env: SUPERSET_SECRET_KEY, label: Superset session signing key, hidden: true, length: 48}
+capabilities:
+  bi: {title: Dashboards, tone: report, icon: dashboard, services: [superset], requires: [workspace], blurb: "Superset"}
+apps:
+  - {id: superset, group: report, title: Superset, service: superset, path: /superset/, cred: SUPERSET_ADMIN_PASS, icon: dashboard, blurb: "Dashboards"}

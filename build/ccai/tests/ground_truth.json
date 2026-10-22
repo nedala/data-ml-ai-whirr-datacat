@@ -1,0 +1,2535 @@
+{
+ "calls": {
+  "00cb6b5df32d43af": {
+   "ban": "3100048160",
+   "churn_risk": true,
+   "clli": "RKHLSCXA",
+   "file": "2026/10/09/conv_00cb6b5df32d43af.json",
+   "format": "json",
+   "plan_id": "FB-300",
+   "primary": "FBR.MIG.MIGRATION_ISSUE",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "02a686d0fca0fee7": {
+   "ban": "3100103931",
+   "churn_risk": false,
+   "clli": "ENTPALDS",
+   "file": "2026/10/05/conv_02a686d0fca0fee7.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "INS.APPT.SCHEDULE_INSTALL",
+   "resolution": "unresolved",
+   "secondary": [
+    "SAL.NEW.PRICING_INQUIRY"
+   ],
+   "technology": "copper"
+  },
+  "05a0878f4ddddc1c": {
+   "ban": "3100014794",
+   "churn_risk": false,
+   "clli": "SNDSOHXA",
+   "file": "2026/10/07/conv_05a0878f4ddddc1c.json",
+   "format": "json",
+   "plan_id": "FB-2G",
+   "primary": "ACC.SEC.PIN_RESET",
+   "resolution": "escalated",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "05e048ace7e68155": {
+   "ban": "3100093237",
+   "churn_risk": false,
+   "clli": "HCKRNCXA",
+   "file": "2026/10/06/conv_05e048ace7e68155.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "SAL.NEW.PRICING_INQUIRY",
+   "resolution": "unresolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "0760c7ad7364baeb": {
+   "ban": "3100023003",
+   "churn_risk": true,
+   "clli": "RLGHNCDS",
+   "file": "2026/10/12/conv_0760c7ad7364baeb.json",
+   "format": "json",
+   "plan_id": "FB-300",
+   "primary": "TEC.SVC.STATIC_IP",
+   "resolution": "resolved",
+   "secondary": [
+    "RET.CAN.CANCEL_PRICE"
+   ],
+   "technology": "fiber"
+  },
+  "0c813bc58f957026": {
+   "ban": "3100033013",
+   "churn_risk": true,
+   "clli": "BRTLVADS",
+   "file": "2026/10/11/conv_0c813bc58f957026.json",
+   "format": "json",
+   "plan_id": "CU-80",
+   "primary": "RET.CAN.CANCEL_MOVE",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "0caba81586c8b954": {
+   "ban": "3100097717",
+   "churn_risk": false,
+   "clli": "BRTLVAXA",
+   "file": "2026/10/10/conv_0caba81586c8b954.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "TEC.WIFI.COVERAGE",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "0cee23b67580c38b": {
+   "ban": "3100093913",
+   "churn_risk": false,
+   "clli": "OZRKALXA",
+   "file": "2026/10/14/conv_0cee23b67580c38b.json",
+   "format": "json",
+   "plan_id": "FB-1G",
+   "primary": "ACC.SEC.PIN_RESET",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "0d5d4ead514ce5a8": {
+   "ban": "3100086377",
+   "churn_risk": false,
+   "clli": "JFCYMOXA",
+   "file": "2026/10/13/conv_0d5d4ead514ce5a8.json",
+   "format": "json",
+   "plan_id": "FB-2G",
+   "primary": "BIL.CHG.BILL_EXPLAIN",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "10f886279e2d49c4": {
+   "ban": "3100079275",
+   "churn_risk": true,
+   "clli": "TYLRTXXA",
+   "file": "2026/10/14/conv_10f886279e2d49c4.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "RET.SAVE.RETENTION_OFFER",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "127e1c8b91099d6d": {
+   "ban": "3100086237",
+   "churn_risk": true,
+   "clli": "DTHNALDS",
+   "file": "2026/10/13/conv_127e1c8b91099d6d.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "DIG.APP.APP_ERROR",
+   "resolution": "unresolved",
+   "secondary": [
+    "FBR.MIG.COPPER_TO_FIBER",
+    "RET.CAN.CANCEL_MOVE"
+   ],
+   "technology": "copper"
+  },
+  "1322626b95c7424b": {
+   "ban": "3100091331",
+   "churn_risk": false,
+   "clli": "LSBGFLXA",
+   "file": "2026/10/13/conv_1322626b95c7424b.json",
+   "format": "json",
+   "plan_id": "CU-80",
+   "primary": "OUT.RPT.WEATHER_DAMAGE",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "13366077ee70e13f": {
+   "ban": "3100042315",
+   "churn_risk": true,
+   "clli": "CHVLVAXA",
+   "file": "2026/10/11/conv_13366077ee70e13f.json",
+   "format": "json",
+   "plan_id": "FB-1G",
+   "primary": "RET.CAN.CANCEL_SERVICE_QUALITY",
+   "resolution": "escalated",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "15f1b84d4eb6550d": {
+   "ban": "3100022268",
+   "churn_risk": false,
+   "clli": "CHVLVAXA",
+   "file": "2026/10/11/conv_15f1b84d4eb6550d.json",
+   "format": "json",
+   "plan_id": "FB-300",
+   "primary": "BIL.CHG.INCORRECT_CHARGE",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "19f839ef6b4e34bf": {
+   "ban": "3100125631",
+   "churn_risk": false,
+   "clli": "LIMAOHXA",
+   "file": "2026/10/12/conv_19f839ef6b4e34bf.json",
+   "format": "json",
+   "plan_id": "FB-300",
+   "primary": "TEC.SVC.EMAIL",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "1a4822a1d33f8fab": {
+   "ban": "3100062973",
+   "churn_risk": true,
+   "clli": "KLGRTXDS",
+   "file": "2026/10/08/transcript_1a4822a1d33f8fab.txt",
+   "format": "txt",
+   "plan_id": "CU-25",
+   "primary": "CMP.EXP.AGENT_COMPLAINT",
+   "resolution": "unresolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "1a8239ee54e873b6": {
+   "ban": "3100074935",
+   "churn_risk": true,
+   "clli": "WLPTPADS",
+   "file": "2026/10/11/conv_1a8239ee54e873b6.json",
+   "format": "json",
+   "plan_id": "CU-80",
+   "primary": "BIL.PAY.ARRANGEMENT",
+   "resolution": "resolved",
+   "secondary": [
+    "INS.DEL.INCOMPLETE_INSTALL"
+   ],
+   "technology": "copper"
+  },
+  "1c14c64ed9c8c97e": {
+   "ban": "3100024096",
+   "churn_risk": true,
+   "clli": "GFNYSCXA",
+   "file": "2026/10/10/conv_1c14c64ed9c8c97e.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "RET.CAN.CANCEL_COMPETITOR",
+   "resolution": "escalated",
+   "secondary": [
+    "OUT.RPT.WEATHER_DAMAGE"
+   ],
+   "technology": "copper"
+  },
+  "1e5c3dbb84a276fe": {
+   "ban": "3100112487",
+   "churn_risk": true,
+   "clli": "WLSNNCDS",
+   "file": "2026/10/14/conv_1e5c3dbb84a276fe.json",
+   "format": "json",
+   "plan_id": "FB-2G",
+   "primary": "TEC.SVC.VOICE",
+   "resolution": "resolved",
+   "secondary": [
+    "INS.DEL.INCOMPLETE_INSTALL"
+   ],
+   "technology": "fiber"
+  },
+  "204c3bc6c779c6c1": {
+   "ban": "3100069822",
+   "churn_risk": false,
+   "clli": "KLGRTXDS",
+   "file": "2026/10/09/conv_204c3bc6c779c6c1.json",
+   "format": "json",
+   "plan_id": "FB-300",
+   "primary": "BIL.PAY.NOT_POSTED",
+   "resolution": "unresolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "25ff2de2ca6fea3b": {
+   "ban": "3100011932",
+   "churn_risk": true,
+   "clli": "FTMYFLXA",
+   "file": "2026/10/10/25ff2de2ca6fea3b.vtt",
+   "format": "vtt",
+   "plan_id": "CU-80",
+   "primary": "SAL.PRG.AFFORDABLE_PROGRAM",
+   "resolution": "escalated",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "260d1e22fbb471f7": {
+   "ban": "3100047231",
+   "churn_risk": true,
+   "clli": "MNFDOHXA",
+   "file": "2026/10/09/conv_260d1e22fbb471f7.json",
+   "format": "json",
+   "plan_id": "FB-1G",
+   "primary": "TEC.CON.SLOW_SPEED",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "26d647edf3fd379b": {
+   "ban": "3100005597",
+   "churn_risk": false,
+   "clli": "OZRKALXA",
+   "file": "2026/10/14/conv_26d647edf3fd379b.json",
+   "format": "json",
+   "plan_id": "CU-80",
+   "primary": "BIL.CHG.PRORATION",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "27e8f00fd1c19ccb": {
+   "ban": "3100118262",
+   "churn_risk": true,
+   "clli": "WLPTPADS",
+   "file": "2026/10/14/conv_27e8f00fd1c19ccb.json",
+   "format": "json",
+   "plan_id": "CU-80",
+   "primary": "CMP.EXP.WAIT_TIME",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "2a282d45469aeb88": {
+   "ban": "3100044132",
+   "churn_risk": false,
+   "clli": "GLBRNCDS",
+   "file": "2026/10/06/conv_2a282d45469aeb88.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "OUT.RPT.CABLE_DAMAGE",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "2aa43d4f8ce2ff99": {
+   "ban": "3100053932",
+   "churn_risk": false,
+   "clli": "JFCYMODS",
+   "file": "2026/10/14/conv_2aa43d4f8ce2ff99.json",
+   "format": "json",
+   "plan_id": "FB-500",
+   "primary": "BIL.CHG.BILL_EXPLAIN",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "2afa880df4ba4226": {
+   "ban": "3100106750",
+   "churn_risk": false,
+   "clli": "DNVLVAXA",
+   "file": "2026/10/14/conv_2afa880df4ba4226.json",
+   "format": "json",
+   "plan_id": "FB-2G",
+   "primary": "TEC.WIFI.COVERAGE",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "2beee0057d364101": {
+   "ban": "3100084864",
+   "churn_risk": false,
+   "clli": "RLGHNCDS",
+   "file": "2026/10/06/conv_2beee0057d364101.json",
+   "format": "json",
+   "plan_id": "FB-1G",
+   "primary": "TEC.SVC.VOICE",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "2ce500c397c87c29": {
+   "ban": "3100105560",
+   "churn_risk": true,
+   "clli": "ENTPALDS",
+   "file": "2026/10/13/conv_2ce500c397c87c29.json",
+   "format": "json",
+   "plan_id": "CU-80",
+   "primary": "BIL.CHG.HIGH_BILL",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "2dac7b0266e203c0": {
+   "ban": "3100075188",
+   "churn_risk": true,
+   "clli": "RKHLSCXA",
+   "file": "2026/10/07/conv_2dac7b0266e203c0.json",
+   "format": "json",
+   "plan_id": "CU-80",
+   "primary": "BIL.PAY.ARRANGEMENT",
+   "resolution": "pending_followup",
+   "secondary": [
+    "CMP.ESC.SUPERVISOR_REQUEST"
+   ],
+   "technology": "copper"
+  },
+  "2e2d743e709b3ffd": {
+   "ban": "3100025757",
+   "churn_risk": false,
+   "clli": "WNCHVAXA",
+   "file": "2026/10/07/conv_2e2d743e709b3ffd.json",
+   "format": "json",
+   "plan_id": "FB-500",
+   "primary": "OUT.STAT.AREA_OUTAGE_STATUS",
+   "resolution": "pending_followup",
+   "secondary": [
+    "BIL.CHG.INCORRECT_CHARGE"
+   ],
+   "technology": "fiber"
+  },
+  "2fca2b6dbcf46923": {
+   "ban": "3100055386",
+   "churn_risk": false,
+   "clli": "HCKRNCXA",
+   "file": "2026/10/07/conv_2fca2b6dbcf46923.json",
+   "format": "json",
+   "plan_id": "FB-2G",
+   "primary": "ACC.SEC.PIN_RESET",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "322a1d2a078b0264": {
+   "ban": "3100070708",
+   "churn_risk": false,
+   "clli": "ENTPALXA",
+   "file": "2026/10/06/conv_322a1d2a078b0264.json",
+   "format": "json",
+   "plan_id": "FB-2G",
+   "primary": "DIG.APP.PORTAL_PAYMENT_ERROR",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "32eea088e97d97d1": {
+   "ban": "3100098428",
+   "churn_risk": false,
+   "clli": "TYLRTXXA",
+   "file": "2026/10/07/transcript_32eea088e97d97d1.txt",
+   "format": "txt",
+   "plan_id": "CU-80",
+   "primary": "BIL.PAY.NOT_POSTED",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "341e9f17a094b32a": {
+   "ban": "3100052158",
+   "churn_risk": false,
+   "clli": "RLGHNCXA",
+   "file": "2026/10/06/conv_341e9f17a094b32a.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "EQP.MOD.REPLACE_UPGRADE",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "3691afdda76c00fa": {
+   "ban": "3100098024",
+   "churn_risk": true,
+   "clli": "RLGHNCXA",
+   "file": "2026/10/08/conv_3691afdda76c00fa.json",
+   "format": "json",
+   "plan_id": "FB-500",
+   "primary": "CMP.ESC.REGULATORY_THREAT",
+   "resolution": "resolved",
+   "secondary": [
+    "ORD.STAT.ORDER_STATUS"
+   ],
+   "technology": "fiber"
+  },
+  "36cd9cc39b280113": {
+   "ban": "3100009886",
+   "churn_risk": false,
+   "clli": "ELYROHXA",
+   "file": "2026/10/05/conv_36cd9cc39b280113.json",
+   "format": "json",
+   "plan_id": "FB-1G",
+   "primary": "ACC.PRIV.PAPERLESS",
+   "resolution": "escalated",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "37e03d4f13e45efc": {
+   "ban": "3100120187",
+   "churn_risk": true,
+   "clli": "SNDSOHXA",
+   "file": "2026/10/12/conv_37e03d4f13e45efc.json",
+   "format": "json",
+   "plan_id": "FB-1G",
+   "primary": "FBR.CON.CONSTRUCTION_CONCERN",
+   "resolution": "pending_followup",
+   "secondary": [
+    "BIL.CHG.PROMO_EXPIRED"
+   ],
+   "technology": "fiber"
+  },
+  "37f4eefd0affe91a": {
+   "ban": "3100086205",
+   "churn_risk": true,
+   "clli": "TYLRTXXA",
+   "file": "2026/10/14/conv_37f4eefd0affe91a.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "TEC.CON.SLOW_SPEED",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "37f8796fbdf1bf33": {
+   "ban": "3100133969",
+   "churn_risk": false,
+   "clli": "RLGHNCDS",
+   "file": "2026/10/06/conv_37f8796fbdf1bf33.json",
+   "format": "json",
+   "plan_id": "FB-2G",
+   "primary": "INS.FLD.REPAIR_VISIT",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "39d7f891aac2b4d4": {
+   "ban": "3100068460",
+   "churn_risk": true,
+   "clli": "ENTPALDS",
+   "file": "2026/10/09/conv_39d7f891aac2b4d4.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "OUT.STAT.ETR_MISSED",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "3cf09f3f5c24918c": {
+   "ban": "3100133280",
+   "churn_risk": true,
+   "clli": "MARNOHDS",
+   "file": "2026/10/14/transcript_3cf09f3f5c24918c.txt",
+   "format": "txt",
+   "plan_id": "FB-500",
+   "primary": "RET.SAVE.PROMO_EXTEND",
+   "resolution": "unresolved",
+   "secondary": [
+    "ACC.SEC.PIN_RESET"
+   ],
+   "technology": "fiber"
+  },
+  "3e37fb69bbdeb82e": {
+   "ban": "3100040527",
+   "churn_risk": false,
+   "clli": "ALTNPAXA",
+   "file": "2026/10/05/transcript_3e37fb69bbdeb82e.txt",
+   "format": "txt",
+   "plan_id": "CU-80",
+   "primary": "TEC.SVC.EMAIL",
+   "resolution": "unresolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "3e9aae56009b9b31": {
+   "ban": "3100030073",
+   "churn_risk": true,
+   "clli": "BRTLVADS",
+   "file": "2026/10/06/conv_3e9aae56009b9b31.json",
+   "format": "json",
+   "plan_id": "FB-2G",
+   "primary": "TEC.CON.SLOW_SPEED",
+   "resolution": "unresolved",
+   "secondary": [
+    "ORD.MOVE.MOVE_SERVICE"
+   ],
+   "technology": "fiber"
+  },
+  "3eb3f54556206ead": {
+   "ban": "3100059174",
+   "churn_risk": true,
+   "clli": "NCGDTXXA",
+   "file": "2026/10/13/conv_3eb3f54556206ead.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "BIL.PAY.ARRANGEMENT",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "3f36fefdae2506ab": {
+   "ban": "3100103468",
+   "churn_risk": true,
+   "clli": "SNDSOHXA",
+   "file": "2026/10/11/conv_3f36fefdae2506ab.json",
+   "format": "json",
+   "plan_id": "FB-300",
+   "primary": "RET.SAVE.RETENTION_OFFER",
+   "resolution": "resolved",
+   "secondary": [
+    "INS.FLD.REPAIR_VISIT"
+   ],
+   "technology": "fiber"
+  },
+  "3f5ddada6f586738": {
+   "ban": "3100055090",
+   "churn_risk": false,
+   "clli": "LFKNTXXA",
+   "file": "2026/10/12/3f5ddada6f586738.vtt",
+   "format": "vtt",
+   "plan_id": "FB-500",
+   "primary": "ORD.MOVE.MOVE_SERVICE",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "40f8e3782d675e24": {
+   "ban": "3100097297",
+   "churn_risk": false,
+   "clli": "ELYROHXA",
+   "file": "2026/10/08/40f8e3782d675e24.vtt",
+   "format": "vtt",
+   "plan_id": "FB-2G",
+   "primary": "BIL.ADJ.LATE_FEE_DISPUTE",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "412724dfe0c208e7": {
+   "ban": "3100039652",
+   "churn_risk": false,
+   "clli": "WLPTPADS",
+   "file": "2026/10/13/conv_412724dfe0c208e7.json",
+   "format": "json",
+   "plan_id": "FB-300",
+   "primary": "DIG.CHN.CHATBOT_HANDOFF",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "46094224cf04197e": {
+   "ban": "3100119568",
+   "churn_risk": false,
+   "clli": "WNCHVAXA",
+   "file": "2026/10/14/conv_46094224cf04197e.json",
+   "format": "json",
+   "plan_id": "FB-500",
+   "primary": "BIL.ADJ.REFUND_REQUEST",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "47518f5abef57470": {
+   "ban": "3100120879",
+   "churn_risk": true,
+   "clli": "GLBRNCXA",
+   "file": "2026/10/13/conv_47518f5abef57470.json",
+   "format": "json",
+   "plan_id": "FB-2G",
+   "primary": "BIL.PAY.AUTOPAY_SETUP",
+   "resolution": "resolved",
+   "secondary": [
+    "BIL.ADJ.OUTAGE_CREDIT",
+    "ACC.PRF.UPDATE_CONTACT"
+   ],
+   "technology": "fiber"
+  },
+  "4780d5d5b9b42091": {
+   "ban": "3100137391",
+   "churn_risk": true,
+   "clli": "WNCHVADS",
+   "file": "2026/10/08/conv_4780d5d5b9b42091.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "INS.DEL.INSTALL_DELAY",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "48a122ef05718070": {
+   "ban": "3100138783",
+   "churn_risk": false,
+   "clli": "KGPTTNXA",
+   "file": "2026/10/05/conv_48a122ef05718070.json",
+   "format": "json",
+   "plan_id": "FB-300",
+   "primary": "TEC.WIFI.COVERAGE",
+   "resolution": "unresolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "494e87f0d13fffb0": {
+   "ban": "3100084137",
+   "churn_risk": false,
+   "clli": "NCGDTXXA",
+   "file": "2026/10/12/conv_494e87f0d13fffb0.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "FBR.AVL.ADDRESS_NOT_FOUND",
+   "resolution": "resolved",
+   "secondary": [
+    "SAL.PRG.REFERRAL"
+   ],
+   "technology": "copper"
+  },
+  "4c2d00d624ee3a46": {
+   "ban": "3100056498",
+   "churn_risk": true,
+   "clli": "DNVLVAXA",
+   "file": "2026/10/11/conv_4c2d00d624ee3a46.json",
+   "format": "json",
+   "plan_id": "CU-80",
+   "primary": "INS.APPT.MISSED_APPT",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "4d446530053a9fc7": {
+   "ban": "3100099109",
+   "churn_risk": false,
+   "clli": "FTMYFLXA",
+   "file": "2026/10/08/conv_4d446530053a9fc7.json",
+   "format": "json",
+   "plan_id": "FB-1G",
+   "primary": "TEC.CON.HIGH_LATENCY",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "4dbb411ed1edae8a": {
+   "ban": "3100054888",
+   "churn_risk": true,
+   "clli": "GFNYSCXA",
+   "file": "2026/10/12/conv_4dbb411ed1edae8a.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "FBR.AVL.BUILD_TIMELINE",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "4fb709b39cced929": {
+   "ban": "3100097526",
+   "churn_risk": false,
+   "clli": "MNFDOHXA",
+   "file": "2026/10/06/4fb709b39cced929.vtt",
+   "format": "vtt",
+   "plan_id": "CU-25",
+   "primary": "ORD.MOVE.TRANSFER_OWNERSHIP",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "501492849d79b03c": {
+   "ban": "3100033912",
+   "churn_risk": false,
+   "clli": "MNFDOHDS",
+   "file": "2026/10/09/501492849d79b03c.vtt",
+   "format": "vtt",
+   "plan_id": "CU-25",
+   "primary": "ACC.PRIV.PRIVACY_REQUEST",
+   "resolution": "resolved",
+   "secondary": [
+    "DIG.APP.APP_ERROR"
+   ],
+   "technology": "copper"
+  },
+  "5134fab7866534cd": {
+   "ban": "3100119269",
+   "churn_risk": true,
+   "clli": "LNCSSCXA",
+   "file": "2026/10/05/conv_5134fab7866534cd.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "RET.CAN.CANCEL_PRICE",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "518dac87de49fe9a": {
+   "ban": "3100084961",
+   "churn_risk": false,
+   "clli": "RCMTNCXA",
+   "file": "2026/10/14/transcript_518dac87de49fe9a.txt",
+   "format": "txt",
+   "plan_id": "CU-80",
+   "primary": "ACC.SEC.FRAUD_SUSPECT",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "51cae7cf1dd4c7b7": {
+   "ban": "3100011259",
+   "churn_risk": true,
+   "clli": "JHTWPADS",
+   "file": "2026/10/09/conv_51cae7cf1dd4c7b7.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "BIL.ADJ.LATE_FEE_DISPUTE",
+   "resolution": "resolved",
+   "secondary": [
+    "OUT.RPT.WEATHER_DAMAGE",
+    "INS.DEL.INSTALL_DELAY"
+   ],
+   "technology": "copper"
+  },
+  "53434227fa3ab63e": {
+   "ban": "3100012845",
+   "churn_risk": false,
+   "clli": "KGPTTNXA",
+   "file": "2026/10/10/conv_53434227fa3ab63e.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "OUT.STAT.PLANNED_MAINT",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "5bd5050f89bb9137": {
+   "ban": "3100096826",
+   "churn_risk": false,
+   "clli": "MNCEINXA",
+   "file": "2026/10/13/conv_5bd5050f89bb9137.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "DIG.CHN.NOTIFICATION_PREFS",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "5c46ade4d3c86cb9": {
+   "ban": "3100004445",
+   "churn_risk": false,
+   "clli": "SNDSOHDS",
+   "file": "2026/10/12/conv_5c46ade4d3c86cb9.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "DIG.APP.PORTAL_PAYMENT_ERROR",
+   "resolution": "unresolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "5efb5ddafb5ea55f": {
+   "ban": "3100135310",
+   "churn_risk": true,
+   "clli": "WLSNNCXA",
+   "file": "2026/10/14/conv_5efb5ddafb5ea55f.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "FBR.MIG.COPPER_RETIREMENT",
+   "resolution": "escalated",
+   "secondary": [
+    "INS.FLD.REPAIR_VISIT"
+   ],
+   "technology": "copper"
+  },
+  "5f85538d816cd41a": {
+   "ban": "3100102970",
+   "churn_risk": false,
+   "clli": "RLGHNCXA",
+   "file": "2026/10/05/5f85538d816cd41a.vtt",
+   "format": "vtt",
+   "plan_id": "FB-500",
+   "primary": "TEC.SVC.VOICE",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "5f9ce67931a239a0": {
+   "ban": "3100114396",
+   "churn_risk": true,
+   "clli": "JFCYMOXA",
+   "file": "2026/10/08/conv_5f9ce67931a239a0.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "FBR.MIG.COPPER_RETIREMENT",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "603950866b1d7815": {
+   "ban": "3100138939",
+   "churn_risk": false,
+   "clli": "MNCEINXA",
+   "file": "2026/10/13/603950866b1d7815.vtt",
+   "format": "vtt",
+   "plan_id": "CU-80",
+   "primary": "BIL.PAY.MAKE_PAYMENT",
+   "resolution": "resolved",
+   "secondary": [
+    "ORD.MOVE.TRANSFER_OWNERSHIP"
+   ],
+   "technology": "copper"
+  },
+  "6183593263bc691e": {
+   "ban": "3100007269",
+   "churn_risk": false,
+   "clli": "ELYROHXA",
+   "file": "2026/10/09/conv_6183593263bc691e.json",
+   "format": "json",
+   "plan_id": "FB-2G",
+   "primary": "BIL.CHG.FEES_TAXES",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "62a84161b1dc228a": {
+   "ban": "3100020510",
+   "churn_risk": false,
+   "clli": "GLBRNCDS",
+   "file": "2026/10/09/62a84161b1dc228a.vtt",
+   "format": "vtt",
+   "plan_id": "CU-25",
+   "primary": "INS.DEL.DROP_LINE",
+   "resolution": "escalated",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "63a3477c9193e784": {
+   "ban": "3100133627",
+   "churn_risk": true,
+   "clli": "WLSNNCXA",
+   "file": "2026/10/14/63a3477c9193e784.vtt",
+   "format": "vtt",
+   "plan_id": "CU-80",
+   "primary": "EQP.SHP.SHIPMENT_STATUS",
+   "resolution": "pending_followup",
+   "secondary": [
+    "TEC.TS.REPEAT_ISSUE"
+   ],
+   "technology": "copper"
+  },
+  "63b317ece9318ce0": {
+   "ban": "3100045769",
+   "churn_risk": false,
+   "clli": "JHCYTNDS",
+   "file": "2026/10/11/conv_63b317ece9318ce0.json",
+   "format": "json",
+   "plan_id": "CU-80",
+   "primary": "OUT.STAT.PLANNED_MAINT",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "647869665de98696": {
+   "ban": "3100103449",
+   "churn_risk": false,
+   "clli": "KLGRTXDS",
+   "file": "2026/10/13/conv_647869665de98696.json",
+   "format": "json",
+   "plan_id": "FB-300",
+   "primary": "TEC.SVC.SECURITY",
+   "resolution": "escalated",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "65aee5ce9f450eb9": {
+   "ban": "3100088725",
+   "churn_risk": false,
+   "clli": "MARNOHDS",
+   "file": "2026/10/10/conv_65aee5ce9f450eb9.json",
+   "format": "json",
+   "plan_id": "FB-1G",
+   "primary": "SAL.PRG.REFERRAL",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "660705b260409ff0": {
+   "ban": "3100084455",
+   "churn_risk": false,
+   "clli": "TYLRTXXA",
+   "file": "2026/10/08/conv_660705b260409ff0.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "ACC.SEC.VERIFY_FAIL",
+   "resolution": "unresolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "66a8c5c478033ae3": {
+   "ban": "3100012301",
+   "churn_risk": false,
+   "clli": "JHTWPADS",
+   "file": "2026/10/08/conv_66a8c5c478033ae3.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "BIL.CHG.BILL_EXPLAIN",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "6774fc7e0c7756a2": {
+   "ban": "3100086520",
+   "churn_risk": false,
+   "clli": "LNCSSCXA",
+   "file": "2026/10/11/transcript_6774fc7e0c7756a2.txt",
+   "format": "txt",
+   "plan_id": "CU-80",
+   "primary": "BIL.ADJ.REFUND_REQUEST",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "688f220f4167ca66": {
+   "ban": "3100092564",
+   "churn_risk": false,
+   "clli": "TYLRTXXA",
+   "file": "2026/10/13/conv_688f220f4167ca66.json",
+   "format": "json",
+   "plan_id": "FB-500",
+   "primary": "EQP.RTN.RETURN_EQUIPMENT",
+   "resolution": "pending_followup",
+   "secondary": [
+    "ACC.PRIV.PAPERLESS"
+   ],
+   "technology": "fiber"
+  },
+  "6ab81fdf61fddb6a": {
+   "ban": "3100029548",
+   "churn_risk": false,
+   "clli": "DTHNALXA",
+   "file": "2026/10/13/conv_6ab81fdf61fddb6a.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "OUT.RPT.CABLE_DAMAGE",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "6beca7c9af092375": {
+   "ban": "3100064758",
+   "churn_risk": false,
+   "clli": "MARNOHXA",
+   "file": "2026/10/12/conv_6beca7c9af092375.json",
+   "format": "json",
+   "plan_id": "FB-2G",
+   "primary": "EQP.RTN.LEASE_FEE",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "6c1706e5f3028bfc": {
+   "ban": "3100124363",
+   "churn_risk": false,
+   "clli": "TYLRTXXA",
+   "file": "2026/10/10/conv_6c1706e5f3028bfc.json",
+   "format": "json",
+   "plan_id": "CU-80",
+   "primary": "BIL.CHG.INCORRECT_CHARGE",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "6decc91de5d7ce58": {
+   "ban": "3100033457",
+   "churn_risk": false,
+   "clli": "RKHLSCXA",
+   "file": "2026/10/06/conv_6decc91de5d7ce58.json",
+   "format": "json",
+   "plan_id": "CU-80",
+   "primary": "OUT.STAT.AREA_OUTAGE_STATUS",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "6f54d0c532f4af76": {
+   "ban": "3100115061",
+   "churn_risk": false,
+   "clli": "DNVLVAXA",
+   "file": "2026/10/10/conv_6f54d0c532f4af76.json",
+   "format": "json",
+   "plan_id": "FB-1G",
+   "primary": "OUT.STAT.AREA_OUTAGE_STATUS",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "706143a57f8ed56c": {
+   "ban": "3100110134",
+   "churn_risk": false,
+   "clli": "GLBRNCXA",
+   "file": "2026/10/11/conv_706143a57f8ed56c.json",
+   "format": "json",
+   "plan_id": "FB-2G",
+   "primary": "INS.DEL.ONT_PLACEMENT",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "710f70d9974c1eab": {
+   "ban": "3100007242",
+   "churn_risk": false,
+   "clli": "CHVLVAXA",
+   "file": "2026/10/09/conv_710f70d9974c1eab.json",
+   "format": "json",
+   "plan_id": "FB-500",
+   "primary": "OUT.NOT.OUTAGE_ALERTS",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "746f6f5c4c33626a": {
+   "ban": "3100052812",
+   "churn_risk": true,
+   "clli": "GLBRNCXA",
+   "file": "2026/10/07/conv_746f6f5c4c33626a.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "BIL.CHG.PROMO_EXPIRED",
+   "resolution": "escalated",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "75f639ce79ade69c": {
+   "ban": "3100071163",
+   "churn_risk": false,
+   "clli": "GLBRNCXA",
+   "file": "2026/10/06/conv_75f639ce79ade69c.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "BIL.PAY.AUTOPAY_FAIL",
+   "resolution": "escalated",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "77e5cf1ee8d33780": {
+   "ban": "3100059683",
+   "churn_risk": true,
+   "clli": "LIMAOHXA",
+   "file": "2026/10/06/conv_77e5cf1ee8d33780.json",
+   "format": "json",
+   "plan_id": "FB-1G",
+   "primary": "INS.DEL.INCOMPLETE_INSTALL",
+   "resolution": "resolved",
+   "secondary": [
+    "BIL.CHG.INCORRECT_CHARGE"
+   ],
+   "technology": "fiber"
+  },
+  "78d326a8de6067b0": {
+   "ban": "3100001066",
+   "churn_risk": true,
+   "clli": "MARNOHXA",
+   "file": "2026/10/10/conv_78d326a8de6067b0.json",
+   "format": "json",
+   "plan_id": "FB-300",
+   "primary": "ORD.PLAN.DOWNGRADE",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "7a9f9538738c12dc": {
+   "ban": "3100112471",
+   "churn_risk": true,
+   "clli": "JHCYTNDS",
+   "file": "2026/10/05/conv_7a9f9538738c12dc.json",
+   "format": "json",
+   "plan_id": "FB-500",
+   "primary": "TEC.CON.SLOW_SPEED",
+   "resolution": "pending_followup",
+   "secondary": [
+    "SAL.NEW.PRICING_INQUIRY",
+    "BIL.PAY.ARRANGEMENT"
+   ],
+   "technology": "fiber"
+  },
+  "7b6bd7b1787dab05": {
+   "ban": "3100068161",
+   "churn_risk": false,
+   "clli": "MNFDOHDS",
+   "file": "2026/10/12/conv_7b6bd7b1787dab05.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "ACC.SEC.VERIFY_FAIL",
+   "resolution": "resolved",
+   "secondary": [
+    "ACC.PRF.AUTHORIZED_USER"
+   ],
+   "technology": "copper"
+  },
+  "7cadd563c4984933": {
+   "ban": "3100000969",
+   "churn_risk": false,
+   "clli": "RKHLSCXA",
+   "file": "2026/10/12/transcript_7cadd563c4984933.txt",
+   "format": "txt",
+   "plan_id": "CU-25",
+   "primary": "TEC.WIFI.DEVICE_CONNECT",
+   "resolution": "unresolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "7cbd2aca3f23bdab": {
+   "ban": "3100024454",
+   "churn_risk": true,
+   "clli": "OCALFLXA",
+   "file": "2026/10/06/conv_7cbd2aca3f23bdab.json",
+   "format": "json",
+   "plan_id": "CU-80",
+   "primary": "BIL.PAY.AUTOPAY_SETUP",
+   "resolution": "resolved",
+   "secondary": [
+    "RET.CAN.CANCEL_PRICE"
+   ],
+   "technology": "copper"
+  },
+  "7d8e104985c3350c": {
+   "ban": "3100025811",
+   "churn_risk": false,
+   "clli": "KKMOINXA",
+   "file": "2026/10/10/7d8e104985c3350c.vtt",
+   "format": "vtt",
+   "plan_id": "CU-80",
+   "primary": "RET.FIN.FINAL_BILL",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "8115f298939db7f6": {
+   "ban": "3100014374",
+   "churn_risk": false,
+   "clli": "WLSNNCXA",
+   "file": "2026/10/08/conv_8115f298939db7f6.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "BIL.ADJ.LATE_FEE_DISPUTE",
+   "resolution": "resolved",
+   "secondary": [
+    "TEC.WIFI.DEVICE_CONNECT"
+   ],
+   "technology": "copper"
+  },
+  "82f98a7e58bef206": {
+   "ban": "3100082153",
+   "churn_risk": true,
+   "clli": "GLBRNCDS",
+   "file": "2026/10/09/conv_82f98a7e58bef206.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "BIL.CHG.HIGH_BILL",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "84e30a4d126fbaff": {
+   "ban": "3100058870",
+   "churn_risk": false,
+   "clli": "GFNYSCXA",
+   "file": "2026/10/11/conv_84e30a4d126fbaff.json",
+   "format": "json",
+   "plan_id": "CU-80",
+   "primary": "RET.FIN.REVERSE_CANCEL",
+   "resolution": "pending_followup",
+   "secondary": [
+    "BIL.PAY.MAKE_PAYMENT"
+   ],
+   "technology": "copper"
+  },
+  "87beab0e719a383e": {
+   "ban": "3100048798",
+   "churn_risk": true,
+   "clli": "JHCYTNXA",
+   "file": "2026/10/08/87beab0e719a383e.vtt",
+   "format": "vtt",
+   "plan_id": "CU-80",
+   "primary": "INS.FLD.PROPERTY_DAMAGE",
+   "resolution": "resolved",
+   "secondary": [
+    "CMP.ESC.PRIOR_PROMISE"
+   ],
+   "technology": "copper"
+  },
+  "87e786aeebe6b124": {
+   "ban": "3100094454",
+   "churn_risk": false,
+   "clli": "WLSNNCXA",
+   "file": "2026/10/09/conv_87e786aeebe6b124.json",
+   "format": "json",
+   "plan_id": "FB-300",
+   "primary": "TEC.SVC.SECURITY",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "889861bbf918980a": {
+   "ban": "3100109827",
+   "churn_risk": true,
+   "clli": "GLBRNCDS",
+   "file": "2026/10/05/transcript_889861bbf918980a.txt",
+   "format": "txt",
+   "plan_id": "CU-140",
+   "primary": "TEC.CON.HIGH_LATENCY",
+   "resolution": "pending_followup",
+   "secondary": [
+    "FBR.MIG.COPPER_RETIREMENT"
+   ],
+   "technology": "copper"
+  },
+  "88c5c36a8aa03490": {
+   "ban": "3100070382",
+   "churn_risk": false,
+   "clli": "NCGDTXXA",
+   "file": "2026/10/08/transcript_88c5c36a8aa03490.txt",
+   "format": "txt",
+   "plan_id": "CU-25",
+   "primary": "ORD.STAT.ADDON",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "8923cf39a979f298": {
+   "ban": "3100112339",
+   "churn_risk": false,
+   "clli": "OZRKALXA",
+   "file": "2026/10/07/conv_8923cf39a979f298.json",
+   "format": "json",
+   "plan_id": "CU-80",
+   "primary": "ORD.PLAN.UPGRADE_SPEED",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "8b6d492cbbb39e26": {
+   "ban": "3100045430",
+   "churn_risk": false,
+   "clli": "DNVLVAXA",
+   "file": "2026/10/08/conv_8b6d492cbbb39e26.json",
+   "format": "json",
+   "plan_id": "FB-2G",
+   "primary": "ORD.STAT.ORDER_STATUS",
+   "resolution": "resolved",
+   "secondary": [
+    "EQP.MOD.REPLACE_UPGRADE"
+   ],
+   "technology": "fiber"
+  },
+  "8ba48a8dbb091240": {
+   "ban": "3100038112",
+   "churn_risk": true,
+   "clli": "BRTLVAXA",
+   "file": "2026/10/05/conv_8ba48a8dbb091240.json",
+   "format": "json",
+   "plan_id": "FB-1G",
+   "primary": "ORD.PLAN.DOWNGRADE",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "8dba8d234476d6d6": {
+   "ban": "3100138546",
+   "churn_risk": false,
+   "clli": "LNCSSCXA",
+   "file": "2026/10/11/conv_8dba8d234476d6d6.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "DIG.CHN.NOTIFICATION_PREFS",
+   "resolution": "unresolved",
+   "secondary": [
+    "SAL.PRG.REFERRAL"
+   ],
+   "technology": "copper"
+  },
+  "8efc93ce32cab09e": {
+   "ban": "3100112813",
+   "churn_risk": true,
+   "clli": "LFKNTXXA",
+   "file": "2026/10/07/conv_8efc93ce32cab09e.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "CMP.ESC.SUPERVISOR_REQUEST",
+   "resolution": "escalated",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "8fb7943608648ff0": {
+   "ban": "3100003621",
+   "churn_risk": false,
+   "clli": "NPLSFLXA",
+   "file": "2026/10/11/conv_8fb7943608648ff0.json",
+   "format": "json",
+   "plan_id": "CU-80",
+   "primary": "TEC.WIFI.MESH_EXTENDER",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "8fc26928113dd760": {
+   "ban": "3100106809",
+   "churn_risk": false,
+   "clli": "MARNOHDS",
+   "file": "2026/10/06/conv_8fc26928113dd760.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "TEC.CON.NO_INTERNET",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "91130f43838a9470": {
+   "ban": "3100016692",
+   "churn_risk": false,
+   "clli": "CHVLVAXA",
+   "file": "2026/10/11/conv_91130f43838a9470.json",
+   "format": "json",
+   "plan_id": "FB-500",
+   "primary": "TEC.SVC.VOICE",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "92869d4a16446c9c": {
+   "ban": "3100126654",
+   "churn_risk": true,
+   "clli": "GLBRNCDS",
+   "file": "2026/10/09/transcript_92869d4a16446c9c.txt",
+   "format": "txt",
+   "plan_id": "CU-80",
+   "primary": "TEC.TS.REPEAT_ISSUE",
+   "resolution": "escalated",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "92faf62bcd9db9ea": {
+   "ban": "3100064863",
+   "churn_risk": true,
+   "clli": "TYLRTXXA",
+   "file": "2026/10/14/conv_92faf62bcd9db9ea.json",
+   "format": "json",
+   "plan_id": "CU-80",
+   "primary": "RET.SAVE.PROMO_EXTEND",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "931d6d07c9ff29b6": {
+   "ban": "3100120599",
+   "churn_risk": true,
+   "clli": "GLBRNCDS",
+   "file": "2026/10/07/931d6d07c9ff29b6.vtt",
+   "format": "vtt",
+   "plan_id": "CU-80",
+   "primary": "RET.CAN.CANCEL_COMPETITOR",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "9b5b71cea3b40074": {
+   "ban": "3100139211",
+   "churn_risk": true,
+   "clli": "JHCYTNXA",
+   "file": "2026/10/09/conv_9b5b71cea3b40074.json",
+   "format": "json",
+   "plan_id": "FB-500",
+   "primary": "BIL.CHG.HIGH_BILL",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "9c57819c8f59165b": {
+   "ban": "3100029319",
+   "churn_risk": false,
+   "clli": "JHTWPADS",
+   "file": "2026/10/14/transcript_9c57819c8f59165b.txt",
+   "format": "txt",
+   "plan_id": "FB-1G",
+   "primary": "EQP.MOD.OWN_EQUIPMENT",
+   "resolution": "unresolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "9dc4f8684ca92173": {
+   "ban": "3100049576",
+   "churn_risk": false,
+   "clli": "GLBRNCXA",
+   "file": "2026/10/05/conv_9dc4f8684ca92173.json",
+   "format": "json",
+   "plan_id": "FB-1G",
+   "primary": "ORD.MOVE.SEASONAL_SUSPEND",
+   "resolution": "escalated",
+   "secondary": [
+    "INS.APPT.RESCHEDULE"
+   ],
+   "technology": "fiber"
+  },
+  "9dcfd8b136588d16": {
+   "ban": "3100027553",
+   "churn_risk": true,
+   "clli": "MARNOHXA",
+   "file": "2026/10/12/transcript_9dcfd8b136588d16.txt",
+   "format": "txt",
+   "plan_id": "CU-80",
+   "primary": "INS.DEL.INCOMPLETE_INSTALL",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "9ed3e42ddda6753e": {
+   "ban": "3100050704",
+   "churn_risk": false,
+   "clli": "GLBRNCXA",
+   "file": "2026/10/13/conv_9ed3e42ddda6753e.json",
+   "format": "json",
+   "plan_id": "FB-500",
+   "primary": "SAL.PRG.REFERRAL",
+   "resolution": "pending_followup",
+   "secondary": [
+    "OUT.STAT.AREA_OUTAGE_STATUS"
+   ],
+   "technology": "fiber"
+  },
+  "9ef72ba9f599f2e8": {
+   "ban": "3100068204",
+   "churn_risk": false,
+   "clli": "BLTNINXA",
+   "file": "2026/10/07/conv_9ef72ba9f599f2e8.json",
+   "format": "json",
+   "plan_id": "CU-80",
+   "primary": "DIG.CHN.CHATBOT_HANDOFF",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "9f5305615dc0c033": {
+   "ban": "3100038683",
+   "churn_risk": false,
+   "clli": "JFCYMOXA",
+   "file": "2026/10/07/conv_9f5305615dc0c033.json",
+   "format": "json",
+   "plan_id": "FB-300",
+   "primary": "EQP.MOD.MODEM_FAULT",
+   "resolution": "escalated",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "9f5577bfeb3aa775": {
+   "ban": "3100099758",
+   "churn_risk": true,
+   "clli": "RCMTNCXA",
+   "file": "2026/10/11/conv_9f5577bfeb3aa775.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "RET.CAN.CANCEL_MOVE",
+   "resolution": "escalated",
+   "secondary": [
+    "BIL.ADJ.LATE_FEE_DISPUTE"
+   ],
+   "technology": "copper"
+  },
+  "a0a3d70f1cdc511c": {
+   "ban": "3100066551",
+   "churn_risk": false,
+   "clli": "GLBRNCXA",
+   "file": "2026/10/07/conv_a0a3d70f1cdc511c.json",
+   "format": "json",
+   "plan_id": "FB-300",
+   "primary": "SAL.NEW.CREDIT_DEPOSIT",
+   "resolution": "escalated",
+   "secondary": [
+    "TEC.WIFI.PASSWORD"
+   ],
+   "technology": "fiber"
+  },
+  "a3720c498dd9e8c5": {
+   "ban": "3100083483",
+   "churn_risk": true,
+   "clli": "FTMYFLXA",
+   "file": "2026/10/10/conv_a3720c498dd9e8c5.json",
+   "format": "json",
+   "plan_id": "FB-300",
+   "primary": "INS.DEL.INSTALL_DELAY",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "a6d48a7e7813486e": {
+   "ban": "3100108882",
+   "churn_risk": true,
+   "clli": "KLGRTXXA",
+   "file": "2026/10/12/conv_a6d48a7e7813486e.json",
+   "format": "json",
+   "plan_id": "CU-80",
+   "primary": "FBR.AVL.BUILD_TIMELINE",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "a8019ffebdb97731": {
+   "ban": "3100030415",
+   "churn_risk": true,
+   "clli": "SNDSOHXA",
+   "file": "2026/10/14/a8019ffebdb97731.vtt",
+   "format": "vtt",
+   "plan_id": "FB-500",
+   "primary": "INS.DEL.INCOMPLETE_INSTALL",
+   "resolution": "resolved",
+   "secondary": [
+    "TEC.SVC.VOICE"
+   ],
+   "technology": "fiber"
+  },
+  "a96c2fe967ab4c93": {
+   "ban": "3100079633",
+   "churn_risk": true,
+   "clli": "RCMTNCXA",
+   "file": "2026/10/07/conv_a96c2fe967ab4c93.json",
+   "format": "json",
+   "plan_id": "FB-500",
+   "primary": "OUT.STAT.ETR_MISSED",
+   "resolution": "unresolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "a9da0ba70e35c8ef": {
+   "ban": "3100084156",
+   "churn_risk": true,
+   "clli": "JFCYMODS",
+   "file": "2026/10/07/conv_a9da0ba70e35c8ef.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "CMP.ESC.REGULATORY_THREAT",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "a9deab1fd01b0655": {
+   "ban": "3100065800",
+   "churn_risk": false,
+   "clli": "WNCHVADS",
+   "file": "2026/10/05/conv_a9deab1fd01b0655.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "EQP.RTN.UNRETURNED_FEE",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "a9fd13b4f3800b33": {
+   "ban": "3100115777",
+   "churn_risk": false,
+   "clli": "KGPTTNXA",
+   "file": "2026/10/05/conv_a9fd13b4f3800b33.json",
+   "format": "json",
+   "plan_id": "FB-2G",
+   "primary": "ACC.PRF.CHANGE_NAME",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "aafb4cbb0d75fa99": {
+   "ban": "3100022268",
+   "churn_risk": false,
+   "clli": "CHVLVAXA",
+   "file": "2026/10/13/conv_aafb4cbb0d75fa99.json",
+   "format": "json",
+   "plan_id": "FB-300",
+   "primary": "INS.APPT.RESCHEDULE",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "ac4706e6b0c9824f": {
+   "ban": "3100074951",
+   "churn_risk": false,
+   "clli": "SNDSOHXA",
+   "file": "2026/10/12/conv_ac4706e6b0c9824f.json",
+   "format": "json",
+   "plan_id": "FB-1G",
+   "primary": "BIL.CHG.BILL_EXPLAIN",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "ace6ac849c4abde1": {
+   "ban": "3100139973",
+   "churn_risk": false,
+   "clli": "ROLAMOXA",
+   "file": "2026/10/06/conv_ace6ac849c4abde1.json",
+   "format": "json",
+   "plan_id": "CU-80",
+   "primary": "TEC.SVC.SECURITY",
+   "resolution": "resolved",
+   "secondary": [
+    "ACC.PRIV.PRIVACY_REQUEST"
+   ],
+   "technology": "copper"
+  },
+  "addfc7aca06c50b0": {
+   "ban": "3100017489",
+   "churn_risk": true,
+   "clli": "KKMOINXA",
+   "file": "2026/10/10/conv_addfc7aca06c50b0.json",
+   "format": "json",
+   "plan_id": "CU-80",
+   "primary": "CMP.EXP.SALES_MISREP",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "b020c5b45381b159": {
+   "ban": "3100134747",
+   "churn_risk": false,
+   "clli": "JHCYTNXA",
+   "file": "2026/10/11/b020c5b45381b159.vtt",
+   "format": "vtt",
+   "plan_id": "CU-140",
+   "primary": "ACC.SEC.VERIFY_FAIL",
+   "resolution": "escalated",
+   "secondary": [
+    "BIL.PAY.NOT_POSTED",
+    "TEC.TS.SPEED_TEST"
+   ],
+   "technology": "copper"
+  },
+  "b2ec78fd949c8363": {
+   "ban": "3100021557",
+   "churn_risk": false,
+   "clli": "RCMTNCXA",
+   "file": "2026/10/10/conv_b2ec78fd949c8363.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "TEC.CON.NO_INTERNET",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "b321ce408e3dc1ec": {
+   "ban": "3100011550",
+   "churn_risk": false,
+   "clli": "BLTNINXA",
+   "file": "2026/10/07/conv_b321ce408e3dc1ec.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "ORD.STAT.ORDER_STATUS",
+   "resolution": "unresolved",
+   "secondary": [
+    "BIL.CHG.BILL_EXPLAIN"
+   ],
+   "technology": "copper"
+  },
+  "b6df82f23731935b": {
+   "ban": "3100046609",
+   "churn_risk": false,
+   "clli": "JHTWPAXA",
+   "file": "2026/10/13/conv_b6df82f23731935b.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "ORD.STAT.ORDER_CHANGE",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "b8a8cf595655bcca": {
+   "ban": "3100037641",
+   "churn_risk": false,
+   "clli": "MARNOHXA",
+   "file": "2026/10/08/conv_b8a8cf595655bcca.json",
+   "format": "json",
+   "plan_id": "FB-300",
+   "primary": "EQP.MOD.SETUP_ACTIVATE",
+   "resolution": "resolved",
+   "secondary": [
+    "BIL.CHG.FEES_TAXES"
+   ],
+   "technology": "fiber"
+  },
+  "bc42bba98bcd7893": {
+   "ban": "3100050537",
+   "churn_risk": true,
+   "clli": "GLBRNCXA",
+   "file": "2026/10/09/conv_bc42bba98bcd7893.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "INS.DEL.INSTALL_DELAY",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "bc724a15bd5fc82c": {
+   "ban": "3100057373",
+   "churn_risk": false,
+   "clli": "MNCEINXA",
+   "file": "2026/10/11/conv_bc724a15bd5fc82c.json",
+   "format": "json",
+   "plan_id": "FB-300",
+   "primary": "BIL.CHG.FEES_TAXES",
+   "resolution": "unresolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "be5ac9d366f3bbb3": {
+   "ban": "3100068869",
+   "churn_risk": false,
+   "clli": "WLPTPAXA",
+   "file": "2026/10/08/conv_be5ac9d366f3bbb3.json",
+   "format": "json",
+   "plan_id": "FB-500",
+   "primary": "BIL.ADJ.REFUND_REQUEST",
+   "resolution": "pending_followup",
+   "secondary": [
+    "EQP.MOD.OWN_EQUIPMENT"
+   ],
+   "technology": "fiber"
+  },
+  "bea9fea8fdd119e6": {
+   "ban": "3100018340",
+   "churn_risk": true,
+   "clli": "JFCYMOXA",
+   "file": "2026/10/14/conv_bea9fea8fdd119e6.json",
+   "format": "json",
+   "plan_id": "FB-500",
+   "primary": "TEC.CON.SLOW_SPEED",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "c1cf0aafac0896e0": {
+   "ban": "3100137130",
+   "churn_risk": true,
+   "clli": "DTHNALDS",
+   "file": "2026/10/12/conv_c1cf0aafac0896e0.json",
+   "format": "json",
+   "plan_id": "FB-500",
+   "primary": "INS.APPT.MISSED_APPT",
+   "resolution": "unresolved",
+   "secondary": [
+    "BIL.CHG.BILL_EXPLAIN"
+   ],
+   "technology": "fiber"
+  },
+  "c1d16a45183c9298": {
+   "ban": "3100058606",
+   "churn_risk": false,
+   "clli": "DNVLVAXA",
+   "file": "2026/10/13/conv_c1d16a45183c9298.json",
+   "format": "json",
+   "plan_id": "FB-500",
+   "primary": "TEC.CON.NO_INTERNET",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "c5160f2237512245": {
+   "ban": "3100094147",
+   "churn_risk": true,
+   "clli": "MNFDOHXA",
+   "file": "2026/10/08/conv_c5160f2237512245.json",
+   "format": "json",
+   "plan_id": "CU-80",
+   "primary": "TEC.TS.REPEAT_ISSUE",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "c53abe1c9df0eb45": {
+   "ban": "3100095278",
+   "churn_risk": false,
+   "clli": "KGPTTNDS",
+   "file": "2026/10/10/conv_c53abe1c9df0eb45.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "BIL.CHG.FEES_TAXES",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "c74db97e75487aa0": {
+   "ban": "3100105934",
+   "churn_risk": true,
+   "clli": "MARNOHDS",
+   "file": "2026/10/11/transcript_c74db97e75487aa0.txt",
+   "format": "txt",
+   "plan_id": "CU-80",
+   "primary": "BIL.PAY.ARRANGEMENT",
+   "resolution": "resolved",
+   "secondary": [
+    "ORD.STAT.ORDER_STATUS"
+   ],
+   "technology": "copper"
+  },
+  "c97cd07dbf40c460": {
+   "ban": "3100030563",
+   "churn_risk": false,
+   "clli": "MARNOHXA",
+   "file": "2026/10/07/conv_c97cd07dbf40c460.json",
+   "format": "json",
+   "plan_id": "FB-300",
+   "primary": "DIG.APP.LOGIN_ISSUE",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "c988c06842b415bc": {
+   "ban": "3100039986",
+   "churn_risk": false,
+   "clli": "NCGDTXXA",
+   "file": "2026/10/06/conv_c988c06842b415bc.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "BIL.CHG.PRORATION",
+   "resolution": "unresolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "cb81e980a88a3915": {
+   "ban": "3100061118",
+   "churn_risk": false,
+   "clli": "SDLAMOXA",
+   "file": "2026/10/05/conv_cb81e980a88a3915.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "OUT.RPT.REPORT_OUTAGE",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "cc0ec1cfe5af9cdb": {
+   "ban": "3100120774",
+   "churn_risk": false,
+   "clli": "MARNOHDS",
+   "file": "2026/10/05/conv_cc0ec1cfe5af9cdb.json",
+   "format": "json",
+   "plan_id": "FB-1G",
+   "primary": "INS.APPT.TECH_ETA",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "cd29b5132260fa54": {
+   "ban": "3100026398",
+   "churn_risk": true,
+   "clli": "DNVLVADS",
+   "file": "2026/10/07/transcript_cd29b5132260fa54.txt",
+   "format": "txt",
+   "plan_id": "FB-1G",
+   "primary": "BIL.CHG.PRORATION",
+   "resolution": "resolved",
+   "secondary": [
+    "RET.CAN.CANCEL_DECEASED"
+   ],
+   "technology": "fiber"
+  },
+  "cf2ac4b2edfe0a9b": {
+   "ban": "3100084522",
+   "churn_risk": false,
+   "clli": "CHVLVAXA",
+   "file": "2026/10/08/conv_cf2ac4b2edfe0a9b.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "BIL.CHG.FEES_TAXES",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "cf64eb5ba29a0d00": {
+   "ban": "3100023711",
+   "churn_risk": false,
+   "clli": "WLSNNCDS",
+   "file": "2026/10/05/conv_cf64eb5ba29a0d00.json",
+   "format": "json",
+   "plan_id": "FB-1G",
+   "primary": "INS.DEL.ONT_PLACEMENT",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "cf73ae4ef5b92fda": {
+   "ban": "3100035436",
+   "churn_risk": true,
+   "clli": "DNVLVAXA",
+   "file": "2026/10/09/conv_cf73ae4ef5b92fda.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "RET.SAVE.RETENTION_OFFER",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "d034c0ca9069d93f": {
+   "ban": "3100138597",
+   "churn_risk": true,
+   "clli": "SDLAMOXA",
+   "file": "2026/10/08/conv_d034c0ca9069d93f.json",
+   "format": "json",
+   "plan_id": "FB-2G",
+   "primary": "CMP.EXP.SALES_MISREP",
+   "resolution": "resolved",
+   "secondary": [
+    "OUT.STAT.ETR_MISSED",
+    "RET.CAN.CANCEL_PRICE"
+   ],
+   "technology": "fiber"
+  },
+  "d0621c183b8d5502": {
+   "ban": "3100007070",
+   "churn_risk": false,
+   "clli": "NCGDTXDS",
+   "file": "2026/10/05/d0621c183b8d5502.vtt",
+   "format": "vtt",
+   "plan_id": "CU-140",
+   "primary": "DIG.APP.LOGIN_ISSUE",
+   "resolution": "pending_followup",
+   "secondary": [
+    "BIL.PAY.NOT_POSTED"
+   ],
+   "technology": "copper"
+  },
+  "d09ddd6157a06b01": {
+   "ban": "3100033196",
+   "churn_risk": false,
+   "clli": "GLBRNCXA",
+   "file": "2026/10/09/d09ddd6157a06b01.vtt",
+   "format": "vtt",
+   "plan_id": "FB-300",
+   "primary": "BIL.ADJ.LATE_FEE_DISPUTE",
+   "resolution": "resolved",
+   "secondary": [
+    "RET.FIN.FINAL_BILL"
+   ],
+   "technology": "fiber"
+  },
+  "d1708c13125abc88": {
+   "ban": "3100088165",
+   "churn_risk": true,
+   "clli": "NCGDTXXA",
+   "file": "2026/10/10/conv_d1708c13125abc88.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "RET.CAN.CANCEL_MOVE",
+   "resolution": "unresolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "d1a95552b4604587": {
+   "ban": "3100127653",
+   "churn_risk": false,
+   "clli": "HCKRNCXA",
+   "file": "2026/10/10/conv_d1a95552b4604587.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "FBR.AVL.FIBER_AVAILABILITY",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "d25576df661dc5fd": {
+   "ban": "3100022074",
+   "churn_risk": true,
+   "clli": "RLGHNCXA",
+   "file": "2026/10/09/d25576df661dc5fd.vtt",
+   "format": "vtt",
+   "plan_id": "CU-80",
+   "primary": "RET.CAN.CANCEL_DECEASED",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "d2c1bf3fbfa246e9": {
+   "ban": "3100097623",
+   "churn_risk": false,
+   "clli": "KGPTTNDS",
+   "file": "2026/10/08/conv_d2c1bf3fbfa246e9.json",
+   "format": "json",
+   "plan_id": "FB-1G",
+   "primary": "TEC.TS.SPEED_TEST",
+   "resolution": "pending_followup",
+   "secondary": [
+    "DIG.APP.APP_ERROR"
+   ],
+   "technology": "fiber"
+  },
+  "d3bd3772adb5735f": {
+   "ban": "3100028891",
+   "churn_risk": true,
+   "clli": "WLSNNCXA",
+   "file": "2026/10/12/conv_d3bd3772adb5735f.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "TEC.CON.INTERMITTENT",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "d4803df3952495ac": {
+   "ban": "3100016202",
+   "churn_risk": false,
+   "clli": "DTHNALXA",
+   "file": "2026/10/09/conv_d4803df3952495ac.json",
+   "format": "json",
+   "plan_id": "CU-80",
+   "primary": "BIL.PAY.MAKE_PAYMENT",
+   "resolution": "escalated",
+   "secondary": [
+    "ORD.MOVE.TRANSFER_OWNERSHIP"
+   ],
+   "technology": "copper"
+  },
+  "d4d3f3fc325b8012": {
+   "ban": "3100054713",
+   "churn_risk": false,
+   "clli": "KLGRTXXA",
+   "file": "2026/10/12/conv_d4d3f3fc325b8012.json",
+   "format": "json",
+   "plan_id": "FB-1G",
+   "primary": "SAL.NEW.NEW_SERVICE",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "d73eae72b8194b48": {
+   "ban": "3100073279",
+   "churn_risk": false,
+   "clli": "NCGDTXXA",
+   "file": "2026/10/05/d73eae72b8194b48.vtt",
+   "format": "vtt",
+   "plan_id": "FB-300",
+   "primary": "TEC.WIFI.MESH_EXTENDER",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "d810741f39b345a1": {
+   "ban": "3100083553",
+   "churn_risk": false,
+   "clli": "RLGHNCXA",
+   "file": "2026/10/09/conv_d810741f39b345a1.json",
+   "format": "json",
+   "plan_id": "FB-500",
+   "primary": "TEC.CON.NO_INTERNET",
+   "resolution": "pending_followup",
+   "secondary": [
+    "ACC.SEC.PIN_RESET"
+   ],
+   "technology": "fiber"
+  },
+  "d86a0e58d84fac81": {
+   "ban": "3100060251",
+   "churn_risk": false,
+   "clli": "NPLSFLXA",
+   "file": "2026/10/10/transcript_d86a0e58d84fac81.txt",
+   "format": "txt",
+   "plan_id": "FB-2G",
+   "primary": "ORD.PLAN.PLAN_COMPARE",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "d908747c1a50bd8a": {
+   "ban": "3100016116",
+   "churn_risk": true,
+   "clli": "JHTWPADS",
+   "file": "2026/10/10/transcript_d908747c1a50bd8a.txt",
+   "format": "txt",
+   "plan_id": "FB-2G",
+   "primary": "TEC.CON.INTERMITTENT",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "da143f939f010dac": {
+   "ban": "3100121388",
+   "churn_risk": false,
+   "clli": "ENTPALXA",
+   "file": "2026/10/06/conv_da143f939f010dac.json",
+   "format": "json",
+   "plan_id": "FB-2G",
+   "primary": "EQP.RTN.UNRETURNED_FEE",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "dc3e58a781aac042": {
+   "ban": "3100131293",
+   "churn_risk": true,
+   "clli": "SDLAMOXA",
+   "file": "2026/10/11/conv_dc3e58a781aac042.json",
+   "format": "json",
+   "plan_id": "FB-2G",
+   "primary": "CMP.ESC.REGULATORY_THREAT",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "dd49cb08b3d26ca2": {
+   "ban": "3100043354",
+   "churn_risk": false,
+   "clli": "KKMOINXA",
+   "file": "2026/10/14/conv_dd49cb08b3d26ca2.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "TEC.SVC.STATIC_IP",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "ddbbbf10d7e291f2": {
+   "ban": "3100022082",
+   "churn_risk": false,
+   "clli": "DTHNALDS",
+   "file": "2026/10/06/conv_ddbbbf10d7e291f2.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "TEC.SVC.VOICE",
+   "resolution": "pending_followup",
+   "secondary": [
+    "EQP.MOD.REPLACE_UPGRADE",
+    "INS.APPT.RESCHEDULE"
+   ],
+   "technology": "copper"
+  },
+  "de48ee3bb5fbc5ab": {
+   "ban": "3100024796",
+   "churn_risk": false,
+   "clli": "HCKRNCXA",
+   "file": "2026/10/12/conv_de48ee3bb5fbc5ab.json",
+   "format": "json",
+   "plan_id": "FB-300",
+   "primary": "TEC.SVC.EMAIL",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "de77960330bc36d7": {
+   "ban": "3100097685",
+   "churn_risk": false,
+   "clli": "ROLAMOXA",
+   "file": "2026/10/06/conv_de77960330bc36d7.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "BIL.CHG.BILL_EXPLAIN",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "dedd25dd3c68bd07": {
+   "ban": "3100116784",
+   "churn_risk": false,
+   "clli": "JHCYTNXA",
+   "file": "2026/10/09/dedd25dd3c68bd07.vtt",
+   "format": "vtt",
+   "plan_id": "CU-80",
+   "primary": "ACC.PRF.UPDATE_CONTACT",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "deedbccf1e4ed7f1": {
+   "ban": "3100079229",
+   "churn_risk": false,
+   "clli": "NPLSFLXA",
+   "file": "2026/10/11/conv_deedbccf1e4ed7f1.json",
+   "format": "json",
+   "plan_id": "CU-80",
+   "primary": "FBR.MIG.COPPER_TO_FIBER",
+   "resolution": "resolved",
+   "secondary": [
+    "SAL.PRG.REFERRAL"
+   ],
+   "technology": "copper"
+  },
+  "df4efba8be455339": {
+   "ban": "3100006036",
+   "churn_risk": true,
+   "clli": "RLGHNCDS",
+   "file": "2026/10/06/conv_df4efba8be455339.json",
+   "format": "json",
+   "plan_id": "FB-300",
+   "primary": "CMP.ESC.PRIOR_PROMISE",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "dff4875ace2145a7": {
+   "ban": "3100133988",
+   "churn_risk": true,
+   "clli": "MNFDOHXA",
+   "file": "2026/10/05/conv_dff4875ace2145a7.json",
+   "format": "json",
+   "plan_id": "FB-2G",
+   "primary": "BIL.CHG.PROMO_EXPIRED",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "e0f93cdc2a5c380f": {
+   "ban": "3100092152",
+   "churn_risk": false,
+   "clli": "RLGHNCDS",
+   "file": "2026/10/05/conv_e0f93cdc2a5c380f.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "OUT.RPT.WEATHER_DAMAGE",
+   "resolution": "escalated",
+   "secondary": [
+    "TEC.CON.NO_INTERNET"
+   ],
+   "technology": "copper"
+  },
+  "e1a0128a04c4d0d8": {
+   "ban": "3100026896",
+   "churn_risk": false,
+   "clli": "WLSNNCDS",
+   "file": "2026/10/13/conv_e1a0128a04c4d0d8.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "TEC.WIFI.PASSWORD",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "e40efe60742dc626": {
+   "ban": "3100120047",
+   "churn_risk": false,
+   "clli": "GLBRNCDS",
+   "file": "2026/10/12/conv_e40efe60742dc626.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "INS.DEL.DROP_LINE",
+   "resolution": "escalated",
+   "secondary": [
+    "BIL.CHG.INCORRECT_CHARGE"
+   ],
+   "technology": "copper"
+  },
+  "e4fd6f50a558e36d": {
+   "ban": "3100002956",
+   "churn_risk": false,
+   "clli": "WLPTPADS",
+   "file": "2026/10/05/conv_e4fd6f50a558e36d.json",
+   "format": "json",
+   "plan_id": "FB-300",
+   "primary": "ACC.PRF.AUTHORIZED_USER",
+   "resolution": "resolved",
+   "secondary": [
+    "TEC.WIFI.COVERAGE"
+   ],
+   "technology": "fiber"
+  },
+  "e55e7cf0c6384b24": {
+   "ban": "3100051762",
+   "churn_risk": false,
+   "clli": "MNFDOHXA",
+   "file": "2026/10/13/conv_e55e7cf0c6384b24.json",
+   "format": "json",
+   "plan_id": "CU-80",
+   "primary": "BIL.PAY.AUTOPAY_FAIL",
+   "resolution": "escalated",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "e90161f2d43b30e6": {
+   "ban": "3100138188",
+   "churn_risk": false,
+   "clli": "GLBRNCDS",
+   "file": "2026/10/06/conv_e90161f2d43b30e6.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "BIL.CHG.PRORATION",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "ea0fb1ce17ecf9f7": {
+   "ban": "3100129112",
+   "churn_risk": true,
+   "clli": "GLBRNCDS",
+   "file": "2026/10/10/conv_ea0fb1ce17ecf9f7.json",
+   "format": "json",
+   "plan_id": "FB-300",
+   "primary": "BIL.ADJ.OUTAGE_CREDIT",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "eb1ae33a86e25131": {
+   "ban": "3100033958",
+   "churn_risk": false,
+   "clli": "JFCYMODS",
+   "file": "2026/10/10/conv_eb1ae33a86e25131.json",
+   "format": "json",
+   "plan_id": "CU-80",
+   "primary": "ACC.PRIV.PRIVACY_REQUEST",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "ec64a4e31b5c5fd8": {
+   "ban": "3100105875",
+   "churn_risk": true,
+   "clli": "RLGHNCXA",
+   "file": "2026/10/14/transcript_ec64a4e31b5c5fd8.txt",
+   "format": "txt",
+   "plan_id": "FB-1G",
+   "primary": "BIL.ADJ.OUTAGE_CREDIT",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "ec7673e0474358b3": {
+   "ban": "3100042743",
+   "churn_risk": false,
+   "clli": "GLBRNCXA",
+   "file": "2026/10/12/conv_ec7673e0474358b3.json",
+   "format": "json",
+   "plan_id": "FB-2G",
+   "primary": "BIL.PAY.AUTOPAY_FAIL",
+   "resolution": "pending_followup",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "eec3957cf36234ed": {
+   "ban": "3100024917",
+   "churn_risk": true,
+   "clli": "MARNOHDS",
+   "file": "2026/10/08/conv_eec3957cf36234ed.json",
+   "format": "json",
+   "plan_id": "FB-300",
+   "primary": "RET.SAVE.PROMO_EXTEND",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "ef03a2524277863b": {
+   "ban": "3100126234",
+   "churn_risk": false,
+   "clli": "ENTPALXA",
+   "file": "2026/10/07/conv_ef03a2524277863b.json",
+   "format": "json",
+   "plan_id": "FB-1G",
+   "primary": "TEC.TS.SPEED_TEST",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "f2c5335ac71bc615": {
+   "ban": "3100041720",
+   "churn_risk": false,
+   "clli": "LIMAOHXA",
+   "file": "2026/10/07/conv_f2c5335ac71bc615.json",
+   "format": "json",
+   "plan_id": "FB-500",
+   "primary": "TEC.WIFI.MESH_EXTENDER",
+   "resolution": "escalated",
+   "secondary": [],
+   "technology": "fiber"
+  },
+  "f319b2229017b1aa": {
+   "ban": "3100083798",
+   "churn_risk": true,
+   "clli": "WLPTPAXA",
+   "file": "2026/10/12/conv_f319b2229017b1aa.json",
+   "format": "json",
+   "plan_id": "CU-25",
+   "primary": "OUT.NOT.RECURRING_OUTAGES",
+   "resolution": "resolved",
+   "secondary": [
+    "FBR.AVL.BUILD_TIMELINE"
+   ],
+   "technology": "copper"
+  },
+  "f43c192e78b8783d": {
+   "ban": "3100089842",
+   "churn_risk": false,
+   "clli": "LIMAOHXA",
+   "file": "2026/10/07/conv_f43c192e78b8783d.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "SAL.BIZ.SMB_SERVICE",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "f5a3f5cd972b3805": {
+   "ban": "3100120004",
+   "churn_risk": true,
+   "clli": "WNCHVAXA",
+   "file": "2026/10/13/transcript_f5a3f5cd972b3805.txt",
+   "format": "txt",
+   "plan_id": "FB-2G",
+   "primary": "RET.CAN.CANCEL_SERVICE_QUALITY",
+   "resolution": "pending_followup",
+   "secondary": [
+    "BIL.ADJ.OUTAGE_CREDIT",
+    "INS.APPT.SCHEDULE_INSTALL"
+   ],
+   "technology": "fiber"
+  },
+  "fcc5e55ed028edd8": {
+   "ban": "3100006790",
+   "churn_risk": false,
+   "clli": "MARNOHXA",
+   "file": "2026/10/11/conv_fcc5e55ed028edd8.json",
+   "format": "json",
+   "plan_id": "FB-2G",
+   "primary": "ORD.MOVE.MOVE_SERVICE",
+   "resolution": "resolved",
+   "secondary": [
+    "ACC.PRIV.PAPERLESS"
+   ],
+   "technology": "fiber"
+  },
+  "fd60c17084924159": {
+   "ban": "3100097254",
+   "churn_risk": true,
+   "clli": "RKHLSCDS",
+   "file": "2026/10/13/transcript_fd60c17084924159.txt",
+   "format": "txt",
+   "plan_id": "CU-140",
+   "primary": "OUT.NOT.RECURRING_OUTAGES",
+   "resolution": "escalated",
+   "secondary": [],
+   "technology": "copper"
+  },
+  "fdcbc0b0e0fb40c3": {
+   "ban": "3100030003",
+   "churn_risk": true,
+   "clli": "MNFDOHDS",
+   "file": "2026/10/08/conv_fdcbc0b0e0fb40c3.json",
+   "format": "json",
+   "plan_id": "CU-140",
+   "primary": "INS.DEL.INCOMPLETE_INSTALL",
+   "resolution": "pending_followup",
+   "secondary": [
+    "BIL.PAY.MAKE_PAYMENT"
+   ],
+   "technology": "copper"
+  },
+  "fe4b7ad8ebabfd64": {
+   "ban": "3100057583",
+   "churn_risk": false,
+   "clli": "MNFDOHXA",
+   "file": "2026/10/14/transcript_fe4b7ad8ebabfd64.txt",
+   "format": "txt",
+   "plan_id": "FB-300",
+   "primary": "BIL.ADJ.LATE_FEE_DISPUTE",
+   "resolution": "pending_followup",
+   "secondary": [
+    "TEC.SVC.EMAIL"
+   ],
+   "technology": "fiber"
+  },
+  "ff78e7f9f26cd930": {
+   "ban": "3100073508",
+   "churn_risk": true,
+   "clli": "CHVLVAXA",
+   "file": "2026/10/10/conv_ff78e7f9f26cd930.json",
+   "format": "json",
+   "plan_id": "FB-300",
+   "primary": "CMP.ESC.PRIOR_PROMISE",
+   "resolution": "resolved",
+   "secondary": [],
+   "technology": "fiber"
+  }
+ },
+ "generator": "build/ccai/scripts/make_fixtures.py",
+ "seed": 11,
+ "taxonomy_version": "2026.10.2"
+}

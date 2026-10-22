@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCAI Call Insights · DataPlatform</title>
+  <link rel="icon" href="/ccai/ui-kit/brand/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/ccai/ui-kit/bsp.css">
+  <link rel="stylesheet" href="/ccai/static/app.css">
+</head>
+<body>
+  <div class="bsp-app">
+    <header class="bsp-topbar">
+      <a class="bsp-brand" href="/studio/" title="Back to Studio"><span class="mark"></span> <span class="word">datacat</span> <span class="sub">· CCAI Call Insights</span></a>
+      <div class="spacer"></div>
+      <div id="topStatus" class="row wrap"></div>
+      <button class="btn primary sm" id="runNow" title="Check the SharePoint folder for new call logs and tag them now">Sync now</button>
+    </header>
+    <aside class="bsp-sidebar">
+      <nav class="bsp-nav" id="nav"></nav>
+      <div class="side-help caption" id="sideHelp"></div>
+    </aside>
+    <main class="bsp-main" id="main" tabindex="-1"></main>
+  </div>
+  <div id="tip" class="viz-tip" role="tooltip" hidden></div>
+  <script src="/ccai/ui-kit/bsp.js"></script>
+  <script src="/ccai/static/app.js"></script>
+</body>
+</html>

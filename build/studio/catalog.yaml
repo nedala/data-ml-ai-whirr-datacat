@@ -1,0 +1,143 @@
+# Service catalog (core) — services, capabilities, launchpad tiles, personas
+# and shared credentials for the DataPlatform Data & AI Appliances.
+#
+# Studio merges this file with every build/studio/catalog.d/*.yaml fragment
+# (one per component): `services`, `capabilities` and `shared_credentials`
+# are merged by key, `apps` and `app_groups` by `id`. `personas` come from
+# THIS file only. A persona may reference a capability whose fragment is not
+# installed — it is skipped with a hint, never an error.
+# Contract: plan/architecture.md §2.
+
+# ── Services (compose service names) ─────────────────────────────────────
+# ram_mb: rough steady-state estimate shown in the composer.
+# creds: credential slots (vault key `services.<service>.<env>`), generated on
+#        first launch. `user` is a fixed username, `user_env` an env var that
+#        carries the username; `external: true` = a key you obtain and set.
+services:
+  postgres:
+    title: Warehouse
+    blurb: Local Postgres warehouse (bsp_edw) — raw, landing, staging/intermediate/marts and the ML / AI schemas
+    profile: base
+    ram_mb: 256
+    kind: base
+    endpoints:
+      - {label: Host (inside the appliance), value: "postgres:5432 · database bsp_edw · user analyst"}
+      - {label: JDBC, value: "jdbc:postgresql://postgres:5432/bsp_edw"}
+      - {label: Files on disk, value: "<data root>/warehouse/postgres (host)"}
+    creds:
+      - {env: PG_PASS, user: analyst, label: Warehouse (Postgres) password}
+  appliance:
+    title: Workspace
+    blurb: JupyterLab, dbt Studio, import & export, files and Python packages
+    profile: workspace
+    ram_mb: 2048
+    kind: app
+    needs: [postgres]
+    endpoints:
+      - {label: Shared files, value: "/data/lake (host: <data root>/lake)"}
+      - {label: My work, value: "/home/analyst/work (host: <data root>/<user>/work)"}
+      - {label: dbt project, value: "/home/analyst/work/dbt_project (bsp_edw; targets postgres · bigquery · trino)"}
+    creds:
+      - {env: JUPYTER_TOKEN, user: analyst, label: JupyterLab token}
+      - {env: WB_STUDIO_TOKEN, label: "Workbench → Studio service token (cloud-identity principal switch)", hidden: true, length: 48, policy: alnum}
+  code:
+    title: VS Code
+    blurb: Browser VS Code (code-server) on your workspace, with Python, Jupyter and dbt extensions
+    profile: vscode
+    ram_mb: 768
+    kind: app
+    route: /code/
+    creds:
+      - {env: CODE_PASSWORD, user: analyst, label: VS Code password}
+  browser:
+    title: Linux Desktop
+    blurb: "Full Linux desktop in your browser: Chromium, Antigravity, VS Code, terminal, files. Automations run here visibly."
+    profile: browser
+    ram_mb: 768
+    kind: app
+    route: /browser/
+    creds:
+      - {env: VNC_PASSWORD, label: Linux Desktop VNC password (direct noVNC port; first 8 characters are significant), length: 12, policy: alnum}
+    endpoints:
+      - {label: "noVNC direct (host port, VNC password)", value: "http://${NOVNC_HOST:-localhost}:${NOVNC_PORT:-36081}/vnc.html?autoconnect=1&resize=scale&reconnect=1"}
+      - {label: "DevTools (CDP) — from services inside the appliance", value: "http://browser:9223"}
+      - {label: "DevTools (CDP) — from Jupyter / VS Code terminals", value: "http://127.0.0.1:9222"}
+      - {label: "DevTools (CDP) — from this host (loopback only)", value: "http://127.0.0.1:${CDP_PORT:-9222}"}
+
+# ── Shared external credentials ─────────────────────────────────────────
+# Keys several components use. Set once in Studio → Credentials; stored in
+# the vault at `services.shared.<ENV>` and injected into EVERY compose start
+# (a fragment receives a value only if its environment lists `${ENV:-}`).
+# Multi-line values (service-account JSON) are passed verbatim.
+shared_credentials:
+  GCP_SA_JSON:        {label: "GCP service-account key JSON (BigQuery + Vertex AI)", multiline: true,
+                       hint: "Legacy single key — prefer Studio → Cloud identities (named keys or a Google sign-in, assigned per component). Paste the key file JSON (or its base64); empty = local warehouse and mocks."}
+  M365_CLIENT_SECRET: {label: "Microsoft 365 / Power BI app client secret (Entra ID app registration)"}
+  ATLAN_API_TOKEN:    {label: "Atlan API token"}
+  DATAHUB_TOKEN:      {label: "DataHub personal access token (optional DataHub catalog side stack)",
+                       hint: "DataHub → Settings → Access Tokens. Lets the MCP catalog tools and the harness search and annotate the catalog."}
+  SAP_BRIM_USER:      {label: "SAP BRIM user"}
+  SAP_BRIM_PASSWORD:  {label: "SAP BRIM password"}
+  ANTHROPIC_API_KEY:  {label: "Anthropic API key (optional LLM provider)"}
+
+# ── Launchpad panels (tiles are grouped by `group`; fragments reuse these ids,
+#    and a fragment entry with the same id refines the panel instead of adding one)
+app_groups:
+  - {id: analyse,   title: Explore and code,        icon: code,     blurb: "Notebooks and editors on your own workspace"}
+  - {id: data,      title: Land and model data,      icon: database,  blurb: "Bring data in, model it and browse files"}
+  - {id: report,    title: Share with the business,       icon: dashboard, blurb: "Dashboards and SQL for everyone"}
+  - {id: ml,        title: Build and run models,      icon: flask,     blurb: "Train, compare, serve and watch the churn model"}
+  - {id: ai-engineering, title: Build with AI,   icon: bot,      blurb: "Models, tools and knowledge for AI apps"}
+  - {id: ai-automations, title: AI that does the work,   icon: zap,      blurb: "Automations that take routine work off people's desks"}
+  - {id: integrate, title: Company systems,    icon: plug,     blurb: "Links to BigQuery, Atlan, Microsoft 365, Power BI and SAP"}
+  - {id: tools,     title: Desktop and setup,       icon: monitor,      blurb: "A desktop in your browser, packages and guides"}
+
+# ── Launchpad tiles (shown when their service is running) ────────────────
+apps:
+  - {id: jupyter, group: analyse, title: JupyterLab,      service: appliance, path: /jupyter/lab, cred: JUPYTER_TOKEN, icon: notebook,    blurb: "Notebooks that query the warehouse, the lake and BigQuery"}
+  - {id: code,    group: analyse, title: VS Code,         service: code,      path: /code/,       cred: CODE_PASSWORD, icon: code,     blurb: "A full code editor on the same workspace"}
+  - {id: ingress, group: data,    title: Import & Export, service: appliance, path: /ingress/,    icon: upload,   blurb: "Load files and tables into the warehouse, and export results"}
+  - {id: dbt,     group: data,    title: dbt Studio,      service: appliance, path: /dbt/,        icon: branch, blurb: "Build and test the business models, from raw data to marts"}
+  - {id: files,   group: data,    title: Files,           service: appliance, path: /files/,      icon: folder,   blurb: "Browse the shared lake and your own work folder"}
+  - {id: browser, group: tools,   title: Linux Desktop,   service: browser,   path: "/browser/vnc.html?autoconnect=1&resize=scale&path=browser/websockify", cred: VNC_PASSWORD, icon: monitor, blurb: "A Linux desktop in your browser, where automations run in view",
+     alt: {label: "Direct noVNC", url: "http://${NOVNC_HOST:-localhost}:${NOVNC_PORT:-36081}/vnc.html?autoconnect=1&resize=scale&reconnect=1"}}
+  - {id: antigravity, group: analyse, title: Antigravity, service: browser, path: "/browser/vnc.html?autoconnect=1&resize=scale&path=browser/websockify", icon: sparkle, requires_env: ANTIGRAVITY_ENABLED,
+     blurb: "Google's AI coding assistant, opened on the Linux desktop"}
+  # DataHub runs as an optional side stack (stacks/datahub): state comes from a TCP probe, and its sign-in
+  # password is read from the stack's own secrets file under DATA_ROOT (the stack generates it).
+  - {id: datahub, group: data, title: DataHub, service: nginx, path: "https://${PUBLIC_FACADE_HOST:-localhost}:${DATAHUB_PORT:-38081}/", icon: catalog,
+     probe: "datahub-frontend:9002",
+     cred_file: {env: DATAHUB_ADMIN_PASSWORD, user: datahub, label: "DataHub sign-in password", path: datahub/secrets/datahub.env},
+     blurb: "Search every dataset and see where its data comes from"}
+  - {id: pkg,     group: tools,   title: Packages,        service: appliance, path: /pkg/,        icon: package,   blurb: "Add, pin and remove Python packages for your workspace"}
+  - {id: docs,    group: tools,   title: Docs,            service: docs,      path: /docs/,       icon: book, blurb: "Step-by-step guides for every part of the platform"}
+
+# ── Capabilities (what the composer toggles) ─────────────────────────────
+# Further capabilities (trino, bi, canvas, connectors, mlops, ai, ollama,
+# disputes, ccai, rag, chatui) are declared by their components in catalog.d/.
+capabilities:
+  workspace: {title: Workspace,       tone: analyse, icon: notes, services: [appliance, postgres], blurb: "JupyterLab, Workbench (dbt Studio, import & export, files, packages) and the local warehouse"}
+  vscode:    {title: VS Code,         tone: analyse, icon: apps,  services: [code],                blurb: "Browser IDE on the same workspace"}
+  browser:   {title: Linux Desktop,   tone: tools,   icon: globe, services: [browser],             blurb: "Full Linux desktop in your browser: Chromium, Antigravity, VS Code, terminal, files. Automations run here visibly."}
+
+# ── Personas (presets; capabilities can still be toggled) ────────────────
+# `groups`: launchpad panel order when this persona leads.
+personas:
+  data-pro:
+    title: Data Professional
+    icon: database
+    blurb: "Integrate with the no-code canvas, model with dbt on BigQuery and Trino, govern with Atlan, publish to Superset and Power BI."
+    capabilities: [workspace, vscode, trino, bi, canvas, connectors]
+    groups: [data, analyse, report, integrate, tools]
+  ml-scientist:
+    title: ML Scientist
+    icon: chart
+    blurb: "End-to-end MLOps: EDA, features, experiments, registry, blue/green · shadow · canary serving, drift and retraining."
+    capabilities: [workspace, vscode, trino, mlops, bi, connectors]
+    groups: [ml, analyse, data, report, integrate, tools]
+  ai-engineer:
+    title: AI Engineer
+    icon: chat
+    blurb: "LLM harness (Ollama + Vertex AI) with MCP tools, RAG and Open WebUI, dispute-inbox → SAP BRIM automation and CCAI call tagging."
+    capabilities: [workspace, vscode, connectors, ai, rag, chatui, disputes, ccai, browser]
+    groups: [ai-engineering, ai-automations, integrate, analyse, data, tools]

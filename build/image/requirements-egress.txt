@@ -1,0 +1,7 @@
+# px-proxy (build/px-proxy) — isolated venv /opt/venvs/egress so mitmproxy's
+# tight pins never constrain the main environment.
+mitmproxy>=11.0,<13
+aiohttp>=3.9          # admin API (8081)
+PyYAML>=6.0           # allowlist
+certifi               # public roots for ca-bundle.pem / upstream verification
+cryptography>=42      # CA handling

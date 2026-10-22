@@ -1,0 +1,1434 @@
+# DataPlatform contact-reason taxonomy for CCAI call tagging.
+#
+# Three levels: L1 domain → L2 intent group → L3 leaf. EXACTLY 104 leaves
+# (validated by build/ccai/tests/test_taxonomy.py). Leaf ids are STABLE:
+# never rename or reuse an id — deprecate it (`deprecated: true`,
+# `replaced_by: <id>`) and add a new one, then bump `version`.
+#
+# Per leaf:
+#   id / name / definition      what the customer is contacting us about
+#   include / exclude           boundary guidance for taggers and reviewers
+#   examples                    3–5 customer utterances (train the offline tagger)
+#   keywords                    retrieval hints (lower case; ASR-friendly)
+#   mapping                     service-ticket category/subcategory (warehouse
+#                               raw.service_tickets) + SAP CRM/BRIM interaction reason code
+#   churn_risk                  true when this reason is a churn-risk signal
+#
+# Governance: see docs/ai-engineer/ccai.md ("Taxonomy governance").
+version: "2026.10.2"
+name: DataPlatform Contact Reasons
+owner: Customer Care Analytics
+updated: "2026-10-18"
+domains:
+  # ────────────────────────────────────────────────────────────── 14 leaves
+  - id: BIL
+    name: Billing & Payments
+    groups:
+      - id: BIL.CHG
+        name: Charges & bill explanation
+        leaves:
+          - id: BIL.CHG.HIGH_BILL
+            name: Bill higher than expected
+            definition: Customer says the latest bill is higher than usual or than what they were quoted, without naming a specific cause.
+            include: Overall bill amount went up; "why is my bill so high"; comparison to last month.
+            exclude: Increase explicitly caused by a promotion ending (BIL.CHG.PROMO_EXPIRED); a specific unknown line item (BIL.CHG.INCORRECT_CHARGE).
+            examples:
+              - "My bill is way higher this month than it normally is and I don't know why."
+              - "I was quoted fifty five dollars and now I'm getting charged almost eighty."
+              - "Why did my internet bill jump up so much compared to last month?"
+            keywords: [bill higher, bill went up, more than usual, jumped, too high, overcharged, quoted]
+            mapping: {ticket_category: billing, ticket_subcategory: incorrect_charge, sap_reason: ZB01}
+            churn_risk: true
+          - id: BIL.CHG.PROMO_EXPIRED
+            name: Promotion ended / price increase
+            definition: Bill increased because a promotional rate rolled off or a rate-card price increase took effect.
+            include: Promo price ended; twelve-month discount expired; price increase letter.
+            exclude: Asking to get a new promotion or retention deal (RET.SAVE.PROMO_EXTEND).
+            examples:
+              - "My promotional rate ended and now my price went up twelve dollars."
+              - "I got a letter saying my price is increasing, what's going on with that?"
+              - "The discount I signed up with just expired and the bill went way up."
+            keywords: [promo, promotion ended, promotional rate, discount expired, price increase, rate increase, roll off]
+            mapping: {ticket_category: billing, ticket_subcategory: promo_expired, sap_reason: ZB02}
+            churn_risk: true
+          - id: BIL.CHG.INCORRECT_CHARGE
+            name: Unrecognised or incorrect charge
+            definition: Customer disputes or does not recognise a specific line item or one-time charge on the bill.
+            include: Unknown charge; charged for a service never ordered; duplicate charge; installation fee that was supposed to be waived.
+            exclude: Late fees (BIL.ADJ.LATE_FEE_DISPUTE); equipment non-return fees (EQP.RTN.UNRETURNED_FEE); general fees/taxes explanation (BIL.CHG.FEES_TAXES).
+            examples:
+              - "There's a charge on here for something I never ordered."
+              - "I see a ninety nine dollar installation fee and I was told it would be waived."
+              - "I got charged twice for the same month."
+            keywords: [charge i don't recognize, never ordered, charged twice, duplicate charge, waived, wrong charge, one time charge]
+            mapping: {ticket_category: billing, ticket_subcategory: incorrect_charge, sap_reason: ZB03}
+            churn_risk: false
+          - id: BIL.CHG.FEES_TAXES
+            name: Fees, surcharges & taxes
+            definition: Questions about recurring fees, surcharges or taxes on the bill (e.g. internet cost recovery fee, sales tax).
+            include: What is this surcharge; why am I paying tax on internet; regulatory recovery fee.
+            exclude: A one-off charge the customer disputes (BIL.CHG.INCORRECT_CHARGE); equipment rental (EQP.RTN.LEASE_FEE).
+            examples:
+              - "What is this internet cost recovery fee on my statement?"
+              - "Why are there taxes and surcharges added on top of my plan price?"
+              - "Can you explain the regulatory fee, nobody told me about that."
+            keywords: [surcharge, recovery fee, taxes, regulatory fee, fees on my bill, tax]
+            mapping: {ticket_category: billing, ticket_subcategory: incorrect_charge, sap_reason: ZB04}
+            churn_risk: false
+          - id: BIL.CHG.PRORATION
+            name: Prorated / partial-month charges
+            definition: Questions about partial-month, prorated or overlapping charges after a start, move, plan change or cancellation.
+            include: First bill larger than expected because of proration; two months on one bill; partial credit.
+            exclude: Final bill after cancellation (RET.FIN.FINAL_BILL).
+            examples:
+              - "My first bill has two months on it, is that right?"
+              - "I changed plans mid month and the bill shows these partial charges I don't understand."
+              - "What does prorated mean on my statement?"
+            keywords: [prorated, proration, partial month, two months, first bill, mid cycle, partial charge]
+            mapping: {ticket_category: billing, ticket_subcategory: incorrect_charge, sap_reason: ZB05}
+            churn_risk: false
+          - id: BIL.CHG.BILL_EXPLAIN
+            name: Explain my bill / billing cycle
+            definition: General request to walk through the bill, the due date or the billing cycle with no dispute.
+            include: When is my bill due; change due date; what period does this bill cover; copy of a statement.
+            exclude: Any complaint that the bill is too high (BIL.CHG.HIGH_BILL).
+            examples:
+              - "Can you walk me through my bill, I just want to understand it."
+              - "When is my payment due and can I move my due date to the fifteenth?"
+              - "I need a copy of last month's statement for my records."
+            keywords: [due date, billing cycle, walk me through, copy of statement, explain my bill, billing date]
+            mapping: {ticket_category: billing, ticket_subcategory: incorrect_charge, sap_reason: ZB06}
+            churn_risk: false
+      - id: BIL.PAY
+        name: Payments
+        leaves:
+          - id: BIL.PAY.AUTOPAY_FAIL
+            name: Autopay failed
+            definition: An automatic payment did not go through or was declined, or the customer is told they owe money despite autopay.
+            include: Card on autopay expired; autopay didn't run; past-due notice while on autopay.
+            exclude: Enrolling or changing autopay without a failure (BIL.PAY.AUTOPAY_SETUP); late fee dispute is secondary.
+            examples:
+              - "I'm on autopay but it says my payment didn't go through."
+              - "I got a past due notice and I have automatic payments set up."
+              - "My autopay was declined, I think the card on file expired."
+            keywords: [autopay, automatic payment, didn't go through, declined, past due, card expired, auto pay failed]
+            mapping: {ticket_category: billing, ticket_subcategory: autopay_failure, sap_reason: ZP01}
+            churn_risk: false
+          - id: BIL.PAY.AUTOPAY_SETUP
+            name: Set up or change autopay
+            definition: Customer wants to enrol in, change the payment method for, or stop automatic payments.
+            include: Sign up for autopay; switch autopay to a new card or bank account; autopay discount.
+            exclude: Autopay that failed (BIL.PAY.AUTOPAY_FAIL).
+            examples:
+              - "I'd like to set up automatic payments with my checking account."
+              - "Can you change my autopay to a new debit card?"
+              - "Is there a discount if I sign up for autopay and paperless?"
+            keywords: [set up autopay, enroll, change card, bank account, autopay discount, stop autopay]
+            mapping: {ticket_category: account, ticket_subcategory: update_payment, sap_reason: ZP02}
+            churn_risk: false
+          - id: BIL.PAY.MAKE_PAYMENT
+            name: Make a payment
+            definition: Customer wants to pay the bill over the phone or asks how/where to pay.
+            include: Pay by phone; one-time card payment; pay at a store; payment confirmation number.
+            exclude: Online payment errors (DIG.APP.PORTAL_PAYMENT_ERROR); payment extensions (BIL.PAY.ARRANGEMENT).
+            examples:
+              - "I just want to make a payment on my account today."
+              - "Can I pay my bill over the phone with a card?"
+              - "Where can I pay in person with cash?"
+            keywords: [make a payment, pay my bill, pay over the phone, one time payment, confirmation number, pay in person]
+            mapping: {ticket_category: billing, ticket_subcategory: refund_request, sap_reason: ZP03}
+            churn_risk: false
+          - id: BIL.PAY.NOT_POSTED
+            name: Payment not posted
+            definition: Customer paid but the payment is not showing, was misapplied, or the balance did not update.
+            include: Paid last week but account shows balance; payment applied to wrong account; bank shows withdrawn.
+            exclude: Autopay failures (BIL.PAY.AUTOPAY_FAIL).
+            examples:
+              - "I paid my bill last week and it's still showing a balance."
+              - "The money came out of my bank account but your system says I haven't paid."
+              - "I think my payment got applied to the wrong account."
+            keywords: [not posted, still showing balance, came out of my bank, already paid, misapplied, wrong account]
+            mapping: {ticket_category: billing, ticket_subcategory: refund_request, sap_reason: ZP04}
+            churn_risk: false
+          - id: BIL.PAY.ARRANGEMENT
+            name: Payment extension / arrangement
+            definition: Customer cannot pay in full by the due date and asks for an extension, split payment or to avoid disconnection.
+            include: Payment plan; extension until payday; avoid suspension for non-payment; reconnect after suspension.
+            exclude: Affordable-connectivity programmes (SAL.PRG.AFFORDABLE_PROGRAM).
+            examples:
+              - "Can I get an extension until the twentieth, I get paid then."
+              - "I can't pay the whole balance right now, can we split it up?"
+              - "My service got suspended for non payment, how do I get it back on?"
+            keywords: [extension, payment arrangement, payment plan, split, suspended, non payment, disconnect, payday]
+            mapping: {ticket_category: billing, ticket_subcategory: late_fee, sap_reason: ZP05}
+            churn_risk: true
+      - id: BIL.ADJ
+        name: Credits, refunds & disputes
+        leaves:
+          - id: BIL.ADJ.LATE_FEE_DISPUTE
+            name: Late fee dispute
+            definition: Customer disputes a late-payment fee and asks for it to be removed.
+            include: Late fee while on autopay; late fee after paying on time; first late fee waiver.
+            exclude: Payment never posted is primary when that is the main ask (BIL.PAY.NOT_POSTED).
+            examples:
+              - "I got charged a ten dollar late fee and I paid on time."
+              - "Can you take off this late fee, I've never been late before."
+              - "Why is there a late charge when I'm on autopay?"
+            keywords: [late fee, late charge, remove the fee, waive, paid on time, ten dollar fee]
+            mapping: {ticket_category: billing, ticket_subcategory: late_fee, sap_reason: ZA01}
+            churn_risk: false
+          - id: BIL.ADJ.OUTAGE_CREDIT
+            name: Outage / service credit request
+            definition: Customer asks for a bill credit because service was down or degraded.
+            include: Credit for days without internet; prorated credit after outage; compensation request.
+            exclude: Reporting the outage itself (OUT.RPT.REPORT_OUTAGE) unless credit is the main ask.
+            examples:
+              - "My internet was out for three days, I want a credit on my bill."
+              - "I shouldn't have to pay for days I didn't have service."
+              - "Can you credit me for the outage last week?"
+            keywords: [credit, days without service, outage credit, compensation, shouldn't pay, refund for outage]
+            mapping: {ticket_category: billing, ticket_subcategory: refund_request, sap_reason: ZA02}
+            churn_risk: true
+          - id: BIL.ADJ.REFUND_REQUEST
+            name: Refund request
+            definition: Customer asks for money back (overpayment, credit balance, deposit return, closed account refund).
+            include: Refund a credit balance; overpaid; return of security deposit; refund check status.
+            exclude: Bill credits for outages (BIL.ADJ.OUTAGE_CREDIT).
+            examples:
+              - "I overpaid by accident, how do I get a refund?"
+              - "My account is closed and has a credit balance, when will I get that check?"
+              - "I want my deposit refunded, I've paid on time for a year."
+            keywords: [refund, overpaid, credit balance, refund check, deposit back, money back]
+            mapping: {ticket_category: billing, ticket_subcategory: refund_request, sap_reason: ZA03}
+            churn_risk: false
+
+  # ────────────────────────────────────────────────────────────── 14 leaves
+  - id: TEC
+    name: Technical Support
+    groups:
+      - id: TEC.CON
+        name: Connectivity
+        leaves:
+          - id: TEC.CON.NO_INTERNET
+            name: No internet connection
+            definition: Customer's internet service is completely down at their location (not known to be an area outage).
+            include: No internet; modem shows no connection; nothing connects; service down since morning.
+            exclude: Known area outage status questions (OUT.STAT.AREA_OUTAGE_STATUS); a single device (TEC.WIFI.DEVICE_CONNECT).
+            examples:
+              - "My internet is completely down, nothing will connect."
+              - "I have no internet at all since this morning."
+              - "The modem says no connection and I already restarted it."
+            keywords: [no internet, internet down, not working, no connection, completely down, restarted, nothing connects, dsl light off, los light, ont light red]
+            mapping: {ticket_category: technical, ticket_subcategory: no_internet, sap_reason: ZT01}
+            churn_risk: false
+          - id: TEC.CON.INTERMITTENT
+            name: Intermittent / dropping connection
+            definition: Connection drops in and out, disconnects repeatedly or works only part of the time.
+            include: Keeps dropping; drops every evening; disconnects during video calls.
+            exclude: Consistently slow but stable (TEC.CON.SLOW_SPEED); area-wide repeated outages (OUT.NOT.RECURRING_OUTAGES).
+            examples:
+              - "My internet keeps dropping out every few minutes."
+              - "It disconnects all the time when I'm on work video calls."
+              - "The connection goes in and out especially at night."
+            keywords: [keeps dropping, drops, in and out, disconnects, intermittent, cutting out, unstable, dsl keeps resyncing, loses sync]
+            mapping: {ticket_category: technical, ticket_subcategory: intermittent, sap_reason: ZT02}
+            churn_risk: true
+          - id: TEC.CON.SLOW_SPEED
+            name: Slow speeds
+            definition: Speeds are lower than the plan the customer pays for, or service feels slow.
+            include: Paying for 500 but getting 50; slow downloads; buffering on streaming.
+            exclude: Latency/lag in gaming (TEC.CON.HIGH_LATENCY); how to run a speed test (TEC.TS.SPEED_TEST); mis-sold speeds (CMP.EXP.SALES_MISREP).
+            examples:
+              - "I'm paying for five hundred meg and only getting about forty."
+              - "Everything is so slow, Netflix keeps buffering."
+              - "My speeds have been really slow for the past week."
+            keywords: [slow, slow speeds, buffering, only getting, meg, mbps, speed is low, crawling, dsl is slow, sync rate]
+            mapping: {ticket_category: technical, ticket_subcategory: slow_speed, sap_reason: ZT03}
+            churn_risk: true
+          - id: TEC.CON.HIGH_LATENCY
+            name: Latency, lag & packet loss
+            definition: High ping, lag, jitter or packet loss affecting gaming, VPN or calls although speed tests look fine.
+            include: Gaming lag; high ping; VPN keeps timing out; choppy voice on Teams.
+            exclude: Low throughput (TEC.CON.SLOW_SPEED).
+            examples:
+              - "My ping is like two hundred when I'm gaming, it's unplayable."
+              - "I'm getting packet loss and my work VPN keeps timing out."
+              - "Speed test looks fine but everything lags."
+            keywords: [ping, lag, latency, packet loss, jitter, gaming, vpn timing out, choppy]
+            mapping: {ticket_category: technical, ticket_subcategory: intermittent, sap_reason: ZT04}
+            churn_risk: false
+      - id: TEC.WIFI
+        name: Wi-Fi & home network
+        leaves:
+          - id: TEC.WIFI.COVERAGE
+            name: Weak Wi-Fi coverage
+            definition: Wi-Fi signal is weak or missing in parts of the home while service at the router is fine.
+            include: Dead zones upstairs; weak signal in the basement; wifi only works near the router.
+            exclude: Buying/configuring extenders (TEC.WIFI.MESH_EXTENDER).
+            examples:
+              - "The wifi doesn't reach my upstairs bedrooms at all."
+              - "It only works if I'm sitting right next to the router."
+              - "The signal in the back of the house is really weak."
+            keywords: [weak signal, upstairs, dead zone, doesn't reach, next to the router, coverage, bars]
+            mapping: {ticket_category: technical, ticket_subcategory: wifi_coverage, sap_reason: ZW01}
+            churn_risk: false
+          - id: TEC.WIFI.PASSWORD
+            name: Wi-Fi name / password
+            definition: Customer forgot or wants to change the Wi-Fi network name (SSID) or password.
+            include: Forgot wifi password; change network name; password on the sticker doesn't work.
+            exclude: Account/app login passwords (DIG.APP.LOGIN_ISSUE); account PIN (ACC.SEC.PIN_RESET).
+            examples:
+              - "I forgot my wifi password and need to connect a new phone."
+              - "How do I change the name of my wifi network?"
+              - "The password on the back of the router isn't working."
+            keywords: [wifi password, network name, ssid, change password, sticker, forgot password, wifi key]
+            mapping: {ticket_category: technical, ticket_subcategory: wifi_coverage, sap_reason: ZW02}
+            churn_risk: false
+          - id: TEC.WIFI.DEVICE_CONNECT
+            name: Specific device won't connect
+            definition: A particular device (TV, printer, console, laptop, smart home device) cannot connect while others work.
+            include: Smart TV won't join; printer offline; Xbox can't connect; doorbell camera.
+            exclude: Whole-home outage (TEC.CON.NO_INTERNET).
+            examples:
+              - "Everything works except my smart TV, it won't connect to the wifi."
+              - "My printer keeps going offline but my laptop is fine."
+              - "My kid's Xbox can't get online."
+            keywords: [smart tv, printer, xbox, playstation, won't connect, one device, laptop, ring doorbell]
+            mapping: {ticket_category: technical, ticket_subcategory: wifi_coverage, sap_reason: ZW03}
+            churn_risk: false
+          - id: TEC.WIFI.MESH_EXTENDER
+            name: Mesh pods & extenders
+            definition: Setting up, adding or troubleshooting Wi-Fi extenders, mesh pods or whole-home Wi-Fi equipment.
+            include: Pod blinking; set up extender; add another mesh unit.
+            exclude: Ordering whole-home Wi-Fi as a new add-on (ORD.STAT.ADDON).
+            examples:
+              - "I got the wifi extender but I can't get it to pair."
+              - "One of my mesh pods keeps blinking and won't connect."
+              - "Can you help me set up the second pod upstairs?"
+            keywords: [extender, mesh, pod, pair, booster, whole home wifi, satellite]
+            mapping: {ticket_category: technical, ticket_subcategory: wifi_coverage, sap_reason: ZW04}
+            churn_risk: false
+      - id: TEC.SVC
+        name: Service features
+        leaves:
+          - id: TEC.SVC.EMAIL
+            name: Email account issues
+            definition: Problems with a DataPlatform / legacy ISP email address (can't send/receive, settings, migration).
+            include: Can't log into my email; not receiving email; IMAP/SMTP settings.
+            exclude: My DataPlatform app/portal login (DIG.APP.LOGIN_ISSUE).
+            examples:
+              - "I can't get into my email account, the one I've had for years."
+              - "My email stopped receiving messages yesterday."
+              - "What are the outgoing server settings for my email on Outlook?"
+            keywords: [email, email account, not receiving, outgoing server, smtp, imap, mailbox]
+            mapping: {ticket_category: technical, ticket_subcategory: equipment_fault, sap_reason: ZS01}
+            churn_risk: false
+          - id: TEC.SVC.STATIC_IP
+            name: Static IP & port forwarding
+            definition: Requests for a static IP, port forwarding, bridge mode, DNS or other advanced network configuration.
+            include: Port forwarding for cameras/servers; bridge mode; static IP add-on; CGNAT questions.
+            exclude: Own router compatibility in general (EQP.MOD.OWN_EQUIPMENT).
+            examples:
+              - "I need port forwarding set up for my security cameras."
+              - "How much is a static IP address for my business?"
+              - "Can you put my modem in bridge mode?"
+            keywords: [static ip, port forwarding, bridge mode, dns, ip address, open ports, nat]
+            mapping: {ticket_category: technical, ticket_subcategory: equipment_fault, sap_reason: ZS02}
+            churn_risk: false
+          - id: TEC.SVC.SECURITY
+            name: Security, hacking & malware
+            definition: Concerns about a hacked network, malware, suspicious devices or the security add-on.
+            include: Someone is using my wifi; virus; suspicious login on network; security suite install.
+            exclude: Fraud on the account itself (ACC.SEC.FRAUD_SUSPECT).
+            examples:
+              - "I think someone hacked my wifi, there are devices I don't recognize."
+              - "My computer has a virus, does my plan come with security software?"
+              - "How do I install the internet security suite?"
+            keywords: [hacked, virus, malware, security software, unknown devices, neighbor using wifi, antivirus]
+            mapping: {ticket_category: technical, ticket_subcategory: equipment_fault, sap_reason: ZS03}
+            churn_risk: false
+          - id: TEC.SVC.VOICE
+            name: Home phone / voice service
+            definition: Problems with home phone or digital voice service — no dial tone, static, can't make or receive calls, voicemail.
+            include: No dial tone; static on the line; voicemail setup; caller ID.
+            exclude: Number porting issue after a fiber move (FBR.MIG.MIGRATION_ISSUE).
+            examples:
+              - "My home phone has no dial tone."
+              - "There's static on my landline and people can't hear me."
+              - "I can't get into my voicemail."
+            keywords: [dial tone, home phone, landline, static, voicemail, caller id, phone line]
+            mapping: {ticket_category: technical, ticket_subcategory: equipment_fault, sap_reason: ZS04}
+            churn_risk: false
+      - id: TEC.TS
+        name: Troubleshooting follow-up
+        leaves:
+          - id: TEC.TS.REPEAT_ISSUE
+            name: Repeat contact — issue not fixed
+            definition: Customer is calling again about the same unresolved technical problem (prior ticket, prior visit, multiple calls).
+            include: Third time calling; tech came and it's still broken; ticket number from last week.
+            exclude: First contact about a problem (use the specific TEC leaf); complaints about the agent (CMP.EXP.AGENT_COMPLAINT).
+            examples:
+              - "This is the third time I've called about the same problem."
+              - "A technician came out Tuesday and it's still doing the same thing."
+              - "I have a ticket number from last week and nothing has been fixed."
+            keywords: [third time, called before, still not fixed, same problem, ticket number, again, already called]
+            mapping: {ticket_category: technical, ticket_subcategory: intermittent, sap_reason: ZT05}
+            churn_risk: true
+          - id: TEC.TS.SPEED_TEST
+            name: Speed test guidance
+            definition: Customer asks how to run or interpret a speed test, or why Wi-Fi tests differ from wired tests, without reporting a fault.
+            include: How do I test my speed; wired vs Wi-Fi results; what speed should I expect on Wi-Fi.
+            exclude: Complaint about slow service (TEC.CON.SLOW_SPEED).
+            examples:
+              - "How do I run a speed test to see what I'm actually getting?"
+              - "Why does the speed test show different numbers on my phone and my computer?"
+              - "What speed should I expect over wifi on the gig plan?"
+            keywords: [speed test, run a test, wired, ethernet, expect, results, test my speed]
+            mapping: {ticket_category: technical, ticket_subcategory: slow_speed, sap_reason: ZT06}
+            churn_risk: false
+
+  # ─────────────────────────────────────────────────────────────── 8 leaves
+  - id: OUT
+    name: Outage & Network
+    groups:
+      - id: OUT.STAT
+        name: Outage status
+        leaves:
+          - id: OUT.STAT.AREA_OUTAGE_STATUS
+            name: Area outage status / ETR
+            definition: Customer asks whether there is an outage in their area and when service will be restored.
+            include: Is there an outage near me; estimated restoration time; neighbours are down too.
+            exclude: Restoration time already passed (OUT.STAT.ETR_MISSED); reporting a new problem with no known outage (TEC.CON.NO_INTERNET).
+            examples:
+              - "Is there an outage in my area? My neighbors are down too."
+              - "When is the internet supposed to be back on?"
+              - "I saw there's an outage, do you have an estimated time for restoration?"
+            keywords: [outage, in my area, neighbors, restoration, estimated time, when will it be back, area down]
+            mapping: {ticket_category: technical, ticket_subcategory: no_internet, sap_reason: ZO01}
+            churn_risk: false
+          - id: OUT.STAT.ETR_MISSED
+            name: Restoration time missed
+            definition: The promised restoration time has passed and service is still down.
+            include: You said it'd be fixed by noon; restoration estimate keeps moving; down for days.
+            exclude: First enquiry about an outage (OUT.STAT.AREA_OUTAGE_STATUS).
+            examples:
+              - "You told me it would be fixed by six last night and it's still down."
+              - "The restoration time keeps getting pushed back."
+              - "We've been out for three days now, what is going on?"
+            keywords: [still down, pushed back, supposed to be fixed, three days, restoration time passed, still out]
+            mapping: {ticket_category: technical, ticket_subcategory: no_internet, sap_reason: ZO02}
+            churn_risk: true
+          - id: OUT.STAT.PLANNED_MAINT
+            name: Planned maintenance
+            definition: Questions about scheduled network maintenance windows or a maintenance notification.
+            include: Got a text about maintenance tonight; service down overnight for upgrades.
+            exclude: Unplanned outages (OUT.STAT.AREA_OUTAGE_STATUS).
+            examples:
+              - "I got a text saying there's maintenance tonight, how long will I be down?"
+              - "Was there planned work on the network last night?"
+              - "Why do you always do maintenance during my work hours?"
+            keywords: [maintenance, scheduled maintenance, planned work, upgrade tonight, maintenance window, overnight]
+            mapping: {ticket_category: technical, ticket_subcategory: no_internet, sap_reason: ZO03}
+            churn_risk: false
+      - id: OUT.RPT
+        name: Report & damage
+        leaves:
+          - id: OUT.RPT.REPORT_OUTAGE
+            name: Report an outage
+            definition: Customer reports that service is down for several homes or the neighbourhood and wants it logged.
+            include: Whole street is down; reporting an outage; no outage showing in the app.
+            exclude: Physical cable damage (OUT.RPT.CABLE_DAMAGE); single-home fault (TEC.CON.NO_INTERNET).
+            examples:
+              - "I want to report an outage, the whole street has no internet."
+              - "The app doesn't show an outage but nobody on my road has service."
+              - "Can you open an outage report for my neighborhood?"
+            keywords: [report an outage, whole street, nobody has service, neighborhood, open a report, road]
+            mapping: {ticket_category: technical, ticket_subcategory: no_internet, sap_reason: ZO04}
+            churn_risk: false
+          - id: OUT.RPT.CABLE_DAMAGE
+            name: Cut or downed line
+            definition: Physical damage to a DataPlatform line or pedestal (cut by construction, hit by vehicle, line down, pedestal open).
+            include: Line on the ground; construction crew cut cable; damaged pedestal box.
+            exclude: Storm damage across an area (OUT.RPT.WEATHER_DAMAGE); install drop line left on lawn (INS.DEL.DROP_LINE).
+            examples:
+              - "There's a cable hanging down across my driveway."
+              - "A construction crew cut the line and now we have no service."
+              - "The green box by the road got hit by a car and it's wide open."
+            keywords: [line down, cable cut, hanging, pedestal, green box, construction crew, hit by a car, phone line, fiber cut]
+            mapping: {ticket_category: technical, ticket_subcategory: no_internet, sap_reason: ZO05}
+            churn_risk: false
+          - id: OUT.RPT.WEATHER_DAMAGE
+            name: Storm / weather damage
+            definition: Service impact attributed to storms, hurricanes, lightning, flooding or ice.
+            include: Lost service after the storm; lightning fried the modem; flooding in the area.
+            exclude: Non-weather cable damage (OUT.RPT.CABLE_DAMAGE).
+            examples:
+              - "We lost service after the storm last night."
+              - "Lightning hit near the house and now the modem won't come on."
+              - "Since the hurricane we haven't had internet at all."
+            keywords: [storm, hurricane, lightning, flood, ice, tree fell, weather]
+            mapping: {ticket_category: technical, ticket_subcategory: no_internet, sap_reason: ZO06}
+            churn_risk: false
+      - id: OUT.NOT
+        name: Notifications & recurrence
+        leaves:
+          - id: OUT.NOT.OUTAGE_ALERTS
+            name: Outage alerts & notifications
+            definition: Customer wants outage notifications, did not receive them, or complains about inaccurate alerts.
+            include: Sign me up for outage texts; never told about the outage; alert said restored but it isn't.
+            exclude: General marketing/notification preferences (DIG.CHN.NOTIFICATION_PREFS).
+            examples:
+              - "Can I get text alerts when there's an outage?"
+              - "Nobody notified us about the outage."
+              - "I got a message saying service was restored but it's still not working."
+            keywords: [text alerts, notified, outage notification, alert, message said restored, sign up for alerts]
+            mapping: {ticket_category: technical, ticket_subcategory: no_internet, sap_reason: ZO07}
+            churn_risk: false
+          - id: OUT.NOT.RECURRING_OUTAGES
+            name: Recurring outages in area
+            definition: Customer complains the area has frequent, repeated outages over weeks or months.
+            include: Goes out every week; third outage this month; network is unreliable here.
+            exclude: A single current outage (OUT.STAT.AREA_OUTAGE_STATUS).
+            examples:
+              - "We have outages every single week out here."
+              - "This is the third outage this month, it's ridiculous."
+              - "Your network in this area is so unreliable."
+            keywords: [every week, third outage, frequent outages, unreliable, keeps going out, all the time]
+            mapping: {ticket_category: technical, ticket_subcategory: intermittent, sap_reason: ZO08}
+            churn_risk: true
+
+  # ────────────────────────────────────────────────────────────── 10 leaves
+  - id: INS
+    name: Installation & Field Service
+    groups:
+      - id: INS.APPT
+        name: Appointments
+        leaves:
+          - id: INS.APPT.SCHEDULE_INSTALL
+            name: Schedule installation
+            definition: Customer wants to book an installation appointment for a new or upgraded service.
+            include: Book install date; earliest available install; choose time window.
+            exclude: Changing an existing appointment (INS.APPT.RESCHEDULE).
+            examples:
+              - "I need to schedule my installation."
+              - "What's the earliest date you can come install fiber?"
+              - "Can I get a morning install window next week?"
+            keywords: [schedule installation, install date, earliest, book appointment, install window]
+            mapping: {ticket_category: installation, ticket_subcategory: install_delay, sap_reason: ZI01}
+            churn_risk: false
+          - id: INS.APPT.RESCHEDULE
+            name: Reschedule appointment
+            definition: Customer wants to move an existing install or repair appointment to another date/time.
+            include: Can't make Thursday; move my appointment; earlier slot.
+            exclude: Technician did not show (INS.APPT.MISSED_APPT).
+            examples:
+              - "I need to reschedule my appointment, I can't be home Thursday."
+              - "Can we move the technician visit to next week?"
+              - "Is there anything earlier than the date I have?"
+            keywords: [reschedule, move my appointment, can't be home, different day, earlier slot, change appointment]
+            mapping: {ticket_category: installation, ticket_subcategory: missed_appointment, sap_reason: ZI02}
+            churn_risk: false
+          - id: INS.APPT.MISSED_APPT
+            name: Missed appointment / no-show
+            definition: Technician did not show up in the window, or the appointment was cancelled without notice.
+            include: Took the day off and nobody came; tech never showed; appointment cancelled without telling me.
+            exclude: Asking where the tech is while still within window (INS.APPT.TECH_ETA).
+            examples:
+              - "I took the day off and the technician never showed up."
+              - "Nobody came for my appointment yesterday and nobody called."
+              - "My install got cancelled and no one told me."
+            keywords: [never showed, no show, nobody came, took the day off, missed appointment, didn't show]
+            mapping: {ticket_category: installation, ticket_subcategory: missed_appointment, sap_reason: ZI03}
+            churn_risk: true
+          - id: INS.APPT.TECH_ETA
+            name: Technician arrival / ETA
+            definition: Customer asks when the technician will arrive today or confirms an upcoming appointment.
+            include: Where is the tech; confirm appointment; running late.
+            exclude: No-show after the window (INS.APPT.MISSED_APPT).
+            examples:
+              - "My window is eight to twelve, is the technician still coming?"
+              - "Can you tell me when the tech will get here?"
+              - "I just want to confirm my appointment for tomorrow."
+            keywords: [technician coming, eta, arrival, confirm appointment, window, on the way, running late]
+            mapping: {ticket_category: installation, ticket_subcategory: missed_appointment, sap_reason: ZI04}
+            churn_risk: false
+      - id: INS.DEL
+        name: Installation issues
+        leaves:
+          - id: INS.DEL.INSTALL_DELAY
+            name: Installation delayed
+            definition: The install is delayed beyond the promised date (permits, construction, engineering, backlog).
+            include: Order pushed back again; waiting on permits; three weeks waiting for install.
+            exclude: General order status with no delay (ORD.STAT.ORDER_STATUS).
+            examples:
+              - "My installation keeps getting pushed back."
+              - "I've been waiting three weeks for my install."
+              - "They said they're waiting on a permit, how long will that take?"
+            keywords: [delayed, pushed back, waiting weeks, permit, install delay, backorder, engineering]
+            mapping: {ticket_category: installation, ticket_subcategory: install_delay, sap_reason: ZI05}
+            churn_risk: true
+          - id: INS.DEL.INCOMPLETE_INSTALL
+            name: Incomplete installation
+            definition: Technician left before finishing; service not activated after install; work left half done.
+            include: Tech left and it doesn't work; equipment installed but not activated; needs a second visit.
+            exclude: Buried drop/temporary line (INS.DEL.DROP_LINE).
+            examples:
+              - "The technician left and the internet still isn't working."
+              - "They installed everything but never activated it."
+              - "The install wasn't finished, they said someone else would come back."
+            keywords: [not finished, left, never activated, half done, second visit, incomplete, still isn't working]
+            mapping: {ticket_category: installation, ticket_subcategory: install_delay, sap_reason: ZI06}
+            churn_risk: true
+          - id: INS.DEL.DROP_LINE
+            name: Drop line / burial
+            definition: Temporary drop cable left on the ground, burial not completed, or questions about the line run to the home.
+            include: Orange cable across my yard; when will they bury the line; can't mow.
+            exclude: Damaged network cable not from an install (OUT.RPT.CABLE_DAMAGE).
+            examples:
+              - "There's still an orange cable lying across my yard from the install."
+              - "When are they going to bury the line? I can't mow my lawn."
+              - "The temporary drop has been there for a month."
+            keywords: [bury, buried, drop line, orange cable, across my yard, temporary line, mow, drop fiber]
+            mapping: {ticket_category: installation, ticket_subcategory: drop_line, sap_reason: ZI07}
+            churn_risk: false
+          - id: INS.DEL.ONT_PLACEMENT
+            name: ONT / jack placement
+            definition: Customer wants the ONT, fiber jack or wall outlet moved or installed in a different location.
+            include: Move the fiber box; ONT in the wrong room; relocate jack.
+            exclude: Router placement for Wi-Fi coverage (TEC.WIFI.COVERAGE).
+            examples:
+              - "They put the fiber box in the garage and I want it in the office."
+              - "Can someone come move the ONT to another room?"
+              - "I need the fiber jack relocated, it's behind the couch."
+            keywords: [ont, fiber box, move the box, jack, relocate, outlet, terminal]
+            mapping: {ticket_category: installation, ticket_subcategory: ont_placement, sap_reason: ZI08}
+            churn_risk: false
+      - id: INS.FLD
+        name: Field repair
+        leaves:
+          - id: INS.FLD.REPAIR_VISIT
+            name: Request repair visit
+            definition: Customer asks for a technician to come out to repair a problem that remote troubleshooting did not fix.
+            include: Send a tech; need someone to look at the line; repair appointment.
+            exclude: Install appointments (INS.APPT.SCHEDULE_INSTALL).
+            examples:
+              - "Can you just send a technician out to look at it?"
+              - "I need someone to come check the line outside."
+              - "We already did all the troubleshooting, I want a repair appointment."
+            keywords: [send a technician, repair, come out, check the line, truck roll, repair appointment, line test, ont replacement]
+            mapping: {ticket_category: technical, ticket_subcategory: equipment_fault, sap_reason: ZI09}
+            churn_risk: false
+          - id: INS.FLD.PROPERTY_DAMAGE
+            name: Property damage by technician/crew
+            definition: Customer reports damage caused by a DataPlatform technician or contractor (yard, sprinkler, wall, fence).
+            include: Dug up my lawn; hit the sprinkler line; drilled through the wall wrong; claim.
+            exclude: Construction concerns before any damage (FBR.CON.CONSTRUCTION_CONCERN).
+            examples:
+              - "Your contractor broke my sprinkler line when they dug."
+              - "The tech drilled a hole in the wrong wall and left a mess."
+              - "They tore up my yard and never fixed it, I want to file a claim."
+            keywords: [damage, broke, sprinkler, tore up my yard, claim, contractor, fence, drilled]
+            mapping: {ticket_category: installation, ticket_subcategory: drop_line, sap_reason: ZI10}
+            churn_risk: true
+
+  # ─────────────────────────────────────────────────────────────── 9 leaves
+  - id: ORD
+    name: Orders & Plan Changes
+    groups:
+      - id: ORD.PLAN
+        name: Plan changes
+        leaves:
+          - id: ORD.PLAN.UPGRADE_SPEED
+            name: Upgrade speed tier
+            definition: Existing customer on the same technology wants a faster plan (e.g. Fiber 500 → Fiber Gig).
+            include: Upgrade to gig; faster plan; more speed for gaming.
+            exclude: Copper DSL to fiber (FBR.MIG.COPPER_TO_FIBER).
+            examples:
+              - "I want to upgrade to the gig plan."
+              - "What would it cost to go from five hundred to the faster tier?"
+              - "We need more speed, can I bump up my plan?"
+            keywords: [upgrade, faster plan, gig, bump up, higher tier, more speed, 2 gig]
+            mapping: {ticket_category: account, ticket_subcategory: plan_change, sap_reason: ZO11}
+            churn_risk: false
+          - id: ORD.PLAN.DOWNGRADE
+            name: Downgrade plan
+            definition: Customer wants a cheaper or slower plan to save money.
+            include: Lower my plan; cheapest plan; don't need gig.
+            exclude: Cancel because of price (RET.CAN.CANCEL_PRICE).
+            examples:
+              - "I want to go down to a cheaper plan."
+              - "We don't need the gig anymore, what's the lowest tier?"
+              - "Can I switch to something less expensive?"
+            keywords: [downgrade, cheaper plan, lower tier, less expensive, go down, save money, lowest]
+            mapping: {ticket_category: account, ticket_subcategory: plan_change, sap_reason: ZO12}
+            churn_risk: true
+          - id: ORD.PLAN.PLAN_COMPARE
+            name: Compare plans / recommend
+            definition: Customer asks which plan fits their household or how plans differ, without committing to a change.
+            include: Which plan do I need for working from home; difference between 300 and 500.
+            exclude: Prospects with no account (SAL.NEW.PRICING_INQUIRY).
+            examples:
+              - "What's the difference between the three hundred and the five hundred plan?"
+              - "We have four people streaming, which plan do you recommend?"
+              - "Am I on the right plan for working from home?"
+            keywords: [difference between, which plan, recommend, right plan, compare, how much speed do i need]
+            mapping: {ticket_category: account, ticket_subcategory: plan_change, sap_reason: ZO13}
+            churn_risk: false
+      - id: ORD.MOVE
+        name: Moves & transfers
+        leaves:
+          - id: ORD.MOVE.MOVE_SERVICE
+            name: Move service to new address
+            definition: Customer is moving and wants to transfer service to a new address within the footprint.
+            include: Moving next month; transfer service; set up at new house.
+            exclude: Moving outside the service area and cancelling (RET.CAN.CANCEL_MOVE).
+            examples:
+              - "I'm moving at the end of the month and want to take my service with me."
+              - "Can I transfer my internet to my new address?"
+              - "We bought a new house in town, how do I move my service?"
+            keywords: [moving, new address, transfer service, new house, move my service, relocating]
+            mapping: {ticket_category: account, ticket_subcategory: move_service, sap_reason: ZO21}
+            churn_risk: false
+          - id: ORD.MOVE.TRANSFER_OWNERSHIP
+            name: Transfer account ownership
+            definition: Transfer the account/service to another person (tenant, spouse, new homeowner).
+            include: Put the account in my wife's name; new owner wants to keep service.
+            exclude: Name correction for the same person (ACC.PRF.CHANGE_NAME); deceased holder (RET.CAN.CANCEL_DECEASED).
+            examples:
+              - "I want to transfer the account into my daughter's name."
+              - "I sold the house and the new owner wants to keep the internet."
+              - "Can my roommate take over the service when I move out?"
+            keywords: [transfer the account, into my name, new owner, take over, roommate, change of responsibility]
+            mapping: {ticket_category: account, ticket_subcategory: move_service, sap_reason: ZO22}
+            churn_risk: false
+          - id: ORD.MOVE.SEASONAL_SUSPEND
+            name: Seasonal / vacation hold
+            definition: Customer wants to suspend service temporarily (snowbird, vacation home, deployment) and resume later.
+            include: Pause service for the winter; vacation suspend; seasonal hold.
+            exclude: Permanent cancellation (RET.CAN.*).
+            examples:
+              - "We go to Florida for the winter, can I put my service on hold?"
+              - "Is there a vacation suspend option so I don't pay while I'm away?"
+              - "I want to pause my internet for three months."
+            keywords: [seasonal, vacation hold, suspend, pause, snowbird, winter, while i'm away]
+            mapping: {ticket_category: account, ticket_subcategory: plan_change, sap_reason: ZO23}
+            churn_risk: false
+      - id: ORD.STAT
+        name: Orders
+        leaves:
+          - id: ORD.STAT.ORDER_STATUS
+            name: Order status
+            definition: Customer asks about the status of a pending order (new service, upgrade, move) with no complaint about delay.
+            include: Did my order go through; order confirmation; what's next.
+            exclude: Install delays (INS.DEL.INSTALL_DELAY); equipment shipment (EQP.SHP.SHIPMENT_STATUS).
+            examples:
+              - "I placed an order online and wanted to check the status."
+              - "Did my upgrade order go through?"
+              - "I never got an order confirmation email."
+            keywords: [order status, placed an order, order go through, confirmation, order number, pending order]
+            mapping: {ticket_category: account, ticket_subcategory: plan_change, sap_reason: ZO31}
+            churn_risk: false
+          - id: ORD.STAT.ORDER_CHANGE
+            name: Change or cancel pending order
+            definition: Customer wants to modify or cancel an order that has not been installed yet.
+            include: Cancel my order before install; change the plan on my order; wrong address on order.
+            exclude: Cancelling active service (RET.CAN.*).
+            examples:
+              - "I need to cancel the order I placed yesterday."
+              - "Can I change the plan on my pending order to the gig?"
+              - "The order has the wrong address on it."
+            keywords: [cancel my order, change my order, pending order, wrong address on the order, before install]
+            mapping: {ticket_category: account, ticket_subcategory: plan_change, sap_reason: ZO32}
+            churn_risk: false
+          - id: ORD.STAT.ADDON
+            name: Add-on services
+            definition: Customer wants to add or remove add-ons (whole-home Wi-Fi, security suite, tech support plan, static IP bundle).
+            include: Add whole-home wifi; remove security add-on; premium tech support.
+            exclude: Troubleshooting existing extenders (TEC.WIFI.MESH_EXTENDER).
+            examples:
+              - "I'd like to add the whole home wifi package."
+              - "Can you remove the security add-on from my account?"
+              - "What add-ons do you offer with fiber?"
+            keywords: [add on, add-on, whole home wifi, package, premium support, remove the add on]
+            mapping: {ticket_category: account, ticket_subcategory: plan_change, sap_reason: ZO33}
+            churn_risk: false
+
+  # ─────────────────────────────────────────────────────────────── 9 leaves
+  - id: RET
+    name: Retention & Cancellation
+    groups:
+      - id: RET.CAN
+        name: Cancellation
+        leaves:
+          - id: RET.CAN.CANCEL_PRICE
+            name: Cancel — price
+            definition: Customer wants to cancel because the service is too expensive or the price increased.
+            include: Can't afford it; price went up so I'm leaving; too expensive.
+            exclude: Asking for a better deal without intent to cancel (RET.SAVE.RETENTION_OFFER).
+            examples:
+              - "I want to cancel, it's just too expensive now."
+              - "The price keeps going up so I'm going to disconnect."
+              - "I can't afford this anymore, please cancel my service."
+            keywords: [cancel, too expensive, can't afford, disconnect, price went up, leaving]
+            mapping: {ticket_category: account, ticket_subcategory: cancel_request, sap_reason: ZR01}
+            churn_risk: true
+          - id: RET.CAN.CANCEL_COMPETITOR
+            name: Cancel — switching to competitor
+            definition: Customer is cancelling to switch to another provider (cable, competitor fiber, 5G home internet, satellite).
+            include: Spectrum is cheaper; switching to T-Mobile home internet; competitor fiber came in.
+            exclude: Competitor mentioned only as leverage for a deal (RET.SAVE.RETENTION_OFFER).
+            examples:
+              - "I'm switching to Spectrum, they're offering a better deal."
+              - "T-Mobile home internet is half the price so I'm cancelling."
+              - "Another fiber company just came to my street and I'm going with them."
+            keywords: [switching, spectrum, t-mobile, verizon, starlink, competitor, another company, xfinity, att]
+            mapping: {ticket_category: account, ticket_subcategory: cancel_request, sap_reason: ZR02}
+            churn_risk: true
+          - id: RET.CAN.CANCEL_MOVE
+            name: Cancel — moving out of area
+            definition: Customer is cancelling because they are moving to an address DataPlatform does not serve.
+            include: Moving out of state; new address not serviceable.
+            exclude: Moving within the footprint (ORD.MOVE.MOVE_SERVICE).
+            examples:
+              - "I'm moving out of state so I need to cancel."
+              - "You don't service my new address so I have to disconnect."
+              - "We're relocating to Arizona next month, please stop the service."
+            keywords: [moving out of state, don't service, new address, relocating, cancel moving, out of area]
+            mapping: {ticket_category: account, ticket_subcategory: cancel_request, sap_reason: ZR03}
+            churn_risk: true
+          - id: RET.CAN.CANCEL_SERVICE_QUALITY
+            name: Cancel — service quality
+            definition: Customer wants to cancel because of unreliable service, slow speeds, outages or poor support.
+            include: Fed up with outages; speeds never improved; done with the service.
+            exclude: Complaint without cancel intent (use technical or complaint leaves).
+            examples:
+              - "I'm done, the internet never works right, cancel it."
+              - "With all these outages I want to cancel my service."
+              - "The speeds never got better so I'm leaving."
+            keywords: [cancel, fed up, never works, done with, outages, leaving, poor service, unreliable]
+            mapping: {ticket_category: account, ticket_subcategory: cancel_request, sap_reason: ZR04}
+            churn_risk: true
+          - id: RET.CAN.CANCEL_DECEASED
+            name: Cancel — account holder deceased
+            definition: Family member calls to cancel or transfer service because the account holder passed away.
+            include: My father passed away; death certificate; estate.
+            exclude: Normal ownership transfer (ORD.MOVE.TRANSFER_OWNERSHIP).
+            examples:
+              - "My mother passed away and I need to cancel her internet."
+              - "I'm handling my dad's estate, what do you need to close his account?"
+              - "Do you need a death certificate to stop the service?"
+            keywords: [passed away, deceased, death certificate, estate, died, late husband]
+            mapping: {ticket_category: account, ticket_subcategory: cancel_request, sap_reason: ZR05}
+            churn_risk: true
+      - id: RET.SAVE
+        name: Save & offers
+        leaves:
+          - id: RET.SAVE.RETENTION_OFFER
+            name: Ask for better deal / retention offer
+            definition: Customer threatens to leave or asks for a discount/loyalty offer to stay.
+            include: What can you do for me; loyal customer for ten years; match competitor price.
+            exclude: Firm cancellation (RET.CAN.*); renewing an expired promo specifically (RET.SAVE.PROMO_EXTEND).
+            examples:
+              - "I've been a customer for ten years, what can you do to keep me?"
+              - "Can you match the price Spectrum is offering me?"
+              - "I'm thinking about leaving unless you can lower my bill."
+            keywords: [what can you do, keep me, loyal, match the price, discount, thinking about leaving, better deal]
+            mapping: {ticket_category: account, ticket_subcategory: cancel_request, sap_reason: ZR11}
+            churn_risk: true
+          - id: RET.SAVE.PROMO_EXTEND
+            name: Renew / extend promotion
+            definition: Customer asks to renew, extend or re-apply a promotional price that ended or is about to end.
+            include: Put me back on the promo; extend my discount; new customer price for existing customers.
+            exclude: Asking why the bill went up (BIL.CHG.PROMO_EXPIRED).
+            examples:
+              - "Can you put me back on the promotional price?"
+              - "My discount ends next month, can you extend it?"
+              - "Why do new customers get a better price than me? I want that deal."
+            keywords: [extend, renew promotion, back on the promo, new customer price, keep my discount, re apply]
+            mapping: {ticket_category: billing, ticket_subcategory: promo_expired, sap_reason: ZR12}
+            churn_risk: true
+      - id: RET.FIN
+        name: After cancellation
+        leaves:
+          - id: RET.FIN.FINAL_BILL
+            name: Final bill
+            definition: Questions or disputes about the final bill after service was cancelled.
+            include: Still billed after cancelling; final statement amount; collections after closing.
+            exclude: Unreturned equipment fee (EQP.RTN.UNRETURNED_FEE).
+            examples:
+              - "I cancelled last month and I'm still getting a bill."
+              - "What is this final bill amount for?"
+              - "My closed account got sent to collections."
+            keywords: [final bill, still getting a bill, after cancelling, closed account, collections, last bill]
+            mapping: {ticket_category: billing, ticket_subcategory: incorrect_charge, sap_reason: ZR21}
+            churn_risk: false
+          - id: RET.FIN.REVERSE_CANCEL
+            name: Reverse cancellation / win-back
+            definition: Customer wants to undo a cancellation, reactivate a closed account or come back after leaving.
+            include: Changed my mind about cancelling; reconnect old account; came back from competitor.
+            exclude: Reconnect after non-payment suspension (BIL.PAY.ARRANGEMENT).
+            examples:
+              - "I cancelled last week but I changed my mind, can you keep it on?"
+              - "I left for another company and I want to come back."
+              - "Can you reactivate my old account?"
+            keywords: [changed my mind, reactivate, come back, undo cancellation, keep it on, reinstate]
+            mapping: {ticket_category: account, ticket_subcategory: cancel_request, sap_reason: ZR22}
+            churn_risk: false
+
+  # ─────────────────────────────────────────────────────────────── 8 leaves
+  - id: ACC
+    name: Account & Profile
+    groups:
+      - id: ACC.PRF
+        name: Profile
+        leaves:
+          - id: ACC.PRF.UPDATE_CONTACT
+            name: Update contact details
+            definition: Customer wants to update phone number, email address or mailing address on the account.
+            include: New phone number; change email on file; billing address change.
+            exclude: Moving service address (ORD.MOVE.MOVE_SERVICE).
+            examples:
+              - "I need to update the phone number on my account."
+              - "Can you change the email address you have on file?"
+              - "My mailing address changed, the service address is the same."
+            keywords: [update phone number, change email, mailing address, contact info, on file, billing address]
+            mapping: {ticket_category: account, ticket_subcategory: update_payment, sap_reason: ZC01}
+            churn_risk: false
+          - id: ACC.PRF.CHANGE_NAME
+            name: Correct or change name
+            definition: Correct a misspelled name or change the holder's legal name (marriage, divorce) for the same person.
+            include: Name spelled wrong; changed my last name after getting married.
+            exclude: Moving the account to a different person (ORD.MOVE.TRANSFER_OWNERSHIP).
+            examples:
+              - "My name is spelled wrong on the bill."
+              - "I got married and need to change my last name on the account."
+              - "Can you update my name, I legally changed it?"
+            keywords: [spelled wrong, last name, got married, change my name, legal name, divorce]
+            mapping: {ticket_category: account, ticket_subcategory: update_payment, sap_reason: ZC02}
+            churn_risk: false
+          - id: ACC.PRF.AUTHORIZED_USER
+            name: Authorised users
+            definition: Add or remove someone authorised to discuss or manage the account.
+            include: Add my husband to the account; remove my ex; power of attorney.
+            exclude: Transferring ownership (ORD.MOVE.TRANSFER_OWNERSHIP).
+            examples:
+              - "I want to add my husband as an authorized user."
+              - "Please remove my ex from the account."
+              - "My son needs to be able to call about my account for me."
+            keywords: [authorized user, add my husband, remove, power of attorney, permission to call, account manager]
+            mapping: {ticket_category: account, ticket_subcategory: update_payment, sap_reason: ZC03}
+            churn_risk: false
+      - id: ACC.SEC
+        name: Access & security
+        leaves:
+          - id: ACC.SEC.PIN_RESET
+            name: Account PIN / security questions
+            definition: Customer forgot or wants to reset the account PIN, passcode or security questions used for verification.
+            include: Forgot my PIN; reset security question; passcode for calling in.
+            exclude: App/web login password (DIG.APP.LOGIN_ISSUE); Wi-Fi password (TEC.WIFI.PASSWORD).
+            examples:
+              - "I don't remember the PIN on my account."
+              - "Can I reset my security questions?"
+              - "What's the passcode you need when I call in, I forgot it."
+            keywords: [pin, passcode, security question, forgot my pin, reset pin, verification code]
+            mapping: {ticket_category: account, ticket_subcategory: update_payment, sap_reason: ZC11}
+            churn_risk: false
+          - id: ACC.SEC.FRAUD_SUSPECT
+            name: Suspected fraud / unauthorised changes
+            definition: Customer reports account changes, orders or service they did not authorise, or identity theft.
+            include: Someone opened an account in my name; unauthorised order; changes I didn't make.
+            exclude: Hacked home Wi-Fi network (TEC.SVC.SECURITY).
+            examples:
+              - "Someone opened an account in my name, I never signed up."
+              - "There's an order on my account that I didn't place."
+              - "Somebody changed my account information without my permission."
+            keywords: [fraud, in my name, didn't authorize, identity theft, without my permission, never signed up]
+            mapping: {ticket_category: account, ticket_subcategory: update_payment, sap_reason: ZC12}
+            churn_risk: false
+          - id: ACC.SEC.VERIFY_FAIL
+            name: Cannot verify identity
+            definition: Customer is unable to pass account verification and cannot be helped until verified.
+            include: Doesn't know account number; not the account holder; failed verification questions.
+            exclude: Forgot PIN and wants reset (ACC.SEC.PIN_RESET).
+            examples:
+              - "I don't have my account number and I'm not sure whose name it's under."
+              - "Why can't you help me, I pay the bill every month."
+              - "I don't know the answers to those verification questions."
+            keywords: [account number, not the account holder, verify, verification, whose name, can't help me]
+            mapping: {ticket_category: account, ticket_subcategory: update_payment, sap_reason: ZC13}
+            churn_risk: false
+      - id: ACC.PRIV
+        name: Statements & privacy
+        leaves:
+          - id: ACC.PRIV.PAPERLESS
+            name: Paperless / paper bill preference
+            definition: Switch between paper and electronic bills, or paper-bill fee questions.
+            include: Go paperless; still getting paper bills; stop mailing statements.
+            exclude: Copy of a statement (BIL.CHG.BILL_EXPLAIN).
+            examples:
+              - "I want to go paperless."
+              - "I signed up for e-bill but I'm still getting paper bills in the mail."
+              - "Is there a fee for a paper statement?"
+            keywords: [paperless, paper bill, e-bill, ebill, mail, paper statement]
+            mapping: {ticket_category: account, ticket_subcategory: update_payment, sap_reason: ZC21}
+            churn_risk: false
+          - id: ACC.PRIV.PRIVACY_REQUEST
+            name: Privacy & do-not-contact
+            definition: Customer asks about personal data, wants to opt out of marketing calls, or makes a data request.
+            include: Stop calling me with offers; do not call list; what data do you keep.
+            exclude: Outage alert preferences (OUT.NOT.OUTAGE_ALERTS).
+            examples:
+              - "Please put me on your do not call list."
+              - "Stop sending me sales offers."
+              - "What personal information do you keep about me?"
+            keywords: [do not call, stop calling, opt out, personal information, privacy, marketing]
+            mapping: {ticket_category: account, ticket_subcategory: update_payment, sap_reason: ZC22}
+            churn_risk: false
+
+  # ─────────────────────────────────────────────────────────────── 8 leaves
+  - id: EQP
+    name: Equipment
+    groups:
+      - id: EQP.MOD
+        name: Modem & router
+        leaves:
+          - id: EQP.MOD.MODEM_FAULT
+            name: Modem / router fault
+            definition: The modem, router or ONT appears faulty — red or blinking lights, won't power on, overheating.
+            include: Red light on modem; router dead; power supply broken.
+            exclude: No internet with normal lights (TEC.CON.NO_INTERNET).
+            examples:
+              - "The light on my modem is blinking red."
+              - "My router won't turn on at all."
+              - "The box is really hot and keeps rebooting itself."
+            keywords: [red light, blinking, modem, router won't turn on, rebooting, power light, dead, ont, fiber box, dsl modem]
+            mapping: {ticket_category: technical, ticket_subcategory: equipment_fault, sap_reason: ZE01}
+            churn_risk: false
+          - id: EQP.MOD.REPLACE_UPGRADE
+            name: Replace / upgrade equipment
+            definition: Customer wants a newer modem/router (e.g. Wi-Fi 6/7) or a replacement for old equipment that still works.
+            include: Newer router; my modem is old; Wi-Fi 6 upgrade.
+            exclude: Faulty equipment (EQP.MOD.MODEM_FAULT).
+            examples:
+              - "My modem is like eight years old, can I get a new one?"
+              - "Do you have a wifi six router I can upgrade to?"
+              - "I want to swap my router for the newer model."
+            keywords: [new router, old modem, upgrade router, wifi 6, newer model, swap, replacement]
+            mapping: {ticket_category: technical, ticket_subcategory: equipment_fault, sap_reason: ZE02}
+            churn_risk: false
+          - id: EQP.MOD.OWN_EQUIPMENT
+            name: Use own router (BYOD)
+            definition: Customer wants to use their own modem/router, or asks about compatibility and removing the rental.
+            include: Can I use my own router; compatible modems; bought a Netgear.
+            exclude: Port forwarding/bridge mode configuration (TEC.SVC.STATIC_IP).
+            examples:
+              - "Can I use my own router instead of renting yours?"
+              - "I bought a Netgear, will it work with your service?"
+              - "Which modems are compatible with DSL?"
+            keywords: [my own router, compatible, netgear, buy my own, instead of renting, byod, eero]
+            mapping: {ticket_category: technical, ticket_subcategory: equipment_fault, sap_reason: ZE03}
+            churn_risk: false
+          - id: EQP.MOD.SETUP_ACTIVATE
+            name: Self-install & activation
+            definition: Help setting up or activating a self-install kit or newly received equipment.
+            include: Self install kit; activate my modem; setup app stuck.
+            exclude: Equipment that hasn't arrived (EQP.SHP.SHIPMENT_STATUS).
+            examples:
+              - "I got the self install kit and I can't get it activated."
+              - "How do I set up the new modem you sent me?"
+              - "The activation keeps failing on the last step."
+            keywords: [self install, activate, activation, set up the modem, kit, setup]
+            mapping: {ticket_category: installation, ticket_subcategory: install_delay, sap_reason: ZE04}
+            churn_risk: false
+      - id: EQP.RTN
+        name: Returns & fees
+        leaves:
+          - id: EQP.RTN.RETURN_EQUIPMENT
+            name: Return equipment
+            definition: How and where to return equipment after cancellation, swap or upgrade; return label/box.
+            include: Return label; UPS store drop-off; where do I send the modem.
+            exclude: Charged a non-return fee (EQP.RTN.UNRETURNED_FEE).
+            examples:
+              - "How do I return the modem now that I've cancelled?"
+              - "Can you send me a return label?"
+              - "Can I drop the equipment off at a UPS store?"
+            keywords: [return, return label, ups, send back, drop off, box, return the modem]
+            mapping: {ticket_category: account, ticket_subcategory: cancel_request, sap_reason: ZE11}
+            churn_risk: false
+          - id: EQP.RTN.UNRETURNED_FEE
+            name: Unreturned equipment fee
+            definition: Customer disputes a fee for equipment the company says was not returned.
+            include: Charged for modem I returned; non-return fee; tracking number proof.
+            exclude: Final bill disputes without equipment (RET.FIN.FINAL_BILL).
+            examples:
+              - "I got charged a hundred and fifty dollars for a modem I already returned."
+              - "I have the tracking number, why is there an unreturned equipment fee?"
+              - "You're billing me for equipment I sent back a month ago."
+            keywords: [unreturned, non return fee, already returned, tracking number, equipment fee, sent back]
+            mapping: {ticket_category: billing, ticket_subcategory: incorrect_charge, sap_reason: ZE12}
+            churn_risk: false
+          - id: EQP.RTN.LEASE_FEE
+            name: Equipment rental fee
+            definition: Questions about the monthly modem/router rental or lease fee.
+            include: Why am I paying for the modem every month; rental charge; purchase instead.
+            exclude: Using own router (EQP.MOD.OWN_EQUIPMENT) when that is the main ask.
+            examples:
+              - "Why am I paying fifteen dollars a month for the modem?"
+              - "Is there a way to stop the equipment rental fee?"
+              - "I thought the router was included with fiber."
+            keywords: [rental fee, lease, modem fee, every month, equipment charge, included]
+            mapping: {ticket_category: billing, ticket_subcategory: incorrect_charge, sap_reason: ZE13}
+            churn_risk: false
+      - id: EQP.SHP
+        name: Shipping
+        leaves:
+          - id: EQP.SHP.SHIPMENT_STATUS
+            name: Equipment shipment status
+            definition: Equipment or self-install kit has not arrived, tracking questions, wrong item shipped.
+            include: Where is my modem; tracking number; package never came; wrong box.
+            exclude: Order status for service (ORD.STAT.ORDER_STATUS).
+            examples:
+              - "My modem was supposed to arrive Monday and it's not here."
+              - "Can I get a tracking number for the equipment you shipped?"
+              - "The box says delivered but I never got it."
+            keywords: [shipped, tracking, arrive, delivered, package, never got it, shipment]
+            mapping: {ticket_category: installation, ticket_subcategory: install_delay, sap_reason: ZE21}
+            churn_risk: false
+
+  # ─────────────────────────────────────────────────────────────── 7 leaves
+  - id: FBR
+    name: Fiber Upgrade & Availability
+    groups:
+      - id: FBR.AVL
+        name: Availability
+        leaves:
+          - id: FBR.AVL.FIBER_AVAILABILITY
+            name: Is fiber available
+            definition: Customer asks whether fiber service is available at their address right now.
+            include: Can I get fiber; is Quantum Fiber/DataPlatform Fiber at my house; checking availability.
+            exclude: When will it come (FBR.AVL.BUILD_TIMELINE).
+            examples:
+              - "Is fiber available at my address yet?"
+              - "Can you check if I can get fiber at my house?"
+              - "My neighbor has fiber, can I get it too?"
+            keywords: [fiber available, check availability, can i get fiber, my address, neighbor has fiber]
+            mapping: {ticket_category: account, ticket_subcategory: plan_change, sap_reason: ZF01}
+            churn_risk: false
+          - id: FBR.AVL.BUILD_TIMELINE
+            name: Fiber build timeline
+            definition: Customer asks when fiber will be built or reach their street/area.
+            include: When is fiber coming; build schedule; saw crews, when can I order.
+            exclude: Available now (FBR.AVL.FIBER_AVAILABILITY).
+            examples:
+              - "When is fiber coming to my street?"
+              - "You've been saying fiber is coming for two years, when will it be ready?"
+              - "I saw crews putting in fiber, when can I order it?"
+            keywords: [when is fiber coming, timeline, build, coming to my street, years, when can i order]
+            mapping: {ticket_category: account, ticket_subcategory: plan_change, sap_reason: ZF02}
+            churn_risk: true
+          - id: FBR.AVL.ADDRESS_NOT_FOUND
+            name: Address not found / serviceability
+            definition: Address cannot be found in the system or shows as not serviceable although customer believes it is.
+            include: Website says my address doesn't exist; new construction address; unit number missing.
+            exclude: Moving service where address is found (ORD.MOVE.MOVE_SERVICE).
+            examples:
+              - "Your website says my address doesn't exist."
+              - "It's a new build and my address won't come up."
+              - "The system can't find my apartment number."
+            keywords: [address doesn't exist, can't find my address, new build, new construction, apartment number, not serviceable]
+            mapping: {ticket_category: account, ticket_subcategory: plan_change, sap_reason: ZF03}
+            churn_risk: false
+      - id: FBR.MIG
+        name: Copper-to-fiber migration
+        leaves:
+          - id: FBR.MIG.COPPER_TO_FIBER
+            name: Upgrade DSL to fiber
+            definition: Existing copper DSL customer wants to upgrade to fiber now that it is available.
+            include: Switch from DSL to fiber; got a fiber offer letter; upgrade my copper line.
+            exclude: Same-technology speed upgrade (ORD.PLAN.UPGRADE_SPEED).
+            examples:
+              - "I have DSL and I got a flyer that fiber is available, I want to switch."
+              - "How do I upgrade from my old copper internet to fiber?"
+              - "Can you move me from DSL to the fiber gig plan?"
+            keywords: [dsl, copper, switch to fiber, upgrade to fiber, flyer, fiber offer, old internet]
+            mapping: {ticket_category: account, ticket_subcategory: plan_change, sap_reason: ZF11}
+            churn_risk: false
+          - id: FBR.MIG.COPPER_RETIREMENT
+            name: Copper retirement notice
+            definition: Customer received a notice that the copper network is being retired and asks what it means or objects.
+            include: Letter saying my DSL is being discontinued; forced migration; copper retirement.
+            exclude: Voluntary upgrade (FBR.MIG.COPPER_TO_FIBER).
+            examples:
+              - "I got a letter saying my DSL service is being discontinued."
+              - "Why are you forcing me off my copper line?"
+              - "What happens to my phone line when you retire the copper?"
+            keywords: [discontinued, retire, retirement, forcing me, letter, copper network, being shut off]
+            mapping: {ticket_category: account, ticket_subcategory: plan_change, sap_reason: ZF12}
+            churn_risk: true
+          - id: FBR.MIG.MIGRATION_ISSUE
+            name: Post-migration issue
+            definition: Problems after moving from copper to fiber — phone number port, alarm/medical device, lost features.
+            include: Lost my home phone after fiber; alarm system stopped; number didn't transfer.
+            exclude: General voice problems not tied to migration (TEC.SVC.VOICE).
+            examples:
+              - "Since they switched me to fiber my home phone number doesn't work."
+              - "My alarm system stopped working after the fiber install."
+              - "My phone number didn't transfer over when I upgraded."
+            keywords: [since fiber, switched to fiber, alarm system, number didn't transfer, port, after the upgrade]
+            mapping: {ticket_category: technical, ticket_subcategory: equipment_fault, sap_reason: ZF13}
+            churn_risk: true
+      - id: FBR.CON
+        name: Construction
+        leaves:
+          - id: FBR.CON.CONSTRUCTION_CONCERN
+            name: Fiber construction concern
+            definition: Concerns about fiber construction activity — crews on property, flags/paint, locates, noise, access.
+            include: Crews digging in my yard; flags in my lawn; who gave permission; boring under driveway.
+            exclude: Damage already done (INS.FLD.PROPERTY_DAMAGE).
+            examples:
+              - "There are crews digging in my front yard, who gave them permission?"
+              - "Someone put flags and paint all over my lawn."
+              - "How long is the construction on my street going to last?"
+            keywords: [crews, digging, flags, paint, construction, permission, boring, locate]
+            mapping: {ticket_category: installation, ticket_subcategory: drop_line, sap_reason: ZF21}
+            churn_risk: false
+
+  # ─────────────────────────────────────────────────────────────── 6 leaves
+  - id: SAL
+    name: Sales & New Service
+    groups:
+      - id: SAL.NEW
+        name: New service
+        leaves:
+          - id: SAL.NEW.NEW_SERVICE
+            name: Sign up for new service
+            definition: Prospect wants to start new internet service at an address.
+            include: I want to sign up; new customer; start service at my house.
+            exclude: Existing customer moving (ORD.MOVE.MOVE_SERVICE).
+            examples:
+              - "I'd like to sign up for internet service."
+              - "I just moved here and want to start service."
+              - "I'm a new customer, can I order the fiber five hundred?"
+            keywords: [sign up, new service, new customer, start service, order internet, get service]
+            mapping: {ticket_category: account, ticket_subcategory: plan_change, sap_reason: ZS11}
+            churn_risk: false
+          - id: SAL.NEW.PRICING_INQUIRY
+            name: Pricing & promotions inquiry
+            definition: Prospect asks about prices, current promotions, contracts or what is included before buying.
+            include: How much is fiber; any deals right now; is there a contract.
+            exclude: Existing customers comparing plans (ORD.PLAN.PLAN_COMPARE).
+            examples:
+              - "How much is your fiber internet?"
+              - "Are there any deals for new customers right now?"
+              - "Is there a contract or can I cancel anytime?"
+            keywords: [how much, price, deals, contract, promotion, new customers, monthly cost]
+            mapping: {ticket_category: account, ticket_subcategory: plan_change, sap_reason: ZS12}
+            churn_risk: false
+          - id: SAL.NEW.CREDIT_DEPOSIT
+            name: Credit check & deposit
+            definition: Questions about the credit check, required deposit or ID requirements to open service.
+            include: Why do I need a deposit; failed credit check; prepaid option.
+            exclude: Refund of deposit later (BIL.ADJ.REFUND_REQUEST).
+            examples:
+              - "Why do I have to pay a deposit to get service?"
+              - "Do you run a credit check?"
+              - "My credit isn't great, is there a way to avoid the deposit?"
+            keywords: [deposit, credit check, credit, id, social security, prepaid]
+            mapping: {ticket_category: account, ticket_subcategory: plan_change, sap_reason: ZS13}
+            churn_risk: false
+      - id: SAL.BIZ
+        name: Business
+        leaves:
+          - id: SAL.BIZ.SMB_SERVICE
+            name: Small-business service
+            definition: Small business owner asks about business internet, business phone lines or business plans.
+            include: Service for my shop; business plan; multiple lines for an office.
+            exclude: Residential customers.
+            examples:
+              - "I own a small restaurant and need business internet."
+              - "Do you have plans for small offices with a few phone lines?"
+              - "I need service for my shop with a static IP."
+            keywords: [business, small business, office, shop, restaurant, business plan, employees]
+            mapping: {ticket_category: account, ticket_subcategory: plan_change, sap_reason: ZS21}
+            churn_risk: false
+      - id: SAL.PRG
+        name: Programs
+        leaves:
+          - id: SAL.PRG.AFFORDABLE_PROGRAM
+            name: Affordable connectivity / low-income program
+            definition: Questions about low-income discounts, Lifeline, affordable connectivity programmes or senior discounts.
+            include: Do you have a low income plan; Lifeline; discount for seniors; benefit ended.
+            exclude: Payment extensions (BIL.PAY.ARRANGEMENT).
+            examples:
+              - "Do you have a low income internet program?"
+              - "I was on the affordable connectivity program, what happens now that it ended?"
+              - "Is there a senior discount?"
+            keywords: [low income, lifeline, affordable connectivity, acp, senior discount, assistance, benefit]
+            mapping: {ticket_category: billing, ticket_subcategory: promo_expired, sap_reason: ZS31}
+            churn_risk: true
+          - id: SAL.PRG.REFERRAL
+            name: Referral credit
+            definition: Customer asks about refer-a-friend credits or a referral credit that did not apply.
+            include: Referred my neighbor; referral credit missing; referral code.
+            exclude: General credits (BIL.ADJ.*).
+            examples:
+              - "I referred my neighbor and never got the credit."
+              - "How does the refer a friend program work?"
+              - "Where do I find my referral code?"
+            keywords: [referral, referred, refer a friend, referral credit, referral code]
+            mapping: {ticket_category: billing, ticket_subcategory: refund_request, sap_reason: ZS32}
+            churn_risk: false
+
+  # ─────────────────────────────────────────────────────────────── 6 leaves
+  - id: CMP
+    name: Complaints & Escalations
+    groups:
+      - id: CMP.ESC
+        name: Escalations
+        leaves:
+          - id: CMP.ESC.SUPERVISOR_REQUEST
+            name: Supervisor request
+            definition: Customer asks to speak with a supervisor or manager.
+            include: Let me talk to your manager; escalate this; supervisor please.
+            exclude: Regulator threats (CMP.ESC.REGULATORY_THREAT).
+            examples:
+              - "I want to speak to a supervisor right now."
+              - "Can you escalate this to your manager?"
+              - "Get me someone higher up, you're not helping."
+            keywords: [supervisor, manager, escalate, someone higher up, speak to your manager]
+            mapping: {ticket_category: account, ticket_subcategory: cancel_request, sap_reason: ZX01}
+            churn_risk: true
+          - id: CMP.ESC.REGULATORY_THREAT
+            name: Regulatory / legal complaint threat
+            definition: Customer threatens or reports a complaint to the FCC, state PUC, attorney general, BBB or legal action.
+            include: Filing with the FCC; Better Business Bureau; contacting my lawyer.
+            exclude: Ordinary supervisor requests (CMP.ESC.SUPERVISOR_REQUEST).
+            examples:
+              - "I'm going to file a complaint with the FCC."
+              - "I already reported you to the Better Business Bureau."
+              - "If this isn't fixed I'm calling the public utilities commission and my lawyer."
+            keywords: [fcc, better business bureau, bbb, attorney general, lawyer, public utilities commission, complaint]
+            mapping: {ticket_category: account, ticket_subcategory: cancel_request, sap_reason: ZX02}
+            churn_risk: true
+          - id: CMP.ESC.PRIOR_PROMISE
+            name: Broken promise / callback not received
+            definition: A previous promise (credit, callback, price, fix date) was not honoured.
+            include: Promised a credit that never appeared; nobody called back; told price would stay the same.
+            exclude: Repeat technical issue (TEC.TS.REPEAT_ISSUE).
+            examples:
+              - "The last person promised me a credit and it never showed up."
+              - "I was told someone would call me back and nobody ever did."
+              - "They told me my price was locked in and now it went up."
+            keywords: [promised, never showed up, call me back, nobody called, told me, locked in]
+            mapping: {ticket_category: account, ticket_subcategory: cancel_request, sap_reason: ZX03}
+            churn_risk: true
+      - id: CMP.EXP
+        name: Experience complaints
+        leaves:
+          - id: CMP.EXP.AGENT_COMPLAINT
+            name: Complaint about staff
+            definition: Complaint about rudeness, competence or conduct of a previous agent or technician.
+            include: Last rep was rude; technician was unprofessional; hung up on me.
+            exclude: Wait time complaints (CMP.EXP.WAIT_TIME).
+            examples:
+              - "The last person I talked to was so rude to me."
+              - "The rep hung up on me."
+              - "The technician was unprofessional and didn't even take his shoes off."
+            keywords: [rude, hung up, unprofessional, attitude, last rep, didn't listen]
+            mapping: {ticket_category: account, ticket_subcategory: cancel_request, sap_reason: ZX11}
+            churn_risk: true
+          - id: CMP.EXP.WAIT_TIME
+            name: Long hold / transfers
+            definition: Complaint about long hold times, call transfers or being bounced between departments.
+            include: On hold for an hour; transferred five times; disconnected while on hold.
+            exclude: Complaint about agent behaviour (CMP.EXP.AGENT_COMPLAINT).
+            examples:
+              - "I've been on hold for over an hour."
+              - "This is the fourth time I've been transferred."
+              - "I got disconnected after waiting forty minutes."
+            keywords: [on hold, hour, transferred, waiting, disconnected while on hold, bounced around]
+            mapping: {ticket_category: account, ticket_subcategory: cancel_request, sap_reason: ZX12}
+            churn_risk: true
+          - id: CMP.EXP.SALES_MISREP
+            name: Mis-sold / misrepresented
+            definition: Customer says a salesperson misrepresented price, speeds, contract or what was included.
+            include: Salesman said it would be fifty; door-to-door rep lied; told no contract.
+            exclude: Normal price increase questions (BIL.CHG.PROMO_EXPIRED).
+            examples:
+              - "The salesman told me it would be fifty dollars flat and it's not."
+              - "The guy at my door said I'd get gig speeds and DSL can't even do that."
+              - "I was told there was no contract and now there's a fee to cancel."
+            keywords: [salesman, sales rep, lied, told me, door to door, misled, promised speeds]
+            mapping: {ticket_category: account, ticket_subcategory: cancel_request, sap_reason: ZX13}
+            churn_risk: true
+
+  # ─────────────────────────────────────────────────────────────── 5 leaves
+  - id: DIG
+    name: Self-service & Digital
+    groups:
+      - id: DIG.APP
+        name: App & portal
+        leaves:
+          - id: DIG.APP.LOGIN_ISSUE
+            name: App / portal login
+            definition: Customer can't sign in to the My DataPlatform app or website (password, username, verification code).
+            include: Locked out of the app; reset my online password; verification code never arrives.
+            exclude: Email account (TEC.SVC.EMAIL); account PIN (ACC.SEC.PIN_RESET).
+            examples:
+              - "I can't log into the DataPlatform app."
+              - "I'm locked out of my online account after too many tries."
+              - "The verification code never comes to my phone."
+            keywords: [log in, login, app, locked out, online account, username, verification code, sign in]
+            mapping: {ticket_category: account, ticket_subcategory: update_payment, sap_reason: ZD01}
+            churn_risk: false
+          - id: DIG.APP.APP_ERROR
+            name: App / website error
+            definition: The app or website crashes, shows errors or a feature (speed test, wifi settings, bill view) doesn't work.
+            include: App keeps crashing; page error; can't see my bill in the app.
+            exclude: Payment failing online (DIG.APP.PORTAL_PAYMENT_ERROR).
+            examples:
+              - "The app keeps crashing when I open it."
+              - "Your website gives me an error when I try to view my bill."
+              - "The wifi settings page in the app won't load."
+            keywords: [app crashing, error, website, page won't load, glitch, app not working]
+            mapping: {ticket_category: account, ticket_subcategory: update_payment, sap_reason: ZD02}
+            churn_risk: false
+          - id: DIG.APP.PORTAL_PAYMENT_ERROR
+            name: Online payment error
+            definition: Payment attempt in the app/website fails or errors.
+            include: Card declined online but bank says fine; payment page error; pay button does nothing.
+            exclude: Autopay failures (BIL.PAY.AUTOPAY_FAIL).
+            examples:
+              - "I tried to pay online and it keeps giving me an error."
+              - "The payment page says my card was declined but my bank says it's fine."
+              - "When I hit pay in the app nothing happens."
+            keywords: [pay online, payment page, error, declined online, pay in the app, website payment]
+            mapping: {ticket_category: billing, ticket_subcategory: autopay_failure, sap_reason: ZD03}
+            churn_risk: false
+      - id: DIG.CHN
+        name: Digital channels
+        leaves:
+          - id: DIG.CHN.CHATBOT_HANDOFF
+            name: Chat / virtual agent didn't help
+            definition: Customer calls because the chat, virtual agent or IVR couldn't resolve the issue or looped.
+            include: The bot kept going in circles; chat disconnected; automated system wouldn't let me talk to a person.
+            exclude: The underlying issue is primary when clearly stated; use this as secondary in that case.
+            examples:
+              - "I tried the chat and the bot kept going in circles."
+              - "The automated system wouldn't let me talk to a real person."
+              - "The online chat disconnected me twice."
+            keywords: [chat, bot, virtual assistant, automated system, real person, going in circles, ivr]
+            mapping: {ticket_category: account, ticket_subcategory: update_payment, sap_reason: ZD11}
+            churn_risk: false
+          - id: DIG.CHN.NOTIFICATION_PREFS
+            name: Text & email notification settings
+            definition: Customer wants to change, stop or start account text/email notifications (bill reminders, appointment texts).
+            include: Too many texts; stop bill reminder emails; send appointment reminders to my cell.
+            exclude: Outage alerts (OUT.NOT.OUTAGE_ALERTS); marketing opt-out (ACC.PRIV.PRIVACY_REQUEST).
+            examples:
+              - "I keep getting text messages about my bill, can you turn those off?"
+              - "Can you send appointment reminders to my cell instead of email?"
+              - "I'm not getting the payment reminder emails anymore."
+            keywords: [text messages, reminders, notifications, turn off texts, email reminders, alerts settings]
+            mapping: {ticket_category: account, ticket_subcategory: update_payment, sap_reason: ZD12}
+            churn_risk: false

@@ -1,0 +1,35 @@
+/* JupyterLab in the appliance's typography (same fonts as Studio / Workbench).
+   Loaded by JupyterLab's custom CSS (--LabApp.custom_css=True); the workspace
+   entrypoint links it to ~/.jupyter/custom/custom.css on every start. */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+html:root, html:root body {
+  --bsp-font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --bsp-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --jp-ui-font-family: var(--bsp-font-sans);
+  --jp-content-font-family: var(--bsp-font-sans);
+  --jp-code-font-family-default: var(--bsp-font-mono);
+  --jp-code-font-family: var(--bsp-font-mono);
+
+  --jp-ui-font-size1: 13px;
+  --jp-content-font-size1: 14.5px;
+  --jp-content-line-height: 1.6;
+  --jp-code-font-size: 13px;
+  --jp-code-line-height: 1.5;
+}
+
+/* rendered Markdown reads like the docs: comfortable headings and spacing */
+.jp-RenderedMarkdown h1, .jp-RenderedMarkdown h2, .jp-RenderedMarkdown h3 {
+  font-family: var(--bsp-font-sans); font-weight: 600; letter-spacing: -0.01em; line-height: 1.25;
+}
+.jp-RenderedMarkdown h1 { font-size: 1.85em; margin: 0.4em 0 0.5em; }
+.jp-RenderedMarkdown h2 { font-size: 1.4em; margin: 1.1em 0 0.45em; }
+.jp-RenderedMarkdown h3 { font-size: 1.15em; margin: 1em 0 0.4em; }
+.jp-RenderedMarkdown p, .jp-RenderedMarkdown li { line-height: 1.6; }
+.jp-RenderedMarkdown blockquote { border-left: 3px solid #0b6e79; padding-left: 12px; color: inherit; opacity: 0.9; }
+.jp-RenderedMarkdown table { font-size: 13.5px; }
+.jp-RenderedMarkdown code { font-family: var(--bsp-font-mono); font-size: 0.92em; }
+
+/* code and output use the mono face consistently */
+.jp-OutputArea-output pre, .jp-CodeMirrorEditor, .cm-editor, .cm-content { font-family: var(--bsp-font-mono); }

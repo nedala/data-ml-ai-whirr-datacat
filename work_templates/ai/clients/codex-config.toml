@@ -1,0 +1,22 @@
+# OpenAI Codex (CLI + IDE extension) — append to ~/.codex/config.toml
+# Syntax: https://learn.chatgpt.com/docs/extend/mcp?surface=cli
+# export MCP_TOKEN=<Studio → Credentials → MCP_TOKEN> before starting Codex.
+
+[mcp_servers.dataplatform]
+url = "http://127.0.0.1:8765/mcp"          # inside the appliance: http://mcp:8095/mcp
+bearer_token_env_var = "MCP_TOKEN"
+startup_timeout_sec = 20
+tool_timeout_sec = 120
+# enabled_tools = ["warehouse_query", "warehouse_describe", "atlan_search_assets"]
+# disabled_tools = ["browser_evaluate"]
+
+# Just one tool group:
+[mcp_servers.bsp_warehouse]
+url = "http://127.0.0.1:8765/mcp/warehouse"
+bearer_token_env_var = "MCP_TOKEN"
+
+# stdio alternative (python -m bsp_mcp.stdio_bridge needs fastmcp + build/mcp on PYTHONPATH):
+# [mcp_servers.dataplatform_stdio]
+# command = "python"
+# args = ["-m", "bsp_mcp.stdio_bridge", "--url", "http://127.0.0.1:8765/mcp"]
+# env_vars = ["MCP_TOKEN"]

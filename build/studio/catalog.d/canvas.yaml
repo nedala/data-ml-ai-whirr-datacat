@@ -1,0 +1,32 @@
+# Integration canvas — build/canvas (plan/architecture.md §1, §2).
+services:
+  canvas:
+    title: Integration Canvas
+    blurb: "No-code pipelines: SharePoint, Outlook, BigQuery, Atlan, Power BI, databases, object storage, REST → warehouse / BigQuery / lake (dlt)"
+    profile: canvas
+    ram_mb: 768
+    kind: app
+    route: /canvas/
+    needs: [postgres]
+    soft_needs: [connectors, demo-seed]   # demo-seed = capability demo-sources (example connections minio-demo · care-mssql · billing-oracle)
+    endpoints:
+      - {label: Canvas, value: "/canvas/"}
+      - {label: API docs, value: "/canvas/docs"}
+      - {label: Pipelines (YAML), value: "<data root>/canvas/pipelines (host)"}
+    creds:
+      - {env: CANVAS_STUDIO_TOKEN, label: "Canvas → Studio service token (cloud-identity principal switch)", hidden: true, length: 48, policy: alnum}
+    # external creds (GCP_SA_JSON, M365_CLIENT_SECRET, ATLAN_API_TOKEN) come from shared_credentials;
+    # connection passwords are any vault key you reference as vault:NAME in a Connection.
+
+capabilities:
+  canvas:
+    title: Integration Canvas
+    tone: data
+    icon: stacks
+    services: [canvas]
+    requires: [workspace]
+    blurb: "Airbyte-style no-code connection builder and visual DAG on dlt — sources, transforms, sync modes, schedules"
+
+apps:
+  - {id: canvas, group: data, title: Integration Canvas, service: canvas, path: /canvas/, icon: workflow,
+     blurb: "Build pipelines by drag and drop, from any source into landing"}

@@ -1,0 +1,569 @@
+# DataPlatform Data & AI Appliance — DEFAULT egress allowlist.
+#
+# px-proxy seeds data/egress/allowlist.yaml from this file the first time it
+# starts (it never overwrites an existing allowlist). After that the live file
+# is managed in Studio → Egress and hot-reloaded.
+#
+# Pattern syntax (build/px-proxy/policy.py):
+#   pypi.org                 exact host (the apex is NOT covered by "*.")
+#   *.pypi.org               any sub-domain, any depth
+#   cdn-lfs*.huggingface.co  '*' inside a label stays inside that label
+#   regex:^foo[0-9]+\.bar\.com$   full-match regex (rejected if too broad)
+# ports: default [80, 443]; "any" allows every port (corporate domains only).
+# tls: passthrough  → do not decrypt (for clients that pin certificates).
+#
+# Everything not listed is refused with HTTP 403 ("ask your appliance admin to
+# allow it in Studio → Egress"). mode: audit allows everything but logs
+# "would-block" — use it for a short discovery window only.
+
+# Hosts configured through the environment are allowed in memory on top of
+# this file (never written to it): SAP_BRIM_BASE_URL, ATLAN_BASE_URL,
+# SHAREPOINT_SITE, OLLAMA_BASE_URL and EGRESS_EXTRA_HOSTS (comma-separated
+# host[:port]) — see build/px-proxy/policy.py env_rules().
+
+mode: enforce
+
+rules:
+  # ── DataPlatform corporate ─────────────────────────────────────────────
+  - {pattern: "dataplatform.com", category: DataPlatform, reason: "Corporate domain", added_by: system, ports: any}
+  - {pattern: "*.dataplatform.com", category: DataPlatform, reason: "Corporate domain (APIs, SAP BRIM, file shares, SSO)", added_by: system, ports: any}
+  - {pattern: "*.scene7.com", category: DataPlatform, reason: "DataPlatform image CDN (scene7)", added_by: system, ports: [443]}
+  - {pattern: "*.xtlo.net", category: DataPlatform, reason: "DataPlatform site assets (CDN)", added_by: system, ports: [443]}
+
+  # ── Google Cloud: BigQuery, Vertex AI, sign-in ────────────────────────
+  - {pattern: "*.googleapis.com", category: Google Cloud, reason: "Google APIs (BigQuery, BigQuery Storage, Vertex AI, IAM, Cloud Storage)", added_by: system, ports: [443]}
+  - {pattern: "googleapis.com", category: Google Cloud, reason: "Google APIs (bare domain)", added_by: system, ports: [443]}
+  - {pattern: "oauth2.googleapis.com", category: Google Cloud, reason: "Service-account token exchange", added_by: system, ports: [443]}
+  - {pattern: "bigquery.googleapis.com", category: Google Cloud, reason: "BigQuery REST API", added_by: system, ports: [443]}
+  - {pattern: "bigquerystorage.googleapis.com", category: Google Cloud, reason: "BigQuery Storage Read API (gRPC over 443)", added_by: system, ports: [443]}
+  - {pattern: "aiplatform.googleapis.com", category: Google Cloud, reason: "Vertex AI (global endpoint)", added_by: system, ports: [443]}
+  - {pattern: "*-aiplatform.googleapis.com", category: Google Cloud, reason: "Vertex AI regional endpoints (us-central1-aiplatform …)", added_by: system, ports: [443]}
+  - {pattern: "accounts.google.com", category: Google Cloud, reason: "Google sign-in", added_by: system, ports: [443]}
+  - {pattern: "www.googleapis.com", category: Google Cloud, reason: "Google OAuth certs / discovery", added_by: system, ports: [443]}
+  - {pattern: "storage.googleapis.com", category: Google Cloud, reason: "Cloud Storage (BigQuery extracts, model artifacts)", added_by: system, ports: [443]}
+  - {pattern: "console.cloud.google.com", category: Google Cloud, reason: "Google Cloud console (Desktop browser)", added_by: system, ports: [443]}
+
+  # ── Object storage (integration canvas: GCS, S3 / MinIO, Azure Blob / ADLS) ──
+  - {pattern: "*.storage.googleapis.com", category: Object storage, reason: "Google Cloud Storage (virtual-hosted buckets)", added_by: system, ports: [443]}
+  - {pattern: "*.amazonaws.com", category: Object storage, reason: "Amazon S3 and AWS endpoints (narrow to your buckets in Studio → Egress if required)", added_by: system, ports: [443]}
+  - {pattern: "*.blob.core.windows.net", category: Object storage, reason: "Azure Blob storage", added_by: system, ports: [443]}
+  - {pattern: "*.dfs.core.windows.net", category: Object storage, reason: "Azure Data Lake Storage Gen2", added_by: system, ports: [443]}
+
+  # ── Google Antigravity (Linux Desktop IDE) ────────────────────────────
+  - {pattern: "antigravity.google", category: Antigravity, reason: "Antigravity site, docs and sign-in hand-off", added_by: system, ports: [443]}
+  - {pattern: "*.antigravity.google", category: Antigravity, reason: "Antigravity services", added_by: system, ports: [443]}
+  - {pattern: "registry.npmjs.org", category: OpenCode, reason: "OpenCode provider plugins (@ai-sdk/*) fetched on first use", added_by: system, ports: [443]}
+  - {pattern: "models.dev", category: OpenCode, reason: "OpenCode model catalogue", added_by: system, ports: [443]}
+  - {pattern: "models.opencode.ai", category: OpenCode, reason: "OpenCode live model catalogue", added_by: system, ports: [443]}
+  - {pattern: "opencode.ai", category: OpenCode, reason: "OpenCode config schema and docs", added_by: system, ports: [443]}
+  - {pattern: "edgedl.me.gvt1.com", category: Antigravity, reason: "Antigravity downloads and updates (Google edge download)", added_by: system, ports: [443]}
+  - {pattern: "*.gvt1.com", category: Antigravity, reason: "Google update / download CDN", added_by: system, ports: [443]}
+  - {pattern: "www.google.com", category: Antigravity, reason: "Google sign-in redirects", added_by: system, ports: [443]}
+  - {pattern: "*.gstatic.com", category: Antigravity, reason: "Google sign-in page assets", added_by: system, ports: [443]}
+  - {pattern: "*.googleusercontent.com", category: Antigravity, reason: "Google account avatars and sign-in assets", added_by: system, ports: [443]}
+  - {pattern: "play.google.com", category: Antigravity, reason: "Google account sign-in checks", added_by: system, ports: [443]}
+  - {pattern: "*.google.com", category: Google, reason: "Google services and sign-in", added_by: system, ports: [443]}
+  - {pattern: "google.co.in", category: Google, reason: "Google India (bare domain)", added_by: system, ports: [443]}
+  - {pattern: "*.google.co.in", category: Google, reason: "Google India services", added_by: system, ports: [443]}
+  - {pattern: "google.com", category: Google, reason: "Google (bare domain)", added_by: system, ports: [443]}
+  - {pattern: "gstatic.com", category: Google, reason: "Google static assets (bare domain)", added_by: system, ports: [443]}
+  - {pattern: "googleusercontent.com", category: Google, reason: "Google user content (bare domain)", added_by: system, ports: [443]}
+  - {pattern: "drive.google.com", action: deny, category: Google, reason: "Data-exfiltration guard: file sharing / mail under the *.google.com allow", added_by: system, ports: [443]}
+  - {pattern: "docs.google.com", action: deny, category: Google, reason: "Data-exfiltration guard: file sharing / mail under the *.google.com allow", added_by: system, ports: [443]}
+  - {pattern: "sheets.google.com", action: deny, category: Google, reason: "Data-exfiltration guard: file sharing / mail under the *.google.com allow", added_by: system, ports: [443]}
+  - {pattern: "slides.google.com", action: deny, category: Google, reason: "Data-exfiltration guard: file sharing / mail under the *.google.com allow", added_by: system, ports: [443]}
+  - {pattern: "forms.google.com", action: deny, category: Google, reason: "Data-exfiltration guard: file sharing / mail under the *.google.com allow", added_by: system, ports: [443]}
+  - {pattern: "mail.google.com", action: deny, category: Google, reason: "Data-exfiltration guard: file sharing / mail under the *.google.com allow", added_by: system, ports: [443]}
+  - {pattern: "photos.google.com", action: deny, category: Google, reason: "Data-exfiltration guard: file sharing / mail under the *.google.com allow", added_by: system, ports: [443]}
+  - {pattern: "keep.google.com", action: deny, category: Google, reason: "Data-exfiltration guard: file sharing / mail under the *.google.com allow", added_by: system, ports: [443]}
+  - {pattern: "sites.google.com", action: deny, category: Google, reason: "Data-exfiltration guard: file sharing / mail under the *.google.com allow", added_by: system, ports: [443]}
+  - {pattern: "takeout.google.com", action: deny, category: Google, reason: "Data-exfiltration guard: file sharing / mail under the *.google.com allow", added_by: system, ports: [443]}
+
+  # ── Atlan (data catalog) ──────────────────────────────────────────────
+  - {pattern: "*.atlan.com", category: Atlan, reason: "Atlan tenant APIs and UI", added_by: system, ports: [443]}
+  - {pattern: "atlan.com", category: Atlan, reason: "Atlan (bare domain)", added_by: system, ports: [443]}
+
+  # ── Microsoft: Entra ID, Graph, Microsoft 365, Power BI ───────────────
+  - {pattern: "login.microsoftonline.com", category: Microsoft, reason: "Entra ID sign-in (OIDC, MSAL app-only tokens)", added_by: system, ports: [443]}
+  - {pattern: "login.microsoft.com", category: Microsoft, reason: "Entra ID sign-in", added_by: system, ports: [443]}
+  - {pattern: "login.windows.net", category: Microsoft, reason: "Entra ID sign-in (legacy authority host)", added_by: system, ports: [443]}
+  - {pattern: "login.live.com", category: Microsoft, reason: "Microsoft account sign-in hops", added_by: system, ports: [443]}
+  - {pattern: "*.msauth.net", category: Microsoft, reason: "Entra sign-in page assets (browser SSO)", added_by: system, ports: [443]}
+  - {pattern: "*.msftauth.net", category: Microsoft, reason: "Entra sign-in page assets (browser SSO)", added_by: system, ports: [443]}
+  - {pattern: "*.msocdn.com", category: Microsoft, reason: "Entra / Office sign-in assets", added_by: system, ports: [443]}
+  - {pattern: "graph.microsoft.com", category: Microsoft, reason: "Microsoft Graph (SharePoint, OneDrive, Outlook, Teams)", added_by: system, ports: [443]}
+  - {pattern: "*.sharepoint.com", category: Microsoft 365, reason: "SharePoint Online sites and OneDrive", added_by: system, ports: [443]}
+  - {pattern: "*.sharepointonline.com", category: Microsoft 365, reason: "SharePoint static assets", added_by: system, ports: [443]}
+  - {pattern: "*.svc.ms", category: Microsoft 365, reason: "SharePoint / OneDrive CDN", added_by: system, ports: [443]}
+  - {pattern: "*.office.com", category: Microsoft 365, reason: "Office on the web and the Microsoft 365 portal", added_by: system, ports: [443]}
+  - {pattern: "*.office.net", category: Microsoft 365, reason: "Office CDNs", added_by: system, ports: [443]}
+  - {pattern: "*.cloud.microsoft", category: Microsoft 365, reason: "Microsoft 365 apps (cloud.microsoft domain)", added_by: system, ports: [443]}
+  - {pattern: "outlook.office365.com", category: Microsoft 365, reason: "Outlook on the web", added_by: system, ports: [443]}
+  - {pattern: "api.powerbi.com", category: Power BI, reason: "Power BI REST API", added_by: system, ports: [443]}
+  - {pattern: "*.powerbi.com", category: Power BI, reason: "Power BI Service (app.powerbi.com, api.powerbi.com)", added_by: system, ports: [443]}
+  - {pattern: "analysis.windows.net", category: Power BI, reason: "Power BI token audience / XMLA", added_by: system, ports: [443]}
+  - {pattern: "*.analysis.windows.net", category: Power BI, reason: "Power BI back-end clusters", added_by: system, ports: [443]}
+  - {pattern: "*.pbidedicated.windows.net", category: Power BI, reason: "Power BI Premium / Fabric capacities", added_by: system, ports: [443]}
+
+  # ── Python packages ───────────────────────────────────────────────────
+  - {pattern: "pypi.org", category: PyPI, reason: "Python package index", added_by: system, ports: [443]}
+  - {pattern: "files.pythonhosted.org", category: PyPI, reason: "Python package downloads", added_by: system, ports: [443]}
+
+  # ── GitHub ────────────────────────────────────────────────────────────
+  - {pattern: "github.com", category: GitHub, reason: "Source code", added_by: system, ports: [443]}
+  - {pattern: "*.github.com", category: GitHub, reason: "GitHub API and sub-domains", added_by: system, ports: [443]}
+  - {pattern: "*.githubusercontent.com", category: GitHub, reason: "Raw files and release assets", added_by: system, ports: [443]}
+  - {pattern: "codeload.github.com", category: GitHub, reason: "Archive downloads", added_by: system, ports: [443]}
+  - {pattern: "ghcr.io", category: GitHub, reason: "GitHub container registry", added_by: system, ports: [443]}
+  - {pattern: "*.githubassets.com", category: GitHub, reason: "GitHub web assets (browser)", added_by: system, ports: [443]}
+
+  # ── Hugging Face ──────────────────────────────────────────────────────
+  - {pattern: "huggingface.co", category: Hugging Face, reason: "Models and datasets", added_by: system, ports: [443]}
+  - {pattern: "*.huggingface.co", category: Hugging Face, reason: "Hub sub-domains", added_by: system, ports: [443]}
+  - {pattern: "cdn-lfs*.huggingface.co", category: Hugging Face, reason: "Large-file CDN", added_by: system, ports: [443]}
+  - {pattern: "*.hf.co", category: Hugging Face, reason: "Xet / CAS storage", added_by: system, ports: [443]}
+
+  # ── Ollama model registry ─────────────────────────────────────────────
+  - {pattern: "registry.ollama.ai", category: Ollama, reason: "Ollama model registry (ollama pull)", added_by: system, ports: [443]}
+  - {pattern: "ollama.com", category: Ollama, reason: "Ollama library / registry redirects", added_by: system, ports: [443]}
+  - {pattern: "*.ollama.com", category: Ollama, reason: "Ollama", added_by: system, ports: [443]}
+  - {pattern: "dd20bb891979d25aebc8bec07b2b3bbc.r2.cloudflarestorage.com", category: Ollama, reason: "Ollama model blobs (registry CDN bucket)", added_by: system, ports: [443]}
+  - {pattern: "*.r2.cloudflarestorage.com", category: Ollama, reason: "Ollama model blobs (registry redirects to Cloudflare R2; narrow to the bucket host above if policy requires)", added_by: system, ports: [443]}
+
+  # ── Editors (VS Code extensions) ──────────────────────────────────────
+  - {pattern: "open-vsx.org", category: VS Code, reason: "Open VSX extension registry", added_by: system, ports: [443]}
+  - {pattern: "*.open-vsx.org", category: VS Code, reason: "Open VSX downloads", added_by: system, ports: [443]}
+  - {pattern: "openvsx.eclipsecontent.org", category: VS Code, reason: "Open VSX extension downloads (Eclipse CDN)", added_by: system, ports: [443]}
+
+  # ── dbt ───────────────────────────────────────────────────────────────
+  - {pattern: "hub.getdbt.com", category: dbt, reason: "dbt package hub (dbt deps)", added_by: system, ports: [443]}
+  - {pattern: "docs.getdbt.com", category: Docs, reason: "dbt documentation", added_by: system, ports: [443]}
+
+  # ── Desktop apps ──────────────────────────────────────────────────────
+  - {pattern: "dbeaver.io", category: Desktop, reason: "DBeaver driver catalogue", added_by: system, ports: [443]}
+  - {pattern: "repo1.maven.org", category: Desktop, reason: "JDBC drivers for DBeaver (Maven Central)", added_by: system, ports: [443]}
+
+  # ── Shared web assets (fonts) ─────────────────────────────────────────
+  - {pattern: "fonts.googleapis.com", category: Web assets, reason: "Web fonts (the appliance's own pages in the Desktop browser)", added_by: system, ports: [443]}
+  - {pattern: "fonts.gstatic.com", category: Web assets, reason: "Web font files", added_by: system, ports: [443]}
+  - {pattern: "googletagmanager.com", category: Web assets, reason: "Tag Manager (page analytics on allowed sites)", added_by: system, ports: [443]}
+  - {pattern: "*.googletagmanager.com", category: Web assets, reason: "Tag Manager (page analytics on allowed sites)", added_by: system, ports: [443]}
+
+  # ── AI providers ──────────────────────────────────────────────────────
+  - {pattern: "api.anthropic.com", category: AI, reason: "Anthropic API (optional provider)", added_by: system, ports: [443]}
+  - {pattern: "host.docker.internal", category: AI, reason: "Ollama on this host (OpenAI-compatible API) — port 11434 only", added_by: system, ports: [11434]}
+  - {pattern: "claude.ai", category: AI, reason: "Claude Code sign-in", added_by: system, ports: [443]}
+  - {pattern: "claude.com", category: AI, reason: "Claude Code sign-in", added_by: system, ports: [443]}
+  - {pattern: "*.claude.com", category: AI, reason: "Claude sign-in and account pages", added_by: system, ports: [443]}
+  - {pattern: "console.anthropic.com", category: AI, reason: "Claude Code sign-in (Console)", added_by: system, ports: [443]}
+  - {pattern: "platform.claude.com", category: AI, reason: "Claude Code sign-in (Platform)", added_by: system, ports: [443]}
+  - {pattern: "downloads.claude.ai", category: AI, reason: "Claude Code downloads / updates", added_by: system, ports: [443]}
+  - {pattern: "mtalk.google.com", category: Google, reason: "Chrome push/messaging endpoint", added_by: system, ports: [443]}
+
+  # ── Documentation ─────────────────────────────────────────────────────
+  - {pattern: "docs.python.org", category: Docs, reason: "Python documentation", added_by: system, ports: [443]}
+
+  # ── US web bundle ─────────────────────────────────────────────────────
+  # Named destinations plus all US-only TLDs (.gov/.mil/.edu/.us).
+  # Most US commercial sites are .com and must be listed explicitly:
+  # the proxy rejects wildcards/TLD-wide regexes by design.
+  - {pattern: "weather.com", category: US weather, reason: "weather.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.weather.com", category: US weather, reason: "weather.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "accuweather.com", category: US weather, reason: "accuweather.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.accuweather.com", category: US weather, reason: "accuweather.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "wunderground.com", category: US weather, reason: "wunderground.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.wunderground.com", category: US weather, reason: "wunderground.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "weatherbug.com", category: US weather, reason: "weatherbug.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.weatherbug.com", category: US weather, reason: "weatherbug.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "atlassian.com", category: US Atlassian, reason: "atlassian.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.atlassian.com", category: US Atlassian, reason: "atlassian.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "atlassian.net", category: US Atlassian, reason: "atlassian.net (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.atlassian.net", category: US Atlassian, reason: "atlassian.net subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "jira.com", category: US Atlassian, reason: "jira.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.jira.com", category: US Atlassian, reason: "jira.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "trello.com", category: US Atlassian, reason: "trello.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.trello.com", category: US Atlassian, reason: "trello.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "bitbucket.org", category: US Atlassian, reason: "bitbucket.org (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.bitbucket.org", category: US Atlassian, reason: "bitbucket.org subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "statuspage.io", category: US Atlassian, reason: "statuspage.io (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.statuspage.io", category: US Atlassian, reason: "statuspage.io subdomains (US web bundle)", added_by: system, ports: [443]}
+  # Atlassian Cloud serves the Jira/Confluence login UI and assets from atl-paas.net
+  - {pattern: "atl-paas.net", category: US Atlassian, reason: "Atlassian Cloud platform assets (Jira sign-in, API)", added_by: system, ports: [443]}
+  - {pattern: "*.atl-paas.net", category: US Atlassian, reason: "Atlassian Cloud frontend/API assets (Jira sign-in)", added_by: system, ports: [443]}
+  - {pattern: "orangelogic.com", category: US Atlassian, reason: "Atlassian asset CDN (dam-cdn.atl.orangelogic.com)", added_by: system, ports: [443]}
+  - {pattern: "*.orangelogic.com", category: US Atlassian, reason: "Atlassian asset CDN (dam-cdn.atl.orangelogic.com)", added_by: system, ports: [443]}
+  - {pattern: "cnn.com", category: US news, reason: "cnn.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.cnn.com", category: US news, reason: "cnn.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "foxnews.com", category: US news, reason: "foxnews.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.foxnews.com", category: US news, reason: "foxnews.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "nbcnews.com", category: US news, reason: "nbcnews.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.nbcnews.com", category: US news, reason: "nbcnews.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "cbsnews.com", category: US news, reason: "cbsnews.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.cbsnews.com", category: US news, reason: "cbsnews.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "npr.org", category: US news, reason: "npr.org (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.npr.org", category: US news, reason: "npr.org subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "usatoday.com", category: US news, reason: "usatoday.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.usatoday.com", category: US news, reason: "usatoday.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "nytimes.com", category: US news, reason: "nytimes.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.nytimes.com", category: US news, reason: "nytimes.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "wsj.com", category: US news, reason: "wsj.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.wsj.com", category: US news, reason: "wsj.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "washingtonpost.com", category: US news, reason: "washingtonpost.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.washingtonpost.com", category: US news, reason: "washingtonpost.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "bloomberg.com", category: US news, reason: "bloomberg.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.bloomberg.com", category: US news, reason: "bloomberg.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "reuters.com", category: US news, reason: "reuters.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.reuters.com", category: US news, reason: "reuters.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "apnews.com", category: US news, reason: "apnews.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.apnews.com", category: US news, reason: "apnews.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "politico.com", category: US news, reason: "politico.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.politico.com", category: US news, reason: "politico.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "thehill.com", category: US news, reason: "thehill.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.thehill.com", category: US news, reason: "thehill.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "latimes.com", category: US news, reason: "latimes.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.latimes.com", category: US news, reason: "latimes.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "forbes.com", category: US news, reason: "forbes.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.forbes.com", category: US news, reason: "forbes.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "businessinsider.com", category: US news, reason: "businessinsider.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.businessinsider.com", category: US news, reason: "businessinsider.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "theverge.com", category: US news, reason: "theverge.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.theverge.com", category: US news, reason: "theverge.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "arstechnica.com", category: US news, reason: "arstechnica.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.arstechnica.com", category: US news, reason: "arstechnica.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "wired.com", category: US news, reason: "wired.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.wired.com", category: US news, reason: "wired.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "techcrunch.com", category: US news, reason: "techcrunch.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.techcrunch.com", category: US news, reason: "techcrunch.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "cnet.com", category: US news, reason: "cnet.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.cnet.com", category: US news, reason: "cnet.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "marketwatch.com", category: US finance, reason: "marketwatch.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.marketwatch.com", category: US finance, reason: "marketwatch.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "cnbc.com", category: US finance, reason: "cnbc.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.cnbc.com", category: US finance, reason: "cnbc.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "yahoo.com", category: US finance, reason: "yahoo.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.yahoo.com", category: US finance, reason: "yahoo.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "schwab.com", category: US finance, reason: "schwab.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.schwab.com", category: US finance, reason: "schwab.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "fidelity.com", category: US finance, reason: "fidelity.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.fidelity.com", category: US finance, reason: "fidelity.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "vanguard.com", category: US finance, reason: "vanguard.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.vanguard.com", category: US finance, reason: "vanguard.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "bankofamerica.com", category: US finance, reason: "bankofamerica.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.bankofamerica.com", category: US finance, reason: "bankofamerica.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "chase.com", category: US finance, reason: "chase.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.chase.com", category: US finance, reason: "chase.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "wellsfargo.com", category: US finance, reason: "wellsfargo.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.wellsfargo.com", category: US finance, reason: "wellsfargo.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "citi.com", category: US finance, reason: "citi.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.citi.com", category: US finance, reason: "citi.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "capitalone.com", category: US finance, reason: "capitalone.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.capitalone.com", category: US finance, reason: "capitalone.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "americanexpress.com", category: US finance, reason: "americanexpress.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.americanexpress.com", category: US finance, reason: "americanexpress.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "paypal.com", category: US finance, reason: "paypal.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.paypal.com", category: US finance, reason: "paypal.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "stripe.com", category: US finance, reason: "stripe.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.stripe.com", category: US finance, reason: "stripe.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "intuit.com", category: US finance, reason: "intuit.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.intuit.com", category: US finance, reason: "intuit.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "turbotax.com", category: US finance, reason: "turbotax.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.turbotax.com", category: US finance, reason: "turbotax.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "creditkarma.com", category: US finance, reason: "creditkarma.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.creditkarma.com", category: US finance, reason: "creditkarma.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "nerdwallet.com", category: US finance, reason: "nerdwallet.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.nerdwallet.com", category: US finance, reason: "nerdwallet.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "coinbase.com", category: US finance, reason: "coinbase.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.coinbase.com", category: US finance, reason: "coinbase.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "robinhood.com", category: US finance, reason: "robinhood.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.robinhood.com", category: US finance, reason: "robinhood.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "amazon.com", category: US shopping, reason: "amazon.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.amazon.com", category: US shopping, reason: "amazon.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "ebay.com", category: US shopping, reason: "ebay.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.ebay.com", category: US shopping, reason: "ebay.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "walmart.com", category: US shopping, reason: "walmart.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.walmart.com", category: US shopping, reason: "walmart.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "target.com", category: US shopping, reason: "target.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.target.com", category: US shopping, reason: "target.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "bestbuy.com", category: US shopping, reason: "bestbuy.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.bestbuy.com", category: US shopping, reason: "bestbuy.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "homedepot.com", category: US shopping, reason: "homedepot.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.homedepot.com", category: US shopping, reason: "homedepot.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "lowes.com", category: US shopping, reason: "lowes.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.lowes.com", category: US shopping, reason: "lowes.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "costco.com", category: US shopping, reason: "costco.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.costco.com", category: US shopping, reason: "costco.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "kohls.com", category: US shopping, reason: "kohls.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.kohls.com", category: US shopping, reason: "kohls.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "macys.com", category: US shopping, reason: "macys.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.macys.com", category: US shopping, reason: "macys.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "nordstrom.com", category: US shopping, reason: "nordstrom.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.nordstrom.com", category: US shopping, reason: "nordstrom.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "etsy.com", category: US shopping, reason: "etsy.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.etsy.com", category: US shopping, reason: "etsy.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "wayfair.com", category: US shopping, reason: "wayfair.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.wayfair.com", category: US shopping, reason: "wayfair.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "chewy.com", category: US shopping, reason: "chewy.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.chewy.com", category: US shopping, reason: "chewy.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "instacart.com", category: US shopping, reason: "instacart.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.instacart.com", category: US shopping, reason: "instacart.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "doordash.com", category: US shopping, reason: "doordash.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.doordash.com", category: US shopping, reason: "doordash.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "ubereats.com", category: US shopping, reason: "ubereats.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.ubereats.com", category: US shopping, reason: "ubereats.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "grubhub.com", category: US shopping, reason: "grubhub.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.grubhub.com", category: US shopping, reason: "grubhub.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "sephora.com", category: US shopping, reason: "sephora.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.sephora.com", category: US shopping, reason: "sephora.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "nike.com", category: US shopping, reason: "nike.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.nike.com", category: US shopping, reason: "nike.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "rei.com", category: US shopping, reason: "rei.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.rei.com", category: US shopping, reason: "rei.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "staples.com", category: US shopping, reason: "staples.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.staples.com", category: US shopping, reason: "staples.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "officedepot.com", category: US shopping, reason: "officedepot.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.officedepot.com", category: US shopping, reason: "officedepot.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "zappos.com", category: US shopping, reason: "zappos.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.zappos.com", category: US shopping, reason: "zappos.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "expedia.com", category: US travel, reason: "expedia.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.expedia.com", category: US travel, reason: "expedia.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "booking.com", category: US travel, reason: "booking.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.booking.com", category: US travel, reason: "booking.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "hotels.com", category: US travel, reason: "hotels.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.hotels.com", category: US travel, reason: "hotels.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "kayak.com", category: US travel, reason: "kayak.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.kayak.com", category: US travel, reason: "kayak.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "priceline.com", category: US travel, reason: "priceline.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.priceline.com", category: US travel, reason: "priceline.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "tripadvisor.com", category: US travel, reason: "tripadvisor.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.tripadvisor.com", category: US travel, reason: "tripadvisor.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "airbnb.com", category: US travel, reason: "airbnb.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.airbnb.com", category: US travel, reason: "airbnb.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "united.com", category: US travel, reason: "united.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.united.com", category: US travel, reason: "united.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "delta.com", category: US travel, reason: "delta.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.delta.com", category: US travel, reason: "delta.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "aa.com", category: US travel, reason: "aa.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.aa.com", category: US travel, reason: "aa.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "southwest.com", category: US travel, reason: "southwest.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.southwest.com", category: US travel, reason: "southwest.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "jetblue.com", category: US travel, reason: "jetblue.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.jetblue.com", category: US travel, reason: "jetblue.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "alaskaair.com", category: US travel, reason: "alaskaair.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.alaskaair.com", category: US travel, reason: "alaskaair.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "amtrak.com", category: US travel, reason: "amtrak.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.amtrak.com", category: US travel, reason: "amtrak.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "marriott.com", category: US travel, reason: "marriott.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.marriott.com", category: US travel, reason: "marriott.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "hilton.com", category: US travel, reason: "hilton.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.hilton.com", category: US travel, reason: "hilton.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "hyatt.com", category: US travel, reason: "hyatt.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.hyatt.com", category: US travel, reason: "hyatt.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "hertz.com", category: US travel, reason: "hertz.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.hertz.com", category: US travel, reason: "hertz.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "enterprise.com", category: US travel, reason: "enterprise.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.enterprise.com", category: US travel, reason: "enterprise.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "asana.com", category: US SaaS, reason: "asana.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.asana.com", category: US SaaS, reason: "asana.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "notion.so", category: US SaaS, reason: "notion.so (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.notion.so", category: US SaaS, reason: "notion.so subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "slack.com", category: US SaaS, reason: "slack.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.slack.com", category: US SaaS, reason: "slack.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "zoom.us", category: US SaaS, reason: "zoom.us (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.zoom.us", category: US SaaS, reason: "zoom.us subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "dropbox.com", category: US SaaS, reason: "dropbox.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.dropbox.com", category: US SaaS, reason: "dropbox.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "box.com", category: US SaaS, reason: "box.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.box.com", category: US SaaS, reason: "box.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "docusign.com", category: US SaaS, reason: "docusign.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.docusign.com", category: US SaaS, reason: "docusign.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "salesforce.com", category: US SaaS, reason: "salesforce.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.salesforce.com", category: US SaaS, reason: "salesforce.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "hubspot.com", category: US SaaS, reason: "hubspot.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.hubspot.com", category: US SaaS, reason: "hubspot.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "zendesk.com", category: US SaaS, reason: "zendesk.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.zendesk.com", category: US SaaS, reason: "zendesk.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "servicenow.com", category: US SaaS, reason: "servicenow.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.servicenow.com", category: US SaaS, reason: "servicenow.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "workday.com", category: US SaaS, reason: "workday.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.workday.com", category: US SaaS, reason: "workday.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "okta.com", category: US SaaS, reason: "okta.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.okta.com", category: US SaaS, reason: "okta.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "onelogin.com", category: US SaaS, reason: "onelogin.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.onelogin.com", category: US SaaS, reason: "onelogin.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "monday.com", category: US SaaS, reason: "monday.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.monday.com", category: US SaaS, reason: "monday.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "airtable.com", category: US SaaS, reason: "airtable.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.airtable.com", category: US SaaS, reason: "airtable.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "smartsheet.com", category: US SaaS, reason: "smartsheet.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.smartsheet.com", category: US SaaS, reason: "smartsheet.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "miro.com", category: US SaaS, reason: "miro.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.miro.com", category: US SaaS, reason: "miro.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "calendly.com", category: US SaaS, reason: "calendly.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.calendly.com", category: US SaaS, reason: "calendly.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "grammarly.com", category: US SaaS, reason: "grammarly.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.grammarly.com", category: US SaaS, reason: "grammarly.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "webex.com", category: US SaaS, reason: "webex.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.webex.com", category: US SaaS, reason: "webex.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "ringcentral.com", category: US SaaS, reason: "ringcentral.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.ringcentral.com", category: US SaaS, reason: "ringcentral.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "twilio.com", category: US SaaS, reason: "twilio.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.twilio.com", category: US SaaS, reason: "twilio.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "mailchimp.com", category: US SaaS, reason: "mailchimp.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.mailchimp.com", category: US SaaS, reason: "mailchimp.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "adobe.com", category: US SaaS, reason: "adobe.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.adobe.com", category: US SaaS, reason: "adobe.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "figma.com", category: US SaaS, reason: "figma.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.figma.com", category: US SaaS, reason: "figma.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "gitlab.com", category: US SaaS, reason: "gitlab.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.gitlab.com", category: US SaaS, reason: "gitlab.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "npmjs.com", category: US SaaS, reason: "npmjs.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.npmjs.com", category: US SaaS, reason: "npmjs.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "postman.com", category: US SaaS, reason: "postman.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.postman.com", category: US SaaS, reason: "postman.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "vercel.com", category: US SaaS, reason: "vercel.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.vercel.com", category: US SaaS, reason: "vercel.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "netlify.com", category: US SaaS, reason: "netlify.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.netlify.com", category: US SaaS, reason: "netlify.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "heroku.com", category: US SaaS, reason: "heroku.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.heroku.com", category: US SaaS, reason: "heroku.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "digitalocean.com", category: US SaaS, reason: "digitalocean.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.digitalocean.com", category: US SaaS, reason: "digitalocean.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "cloudflare.com", category: US SaaS, reason: "cloudflare.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.cloudflare.com", category: US SaaS, reason: "cloudflare.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "stackoverflow.com", category: US SaaS, reason: "stackoverflow.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.stackoverflow.com", category: US SaaS, reason: "stackoverflow.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "facebook.com", category: US social, reason: "facebook.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.facebook.com", category: US social, reason: "facebook.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "instagram.com", category: US social, reason: "instagram.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.instagram.com", category: US social, reason: "instagram.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "linkedin.com", category: US social, reason: "linkedin.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.linkedin.com", category: US social, reason: "linkedin.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "x.com", category: US social, reason: "x.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.x.com", category: US social, reason: "x.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "twitter.com", category: US social, reason: "twitter.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.twitter.com", category: US social, reason: "twitter.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "reddit.com", category: US social, reason: "reddit.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.reddit.com", category: US social, reason: "reddit.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "pinterest.com", category: US social, reason: "pinterest.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.pinterest.com", category: US social, reason: "pinterest.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "snapchat.com", category: US social, reason: "snapchat.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.snapchat.com", category: US social, reason: "snapchat.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "tiktok.com", category: US social, reason: "tiktok.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.tiktok.com", category: US social, reason: "tiktok.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "yelp.com", category: US social, reason: "yelp.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.yelp.com", category: US social, reason: "yelp.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "nextdoor.com", category: US social, reason: "nextdoor.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.nextdoor.com", category: US social, reason: "nextdoor.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "discord.com", category: US social, reason: "discord.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.discord.com", category: US social, reason: "discord.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "twitch.tv", category: US social, reason: "twitch.tv (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.twitch.tv", category: US social, reason: "twitch.tv subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "quora.com", category: US social, reason: "quora.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.quora.com", category: US social, reason: "quora.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "medium.com", category: US social, reason: "medium.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.medium.com", category: US social, reason: "medium.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "substack.com", category: US social, reason: "substack.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.substack.com", category: US social, reason: "substack.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "indeed.com", category: US jobs, reason: "indeed.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.indeed.com", category: US jobs, reason: "indeed.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "glassdoor.com", category: US jobs, reason: "glassdoor.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.glassdoor.com", category: US jobs, reason: "glassdoor.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "ziprecruiter.com", category: US jobs, reason: "ziprecruiter.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.ziprecruiter.com", category: US jobs, reason: "ziprecruiter.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "monster.com", category: US jobs, reason: "monster.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.monster.com", category: US jobs, reason: "monster.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "zillow.com", category: US jobs, reason: "zillow.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.zillow.com", category: US jobs, reason: "zillow.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "realtor.com", category: US jobs, reason: "realtor.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.realtor.com", category: US jobs, reason: "realtor.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "redfin.com", category: US jobs, reason: "redfin.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.redfin.com", category: US jobs, reason: "redfin.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "craigslist.org", category: US jobs, reason: "craigslist.org (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.craigslist.org", category: US jobs, reason: "craigslist.org subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "espn.com", category: US sports, reason: "espn.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.espn.com", category: US sports, reason: "espn.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "nfl.com", category: US sports, reason: "nfl.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.nfl.com", category: US sports, reason: "nfl.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "nba.com", category: US sports, reason: "nba.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.nba.com", category: US sports, reason: "nba.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "mlb.com", category: US sports, reason: "mlb.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.mlb.com", category: US sports, reason: "mlb.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "nhl.com", category: US sports, reason: "nhl.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.nhl.com", category: US sports, reason: "nhl.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "foxsports.com", category: US sports, reason: "foxsports.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.foxsports.com", category: US sports, reason: "foxsports.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "cbssports.com", category: US sports, reason: "cbssports.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.cbssports.com", category: US sports, reason: "cbssports.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "ticketmaster.com", category: US sports, reason: "ticketmaster.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.ticketmaster.com", category: US sports, reason: "ticketmaster.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "stubhub.com", category: US sports, reason: "stubhub.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.stubhub.com", category: US sports, reason: "stubhub.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "eventbrite.com", category: US sports, reason: "eventbrite.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.eventbrite.com", category: US sports, reason: "eventbrite.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "netflix.com", category: US streaming, reason: "netflix.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.netflix.com", category: US streaming, reason: "netflix.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "hulu.com", category: US streaming, reason: "hulu.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.hulu.com", category: US streaming, reason: "hulu.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "disneyplus.com", category: US streaming, reason: "disneyplus.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.disneyplus.com", category: US streaming, reason: "disneyplus.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "max.com", category: US streaming, reason: "max.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.max.com", category: US streaming, reason: "max.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "peacocktv.com", category: US streaming, reason: "peacocktv.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.peacocktv.com", category: US streaming, reason: "peacocktv.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "paramountplus.com", category: US streaming, reason: "paramountplus.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.paramountplus.com", category: US streaming, reason: "paramountplus.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "roku.com", category: US streaming, reason: "roku.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.roku.com", category: US streaming, reason: "roku.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "pandora.com", category: US streaming, reason: "pandora.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.pandora.com", category: US streaming, reason: "pandora.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "pbs.org", category: US streaming, reason: "pbs.org (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.pbs.org", category: US streaming, reason: "pbs.org subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "history.com", category: US streaming, reason: "history.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.history.com", category: US streaming, reason: "history.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "nationalgeographic.com", category: US streaming, reason: "nationalgeographic.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.nationalgeographic.com", category: US streaming, reason: "nationalgeographic.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "mayoclinic.org", category: US health, reason: "mayoclinic.org (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.mayoclinic.org", category: US health, reason: "mayoclinic.org subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "clevelandclinic.org", category: US health, reason: "clevelandclinic.org (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.clevelandclinic.org", category: US health, reason: "clevelandclinic.org subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "hopkinsmedicine.org", category: US health, reason: "hopkinsmedicine.org (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.hopkinsmedicine.org", category: US health, reason: "hopkinsmedicine.org subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "webmd.com", category: US health, reason: "webmd.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.webmd.com", category: US health, reason: "webmd.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "healthline.com", category: US health, reason: "healthline.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.healthline.com", category: US health, reason: "healthline.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "kaiserpermanente.org", category: US health, reason: "kaiserpermanente.org (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.kaiserpermanente.org", category: US health, reason: "kaiserpermanente.org subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "uhc.com", category: US health, reason: "uhc.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.uhc.com", category: US health, reason: "uhc.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "aetna.com", category: US health, reason: "aetna.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.aetna.com", category: US health, reason: "aetna.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "cigna.com", category: US health, reason: "cigna.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.cigna.com", category: US health, reason: "cigna.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "usps.com", category: US shipping, reason: "usps.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.usps.com", category: US shipping, reason: "usps.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "ups.com", category: US shipping, reason: "ups.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.ups.com", category: US shipping, reason: "ups.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "fedex.com", category: US shipping, reason: "fedex.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.fedex.com", category: US shipping, reason: "fedex.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "coursera.org", category: US learning, reason: "coursera.org (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.coursera.org", category: US learning, reason: "coursera.org subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "edx.org", category: US learning, reason: "edx.org (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.edx.org", category: US learning, reason: "edx.org subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "khanacademy.org", category: US learning, reason: "khanacademy.org (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.khanacademy.org", category: US learning, reason: "khanacademy.org subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "duolingo.com", category: US learning, reason: "duolingo.com (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "*.duolingo.com", category: US learning, reason: "duolingo.com subdomains (US web bundle)", added_by: system, ports: [443]}
+  - {pattern: "duckduckgo.com", category: US web, reason: "DuckDuckGo search", added_by: system, ports: [443]}
+  - {pattern: "*.duckduckgo.com", category: US web, reason: "DuckDuckGo search and assets", added_by: system, ports: [443]}
+  - {pattern: 'regex:^([a-z0-9-]+\.)+(gov|mil|edu|us)$', category: US public sector, reason: "All .gov/.mil/.edu/.us hosts (US-only TLDs)", added_by: system, ports: [443]}
+
+# Non-HTTP egress (databases over TCP, SSH): clients connect to
+# px-proxy:<listen_port>; px-proxy forwards to target_host:target_port ONLY
+# while target_host:target_port is allowed by a rule above.
+# Examples (on-prem databases inside the corporate network; the target must
+# also be allowed above — *.dataplatform.com allows any port):
+#   - {name: billing-oracle, listen_port: 15210, target_host: orabill01.dataplatform.com, target_port: 1521, reason: Billing Oracle}
+#   - {name: ops-sqlserver, listen_port: 14330, target_host: sqlops01.dataplatform.com, target_port: 1433, reason: Ops SQL Server}
+# Clients then connect to px-proxy:15210 / px-proxy:14330.
+tcp_tunnels: []

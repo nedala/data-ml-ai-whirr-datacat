@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=VS Code
+Comment=VS Code (code-server) on your work folder, in a browser window
+Exec=appliance-vscode
+Icon=accessories-text-editor
+Categories=Development;IDE;

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="datacat">
+  <title>datacat</title>
+  <g fill="none" stroke="#FFCF00" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15 L22 5 L28.5 11 Q32 10 35.5 11 L42 5 L43 15 Q46 21 42 26 Q38 30 32 30 Q26 30 22 26 Q18 21 21 15 Z"/>
+    <path d="M24 28 Q17 38 18 52 Q18 56 22 56 L42 56 Q46 56 46 52 Q47 38 40 28"/>
+    <path d="M46 50 Q57 50 57 40 Q57 33 51 33"/>
+    <path d="M30.5 23.5 L32 24.5 L33.5 23.5" stroke-width="2"/>
+    <path d="M27 56 L27 49 M37 56 L37 49" stroke-width="2.5"/>
+    <circle cx="27.5" cy="19" r="1.2" fill="#FFCF00" stroke="none"/><circle cx="36.5" cy="19" r="1.2" fill="#FFCF00" stroke="none"/>
+  </g>
+</svg>

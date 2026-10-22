@@ -1,0 +1,37 @@
+-- One row per invoice (<ban>-<yymm>) with charges, settlement from the
+-- ledger, disputes and the account's dimensions.
+select
+    i.invoice_id,
+    i.ban,
+    i.bill_month,
+    i.bill_cycle,
+    i.invoice_date,
+    i.due_date,
+    i.invoice_status,
+    i.recurring_charges,
+    i.one_time_charges,
+    i.taxes_fees,
+    i.credit_amount,
+    i.late_fee_amount,
+    i.amount_due,
+    i.service_revenue,
+    i.paid_date,
+    i.paid_amount,
+    i.payment_method,
+    i.days_to_pay,
+    i.days_past_due,
+    i.is_late,
+    i.invoice_status = 'written_off'  as is_written_off,
+    i.open_balance,
+    i.dispute_count,
+    i.disputed_amount,
+    i.dispute_count > 0               as is_disputed,
+    c.state,
+    c.region,
+    c.segment,
+    c.technology,
+    c.clli,
+    c.plan_id,
+    c.is_autopay
+from {{ ref('int_invoice_settlement') }} as i
+left join {{ ref('int_customer_current_service') }} as c on c.ban = i.ban

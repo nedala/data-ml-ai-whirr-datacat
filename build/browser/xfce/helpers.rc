@@ -1,0 +1,5 @@
+# Preferred applications (exo-open, xdg-open on XFCE): links open in the
+# appliance's running Chromium profile, never a second browser.
+WebBrowser=appliance-browser
+TerminalEmulator=xfce4-terminal
+FileManager=thunar

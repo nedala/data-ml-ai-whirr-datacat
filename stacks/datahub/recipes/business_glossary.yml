@@ -1,0 +1,218 @@
+# DataPlatform business glossary — ingested by glossary.yml
+# (datahub-business-glossary source). Term ids are explicit (bsp.<slug>) so
+# the postgres recipe's column-term rules and any later links stay stable.
+# Each term carries its domain (nodes cannot hold one).
+version: "1"
+source: DataPlatform Data Governance
+owners:
+  groups:
+    - data-governance
+nodes:
+  - name: Billing & Revenue
+    id: bsp.billing-revenue
+    description: Terms used in billing, revenue reporting and plan economics.
+    owners:
+      groups: [billing-data-stewards]
+    terms:
+      - name: ARPU
+        id: bsp.arpu
+        description: >-
+          Average Revenue Per User — recurring broadband revenue for a period
+          divided by the average number of active subscribers in that period
+          (recurring charges net of promo discounts and credits).
+        term_source: INTERNAL
+        domain: urn:li:domain:billing
+        custom_properties: {unit: USD per subscriber per month, grain: monthly}
+      - name: Account
+        id: bsp.account
+        description: >-
+          A billable customer relationship, identified by its BAN (billing
+          account number), e.g. 3100000008.
+        term_source: INTERNAL
+        domain: urn:li:domain:billing
+        related_terms: ["bsp.ban"]
+      - name: BAN
+        id: bsp.ban
+        description: >-
+          Billing Account Number — the 10-digit account key (e.g. 3100000008)
+          shared by billing, the transaction ledger, disputes, tickets, calls,
+          dispatches, surveys and churn features. Invoice ids are
+          <ban>-<yymm> (e.g. 3100000008-2609).
+        term_source: INTERNAL
+        domain: urn:li:domain:billing
+        custom_properties: {format: "10 digits", example: "3100000008"}
+      - name: Billing Dispute
+        id: bsp.billing-dispute
+        description: >-
+          A customer challenge to an invoice line (incorrect charge, missed
+          credit, promo not applied, late fee with autopay) tracked from inbox
+          to resolution in raw.disputes; approved / partial outcomes post a
+          credit to the transaction ledger.
+        term_source: INTERNAL
+        domain: urn:li:domain:billing
+        related_terms: ["bsp.arpu", "bsp.ban"]
+      - name: Invoice
+        id: bsp.invoice
+        description: >-
+          The monthly bill for one BAN; invoice ids are <ban>-<yymm> (e.g.
+          3100000008-2609). Amount due, status (paid / late / ...) and due date
+          drive collections, late fees and disputes.
+        term_source: INTERNAL
+        domain: urn:li:domain:billing
+        related_terms: ["bsp.ban", "bsp.billing-dispute"]
+
+  - name: Network
+    id: bsp.network
+    description: Terms for the access network, coverage and reliability.
+    owners:
+      groups: [network-data-stewards]
+    terms:
+      - name: Wire Center
+        id: bsp.wire-center
+        description: >-
+          The central office building that serves a geographic area, keyed by
+          its CLLI; the unit used for fiber build plans, outage roll-ups,
+          dispatch and plant-quality metrics, and penetration.
+        term_source: INTERNAL
+        domain: urn:li:domain:network
+        related_terms: ["bsp.clli"]
+      - name: CLLI
+        id: bsp.clli
+        description: >-
+          Common Language Location Identifier of a wire center: 8 characters =
+          4-letter place + 2-letter state + 2-character building (e.g.
+          RLGHNCXA). The key of every wire-center table.
+        term_source: INTERNAL
+        domain: urn:li:domain:network
+        custom_properties: {format: "8 characters", example: "RLGHNCXA"}
+      - name: Access Technology
+        id: bsp.technology
+        description: >-
+          Copper (DSL) or fiber (FTTH) — the only two internet technologies
+          DataPlatform sells.
+        term_source: INTERNAL
+        domain: urn:li:domain:network
+      - name: Copper
+        id: bsp.copper
+        description: >-
+          The legacy copper access network and its DSL internet service
+          (ADSL / VDSL), plus POTS voice; being migrated to fiber.
+        term_source: INTERNAL
+        domain: urn:li:domain:network
+        related_terms: ["bsp.technology", "bsp.fiber"]
+      - name: Fiber
+        id: bsp.fiber
+        description: >-
+          Fiber-to-the-home (FTTH, GPON / XGS-PON) access with an ONT at the
+          premises — DataPlatform's growth technology.
+        term_source: INTERNAL
+        domain: urn:li:domain:network
+        related_terms: ["bsp.technology", "bsp.ont"]
+      - name: ONT
+        id: bsp.ont
+        description: >-
+          Optical Network Terminal at a fiber customer's premises. Receive
+          power below -25 dBm ("weak optics": dirty connector, bend, damaged
+          drop) drives LOS events, tickets and repeat dispatches.
+        term_source: INTERNAL
+        domain: urn:li:domain:network
+        related_terms: ["bsp.repeat-dispatch"]
+      - name: DSL SNR Margin
+        id: bsp.dsl-snr
+        description: >-
+          Copper DSL downstream signal-to-noise margin in dB; below 6 dB the
+          line is marginal (retrains, CRC errors, speed loss).
+        term_source: INTERNAL
+        domain: urn:li:domain:network
+      - name: Fiber Penetration
+        id: bsp.fiber-penetration
+        description: >-
+          Share of fiber-passed locations in an area (typically a wire center)
+          that have an active fiber subscription. Penetration = fiber
+          subscribers / fiber-passed locations.
+        term_source: INTERNAL
+        domain: urn:li:domain:network
+        related_terms: ["bsp.wire-center"]
+      - name: Outage
+        id: bsp.outage
+        description: >-
+          An unplanned network event that interrupts service for one or more
+          subscribers; measured in customer-minutes lost.
+        term_source: INTERNAL
+        domain: urn:li:domain:network
+        related_terms: ["bsp.wire-center"]
+
+  - name: Customer Care
+    id: bsp.customer-care
+    description: Terms for servicing, field operations and customer experience.
+    owners:
+      groups: [care-data-stewards]
+    terms:
+      - name: Truck Roll
+        id: bsp.truck-roll
+        description: >-
+          Dispatch of a field technician to a customer premise or plant
+          location to install, repair or inspect service. Avoided truck rolls
+          are a key cost lever. Recorded in raw.dispatches.
+        term_source: INTERNAL
+        domain: urn:li:domain:customer-care
+      - name: Repeat Dispatch
+        id: bsp.repeat-dispatch
+        description: >-
+          A field dispatch to the same BAN within 30 days of the previous one —
+          the first fix did not hold. Repeat dispatch rate = repeat dispatches
+          / dispatches.
+        term_source: INTERNAL
+        domain: urn:li:domain:customer-care
+        related_terms: ["bsp.truck-roll", "bsp.ont"]
+      - name: Repeat Call
+        id: bsp.repeat-call
+        description: >-
+          A contact-center call from an account that called again within 7
+          days; repeat-call rate is the contact-center quality KPI.
+        term_source: INTERNAL
+        domain: urn:li:domain:customer-care
+        related_terms: ["bsp.fcr"]
+      - name: FCR
+        id: bsp.fcr
+        description: >-
+          First Contact Resolution — share of customer issues resolved on the
+          first interaction, with no repeat contact or truck roll for the same
+          issue within 7 days.
+        term_source: INTERNAL
+        domain: urn:li:domain:customer-care
+        related_terms: ["bsp.truck-roll"]
+      - name: NPS
+        id: bsp.nps
+        description: >-
+          Net Promoter Score — % promoters (9–10) minus % detractors (0–6) from
+          the "how likely are you to recommend" survey question.
+        term_source: INTERNAL
+        domain: urn:li:domain:customer-care
+
+  - name: Sales & Retention
+    id: bsp.sales-retention
+    description: Terms for acquisition, base management and churn.
+    owners:
+      groups: [sales-data-stewards]
+    terms:
+      - name: Churn
+        id: bsp.churn
+        description: >-
+          A subscriber disconnecting all broadband service (voluntary or
+          involuntary). The modelling label churned_next_90d flags accounts
+          that churn within the next 90 days.
+        term_source: INTERNAL
+        domain: urn:li:domain:sales
+        related_terms: ["bsp.arpu", "bsp.nps"]
+      - name: Gross Add
+        id: bsp.gross-add
+        description: A new broadband subscription activated in the period.
+        term_source: INTERNAL
+        domain: urn:li:domain:sales
+      - name: Net Add
+        id: bsp.net-add
+        description: Gross adds minus disconnects for the period.
+        term_source: INTERNAL
+        domain: urn:li:domain:sales
+        related_terms: ["bsp.gross-add", "bsp.churn"]

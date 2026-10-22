@@ -1,0 +1,19 @@
+{
+  "env": {
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "DISABLE_AUTOUPDATER": "1"
+  },
+  "permissions": {
+    "disableBypassPermissionsMode": "disable",
+    "deny": [
+      "Read(~/.ssh/**)",
+      "Read(~/.azure/**)",
+      "Read(~/.IdentityService/**)",
+      "Read(//trust/**)"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "bsp"
+  ]
+}
