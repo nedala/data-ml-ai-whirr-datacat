@@ -13,7 +13,7 @@ import users
 from vault import store
 
 H = {"X-Studio": "1"}
-ADMIN, ADMIN_PW, MASTER = "seshu", "Tr0ub4dour-and-3", "vault master passphrase 1"
+ADMIN, ADMIN_PW, MASTER = "analyst", "Tr0ub4dour-and-3", "vault master passphrase 1"
 C: dict[str, TestClient] = {}
 
 

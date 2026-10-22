@@ -242,7 +242,7 @@ def acting_for(conn: dict):
 
 
 def acting_label(conn: dict) -> str:
-    """'seshu.edala@… on da-tsa-dv' for messages (named identities only)."""
+    """'data.analyst@… on da-tsa-dv' for messages (named identities only)."""
     p = conn.get("params") or {}
     if not p.get("identity"):
         return ""

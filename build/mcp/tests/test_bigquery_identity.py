@@ -12,7 +12,7 @@ def test_named_identity_needs_verified_caller(monkeypatch):
     monkeypatch.setattr(T, "connector_mode", lambda system: "live")
     monkeypatch.setattr(delegated, "caller", lambda: "")
     with pytest.raises(UserError, match="verified caller"):
-        with T._acting("seshu-edala"):
+        with T._acting("data-analyst"):
             pass
     with T._acting("") as who:          # no identity → the assigned one, untouched
         assert who == ""
@@ -32,9 +32,9 @@ def test_named_identity_forwards_caller_proof(monkeypatch):
         seen.update(gcp._acting.get() or {}, identity=identity)
         return {"principal_email": "anna@example.com", "default_project": "p1"}
     monkeypatch.setattr(gcp, "studio_token", token)
-    with T._acting("seshu-edala", "da-tsa-dv") as who:
+    with T._acting("data-analyst", "da-tsa-dv") as who:
         assert who == "anna@example.com on da-tsa-dv"
-    assert seen["user"] == "anna" and seen["caller_sig"] == "sig" and seen["identity"] == "seshu-edala"
+    assert seen["user"] == "anna" and seen["caller_sig"] == "sig" and seen["identity"] == "data-analyst"
 
     def refuse(*a, **k):
         raise gcp.StudioTokenError("anna may not act as x", 403)

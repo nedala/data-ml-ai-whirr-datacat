@@ -20,7 +20,7 @@ import settings
 from vault import store
 
 H = {"X-Studio": "1"}
-ADMIN, ADMIN_PW, MASTER = "seshu", "Tr0ub4dour-and-3", "vault master passphrase 1"
+ADMIN, ADMIN_PW, MASTER = "analyst", "Tr0ub4dour-and-3", "vault master passphrase 1"
 C: dict[str, TestClient] = {}
 SECRET_MARKERS = ("PRIVATE KEY", "refresh-token-SECRET", "client-secret-SECRET", "private_key", "refresh_token",
                   "client_secret")
@@ -65,7 +65,7 @@ def fake_http(method, url, *, headers=None, data=None, json_body=None, params=No
     if "/projects/nobq/" in url:
         return 400, {"error": {"code": 400, "message": "The project nobq has not enabled BigQuery."}}
     if "tokeninfo" in url:
-        return 200, {"email": "seshu@example.com", "scope": "openid email cloud-platform"}
+        return 200, {"email": "analyst@example.com", "scope": "openid email cloud-platform"}
     if "/datasets" in url and method == "GET":
         return 200, {"datasets": [{"datasetReference": {"datasetId": "raw"}}]}
     if "projects:search" in url:
@@ -178,16 +178,16 @@ def test_list_never_leaks():
 def test_add_authorized_user_resolves_principal():
     c = C["admin"]
     CALLS.clear()
-    r = c.post("/studio/api/gcp/identities", json={"name": "Seshu sign-in", "json": json.dumps(USER)}, headers=H)
+    r = c.post("/studio/api/gcp/identities", json={"name": "Analyst sign-in", "json": json.dumps(USER)}, headers=H)
     assert r.status_code == 200, r.text
     no_leak(r.text)
     ident = r.json()["identity"]
-    assert ident["type"] == "authorized_user" and ident["principal"] == "seshu@example.com"
+    assert ident["type"] == "authorized_user" and ident["principal"] == "analyst@example.com"
     assert ident["project"] == "proj-user", "quota_project_id is the default project"
     assert any("tokeninfo" in u for _, u, _ in CALLS)
     stored = store.get(f"gcp_identities.{ident['id']}")
     assert json.loads(stored["json"])["refresh_token"] == USER["refresh_token"], "kept in the vault"
-    assert c.post("/studio/api/gcp/identities", json={"name": "seshu SIGN-IN", "json": json.dumps(USER)}, headers=H).status_code == 400
+    assert c.post("/studio/api/gcp/identities", json={"name": "analyst SIGN-IN", "json": json.dumps(USER)}, headers=H).status_code == 400
     r = c.post("/studio/api/gcp/identities", json={"name": "bad", "json": json.dumps({"type": "authorized_user"})}, headers=H)
     assert r.status_code == 400 and "missing" in r.json()["detail"]
     # multipart upload path
@@ -229,11 +229,11 @@ def test_assignments_and_fallback_to_secret_env():
     assert env["GCP_MLFLOW_JSON"] == env["GCP_MLFLOW_JSON"] and env["GCP_WORKSPACE_JSON"] == user_json
     assert env["GCP_SA_JSON"] == json.dumps(SA, indent=2), "workspace is personal → the stored shared key is kept"
     ids = json.loads(env["GCP_IDENTITIES"])
-    assert set(ids) == {"default service account", "Seshu sign-in", "uploaded sa"} and ids["Seshu sign-in"]["type"] == "authorized_user"
+    assert set(ids) == {"default service account", "Analyst sign-in", "uploaded sa"} and ids["Analyst sign-in"]["type"] == "authorized_user"
     no_leak(env["GCP_IDENTITIES"])   # names + metadata only: other identities go through Studio's token endpoint
-    assert ids["uploaded sa"]["principal"] == SA["client_email"] and ids["Seshu sign-in"]["id"] == uid
+    assert ids["uploaded sa"]["principal"] == SA["client_email"] and ids["Analyst sign-in"]["id"] == uid
     names = json.loads(env["GCP_ASSIGNMENTS"])
-    assert names["vertex"] == "default service account" and names["bigquery_write"] == "Seshu sign-in"
+    assert names["vertex"] == "default service account" and names["bigquery_write"] == "Analyst sign-in"
     # workspace → a service account ⇒ GCP_SA_JSON follows it
     c.put("/studio/api/gcp/assignments", json={"workspace": sa2}, headers=H)
     assert orchestrator.secret_env()["GCP_SA_JSON"] == store.get(f"gcp_identities.{sa2}.json")
@@ -251,17 +251,17 @@ def test_assignments_and_fallback_to_secret_env():
         assert mod.info("bigquery")["type"] == "authorized_user", "alias"
         assert mod.project("bigquery_write") == "proj-user"
         assert mod.sa_info("bigquery") is None and mod.sa_info("vertex")["client_email"] == SA["client_email"]
-        assert mod.identity_names() == ["Seshu sign-in", "default service account", "uploaded sa"]
+        assert mod.identity_names() == ["Analyst sign-in", "default service account", "uploaded sa"]
         assert mod.assigned_name("vertex") == "default service account"
-        assert mod.identity_meta("Seshu sign-in")["principal"] == "seshu@example.com" and mod.identities() == {}
+        assert mod.identity_meta("Analyst sign-in")["principal"] == "analyst@example.com" and mod.identities() == {}
         try:
-            mod.identity("Seshu sign-in")          # no key here and no acting user → refused, nothing leaks
+            mod.identity("Analyst sign-in")          # no key here and no acting user → refused, nothing leaks
         except mod.StudioTokenError as exc:
             assert "signed-in user" in str(exc)
         else:
             raise AssertionError("named identity without a user")
-        os.environ["GCP_IDENTITIES"] = json.dumps({"Seshu sign-in": USER})      # legacy env (outside Studio)
-        creds = mod.identity("Seshu sign-in")
+        os.environ["GCP_IDENTITIES"] = json.dumps({"Analyst sign-in": USER})      # legacy env (outside Studio)
+        creds = mod.identity("Analyst sign-in")
         assert type(creds).__module__ == "google.oauth2.credentials" and creds.refresh_token == USER["refresh_token"]
         assert type(mod.credentials("vertex")).__module__ == "google.oauth2.service_account"
         try:
@@ -364,7 +364,7 @@ def test_authorized_user_test_and_expired_token():
     t = r.json()["result"]
     assert r.json()["identity"] == C["user_id"] and r.json()["via"] == "bigquery_read", (r.json()["identity"], r.json()["via"], gi.assignment_details())
     assert t["consumers"]["bigquery_write"]["verdict"] in ("partial", "failed")   # testIamPermissions: tables.create missing
-    assert t["principal"] == "seshu@example.com"
+    assert t["principal"] == "analyst@example.com"
     # revoked refresh token → clean hint, other checks skipped
     bad = {**USER, "refresh_token": "revoked"}
     r = c.post("/studio/api/gcp/identities", json={"name": "revoked", "json": json.dumps(bad)}, headers=H)
@@ -387,7 +387,7 @@ def test_delete_refuses_assigned_unless_forced():
     assert "bigquery_read" in r.json()["deleted"]["unassigned"]
     assert gi.assignments()["bigquery_read"] == ""
     env = orchestrator.secret_env()
-    assert env["GCP_BQ_JSON"] == "" and "Seshu sign-in" not in env["GCP_IDENTITIES"]
+    assert env["GCP_BQ_JSON"] == "" and "Analyst sign-in" not in env["GCP_IDENTITIES"]
     assert c.delete(f"/studio/api/gcp/identities/{C['revoked']}", headers=H).status_code == 200
     assert c.delete("/studio/api/gcp/identities/nope", headers=H).status_code == 404
 
@@ -460,7 +460,7 @@ fi
     assert r.status_code == 200, r.text
     no_leak(r.text)
     ident = r.json()["identity"]
-    assert ident["name"] == "seshu@example.com" and ident["type"] == "authorized_user" and ident["source"] == "google-login"
+    assert ident["name"] == "analyst@example.com" and ident["type"] == "authorized_user" and ident["source"] == "google-login"
     # cancel
     sid = c.post("/studio/api/gcp/google-login/start", headers=H).json()["session"]
     assert c.delete(f"/studio/api/gcp/google-login/{sid}", headers=H).json()["cancelled"]
@@ -497,7 +497,7 @@ def test_principal_switch():
     import time
 
     c = C["admin"]
-    r = c.post("/studio/api/gcp/identities", json={"name": "Seshu sign-in", "json": json.dumps(USER)}, headers=H)
+    r = c.post("/studio/api/gcp/identities", json={"name": "Analyst sign-in", "json": json.dumps(USER)}, headers=H)
     assert r.status_code == 200, r.text
     uid, sa2 = r.json()["identity"]["id"], C["sa2_id"]
     gi._refresh = _FakeRefresh()
@@ -519,7 +519,7 @@ def test_principal_switch():
     mine = c.get("/studio/api/gcp/my-identities").json()
     assert {i["id"] for i in mine["identities"]} >= {uid, sa2}
     ent = next(i for i in mine["identities"] if i["id"] == uid)
-    assert ent["principal"] == "seshu@example.com" and ent["type"] == "authorized_user" and ent["default_project"]
+    assert ent["principal"] == "analyst@example.com" and ent["type"] == "authorized_user" and ent["default_project"]
     assert "json" not in ent and "access_token" not in json.dumps(mine)
 
     # access list: admin only; audited
@@ -543,16 +543,16 @@ def test_principal_switch():
         r = c.post(url, json={"identity": uid, "user": "vic"}, headers=bearer(svc))
         assert r.status_code == 403, (svc, r.text)
     # session proof: must match the user
-    r = c.post(url, json={"identity": uid, "user": "seshu", "session": vic_session}, headers=bearer("appliance"))
+    r = c.post(url, json={"identity": uid, "user": "analyst", "session": vic_session}, headers=bearer("appliance"))
     assert r.status_code == 403
     r = c.post(url, json={"identity": uid, "user": "vic", "session": vic_session, "consumer": "bigquery_read"},
                headers=bearer("appliance"))
     assert r.status_code == 200, r.text
     d = r.json()
-    assert d["access_token"].startswith("ya29.fake-") and d["expires_in"] > 3000 and d["principal_email"] == "seshu@example.com"
+    assert d["access_token"].startswith("ya29.fake-") and d["expires_in"] > 3000 and d["principal_email"] == "analyst@example.com"
     assert d["identity"] == uid and d["default_project"] and "refresh_token" not in r.text and "client_secret" not in r.text
     n = _FakeRefresh.n
-    r2 = c.post(url, json={"identity": "Seshu sign-in", "user": "vic", "session": vic_session}, headers=bearer("canvas"))
+    r2 = c.post(url, json={"identity": "Analyst sign-in", "user": "vic", "session": vic_session}, headers=bearer("canvas"))
     assert r2.status_code == 200 and r2.json()["access_token"] == d["access_token"] and _FakeRefresh.n == n, "cached; name works"
     # not on sa2's list → refused; admin may use anything
     assert c.post(url, json={"identity": sa2, "user": "vic", "session": vic_session}, headers=bearer("appliance")).status_code == 403

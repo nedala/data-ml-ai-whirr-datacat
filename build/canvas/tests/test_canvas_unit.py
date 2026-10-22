@@ -165,18 +165,18 @@ def test_principal_switch_grants(monkeypatch):
         asked.append((identity, gcp.acting_user()))
         if gcp.acting_user() != "anna":
             raise gcp.StudioTokenError(f"{gcp.acting_user()} may not act as {identity}", 403)
-        return {"grant": "signed-grant", "user": "anna", "identity": "seshu-edala", "principal_email": "s@example.com"}
+        return {"grant": "signed-grant", "user": "anna", "identity": "data-analyst", "principal_email": "s@example.com"}
     monkeypatch.setattr(gcp, "studio_grant", grant)
     with pytest.raises(PermissionError):
         with gcp.acting("mallory", session="s-m"):
-            C.save({"name": "bq-as-seshu", "type": "bigquery", "params": {"identity": "Seshu Edala"}})
+            C.save({"name": "bq-as-analyst", "type": "bigquery", "params": {"identity": "Example Analyst"}})
     with gcp.acting("anna", session="s-a"):
-        rec = C.save({"name": "bq-as-seshu", "type": "bigquery", "params": {"identity": "Seshu Edala", "project": "da-tsa-dv"}})
-        C.save({"name": "bq-as-seshu", "type": "bigquery", "params": {"identity": "Seshu Edala", "project": "da-tsa-dv"}})
-    assert rec["identity_user"] == "anna" and asked[-1] == ("Seshu Edala", "anna") and len(asked) == 2, "re-save reuses the grant"
+        rec = C.save({"name": "bq-as-analyst", "type": "bigquery", "params": {"identity": "Example Analyst", "project": "da-tsa-dv"}})
+        C.save({"name": "bq-as-analyst", "type": "bigquery", "params": {"identity": "Example Analyst", "project": "da-tsa-dv"}})
+    assert rec["identity_user"] == "anna" and asked[-1] == ("Example Analyst", "anna") and len(asked) == 2, "re-save reuses the grant"
     yaml_text = (config.canvas_dir() / "connections.yaml").read_text()
     assert "signed-grant" not in yaml_text and "signed-grant" not in json.dumps(C.list_connections())
-    conn = C.get("bq-as-seshu")
+    conn = C.get("bq-as-analyst")
     # scheduler (no acting user) → the saver's grant
     with C.acting_for(conn):
         a = gcp._acting.get()
@@ -185,13 +185,13 @@ def test_principal_switch_grants(monkeypatch):
     with gcp.acting("bob", session="s-b"), C.acting_for(conn):
         assert gcp.acting_user() == "bob"
     # no grant → refused, never the assigned key
-    C._set_grant("bq-as-seshu", None)
+    C._set_grant("bq-as-analyst", None)
     with pytest.raises(PermissionError):
         with C.acting_for(conn):
             pass
     with pytest.raises(ValueError):
-        C.dlt_credentials({"type": "gcs", "params": {"identity": "Seshu Edala"}})
+        C.dlt_credentials({"type": "gcs", "params": {"identity": "Example Analyst"}})
     # unset identity → grant dropped
-    C.save({"name": "bq-as-seshu", "type": "bigquery", "params": {}})
-    assert "bq-as-seshu" not in C._grants()
-    C.delete("bq-as-seshu")
+    C.save({"name": "bq-as-analyst", "type": "bigquery", "params": {}})
+    assert "bq-as-analyst" not in C._grants()
+    C.delete("bq-as-analyst")

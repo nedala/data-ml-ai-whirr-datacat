@@ -264,8 +264,8 @@ class BigQueryPrincipal(unittest.TestCase):
     the signed-in user only."""
     ENV = {"GCP_BQ_JSON": '{"type": "authorized_user", "client_id": "x", "client_secret": "y", "refresh_token": "z"}',
            "GCP_BQ_PROJECT": "da-one-proj", "GCP_BQ_DATA_PROJECTS": "da-one-proj,da-two-proj", "GCP_BQ_EXEC_PROJECT": "da-jobs-proj",
-           "GCP_PROJECT_ID": "wrong-default-proj", "GCP_ASSIGNMENTS": '{"bigquery_read": "Seshu"}',
-           "GCP_IDENTITIES": '{"Seshu": {"id": "seshu", "type": "authorized_user", "principal": "seshu@example.com", "project": "da-one-proj"},'
+           "GCP_PROJECT_ID": "wrong-default-proj", "GCP_ASSIGNMENTS": '{"bigquery_read": "Analyst"}',
+           "GCP_IDENTITIES": '{"Analyst": {"id": "analyst", "type": "authorized_user", "principal": "analyst@example.com", "project": "da-one-proj"},'
                              ' "Other": {"id": "other", "type": "service_account", "principal": "sa@p.iam.gserviceaccount.com", "project": "other-proj"}}'}
 
     @classmethod
@@ -287,8 +287,8 @@ class BigQueryPrincipal(unittest.TestCase):
         self.assertEqual(p["project"], "da-one-proj")
         self.assertEqual(p["data_projects"], ["da-one-proj", "da-two-proj"])
         self.assertEqual(p["exec_project"], "da-jobs-proj")
-        self.assertEqual(p["identity"], "Seshu")
-        self.assertEqual(p["principal"], "seshu@example.com")
+        self.assertEqual(p["identity"], "Analyst")
+        self.assertEqual(p["principal"], "analyst@example.com")
         self.assertNotIn("wrong-default-proj", str(p))
 
     def test_named_identity_needs_signed_in_user(self):

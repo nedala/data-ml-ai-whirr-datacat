@@ -7,7 +7,7 @@ GCP_IDENTITIES lists every identity by NAME with metadata only (no key).
 Principal switch: act as another named identity for a signed-in user —
 
     with gcp.acting(user, session=<studio_session cookie> | grant=... | caller_ts=..., caller_sig=...):
-        creds = gcp.credentials("bigquery_read", identity="seshu-edala")
+        creds = gcp.credentials("bigquery_read", identity="data-analyst")
 
 Studio checks the identity's access list for that user and returns a
 short-lived OAuth access token (POST /studio/internal/gcp-token, this

@@ -2,7 +2,7 @@
     snapshots) instead of dbt's "<target_schema>_<custom>" concatenation, so
     Postgres schemas and BigQuery datasets carry the same names.
 
-    DBT_SCHEMA_PREFIX prefixes every layer (e.g. "dev_seshu_" for a personal
+    DBT_SCHEMA_PREFIX prefixes every layer (e.g. "dev_analyst_" for a personal
     sandbox). On the trino target the default prefix is "trino_": the
     `warehouse` catalog IS the local Postgres, so building through Trino must
     not overwrite the tables the postgres target owns. -#}
